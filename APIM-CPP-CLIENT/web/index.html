@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>APIM C++ Demo Client</title>
+    <style>
+      :root {
+        font-family: Segoe UI, Arial, sans-serif;
+        color: #1b1b1b;
+        background-color: #f4f6f8;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+      }
+
+      main {
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 2rem 1.5rem 3rem;
+      }
+
+      h1 {
+        margin-top: 0;
+      }
+
+      .panel {
+        background: #fff;
+        border-radius: 8px;
+        padding: 1.25rem;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        margin-bottom: 1.25rem;
+      }
+
+      label {
+        font-weight: 600;
+        display: block;
+        margin-bottom: 0.25rem;
+      }
+
+      input,
+      textarea,
+      button {
+        font: inherit;
+      }
+
+      input,
+      textarea {
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid #c8d2dc;
+        border-radius: 4px;
+        margin-bottom: 0.75rem;
+        box-sizing: border-box;
+      }
+
+      textarea {
+        resize: vertical;
+        min-height: 80px;
+      }
+
+      button {
+        background-color: #0078d4;
+        color: #fff;
+        border: none;
+        padding: 0.5rem 1.25rem;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background-color: #005ea6;
+      }
+
+      .command-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1rem;
+      }
+
+      .command-card {
+        border: 1px solid #d0d7de;
+        border-radius: 8px;
+        padding: 1rem;
+        background: #fff;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .command-card h3 {
+        margin: 0;
+        font-size: 1.05rem;
+      }
+
+      .badge {
+        display: inline-block;
+        padding: 0.2rem 0.5rem;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        color: #fff;
+        background-color: #444;
+      }
+
+      .badge.get {
+        background-color: #107c10;
+      }
+
+      .badge.post {
+        background-color: #c50f1f;
+      }
+
+      pre {
+        background: #0b1b32;
+        color: #e3eefc;
+        padding: 1rem;
+        border-radius: 8px;
+        overflow-x: auto;
+        min-height: 120px;
+      }
+
+      .inline-inputs {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="panel">
+        <h1>APIM C++ Demo</h1>
+        <p>Use the controls below to ping the local demo server.</p>
+        <div class="inline-inputs">
+          <div>
+            <label for="hostInput">Host</label>
+            <input id="hostInput" value="127.0.0.1" />
+          </div>
+          <div>
+            <label for="portInput">Port</label>
+            <input id="portInput" value="8080" type="number" min="1" max="65535" />
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Commands</h2>
+        <div class="command-grid">
+          <article class="command-card">
+            <h3>Command Catalog</h3>
+            <span class="badge get">GET</span>
+            <small>/api/commands</small>
+            <p>Enumerate every API endpoint exposed by this server.</p>
+            <button data-command="commands">Send Request</button>
+          </article>
+
+          <article class="command-card">
+            <h3>Health</h3>
+            <span class="badge get">GET</span>
+            <small>/api/health</small>
+            <p>Confirm readiness and inspect uptime/version information.</p>
+            <button data-command="health">Send Request</button>
+          </article>
+
+          <article class="command-card">
+            <h3>Hello World</h3>
+            <span class="badge get">GET</span>
+            <small>/api/hello?name=...</small>
+            <p>Returns a friendly greeting for the supplied name.</p>
+            <label for="helloName">Name</label>
+            <input id="helloName" placeholder="Web Client" value="Web Client" />
+            <button data-command="hello">Send Request</button>
+          </article>
+
+          <article class="command-card">
+            <h3>Echo</h3>
+            <span class="badge post">POST</span>
+            <small>/api/echo</small>
+            <p>POST a JSON document and read the server's echo.</p>
+            <label for="echoBody">Payload</label>
+            <textarea id="echoBody">
+{
+  "client": "web-demo",
+  "message": "Hello from the browser!"
+}
+            </textarea>
+            <button data-command="echo">Send Request</button>
+          </article>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Response</h2>
+        <pre id="responseArea">Click a command to see the server response.</pre>
+      </section>
+    </main>
+
+    <script>
+      const responseArea = document.getElementById("responseArea");
+      const helloInput = document.getElementById("helloName");
+      const echoInput = document.getElementById("echoBody");
+
+      const commands = {
+        commands: { method: "GET", path: "/api/commands" },
+        health: { method: "GET", path: "/api/health" },
+        hello: {
+          method: "GET",
+          buildPath: () => {
+            const name = helloInput.value.trim() || "web-client";
+            return `/api/hello?name=${encodeURIComponent(name)}`;
+          },
+        },
+        echo: {
+          method: "POST",
+          path: "/api/echo",
+          buildBody: () => {
+            const raw = echoInput.value.trim();
+            return raw || '{"client":"web-demo","message":"Hello from the browser!"}';
+          },
+        },
+      };
+
+      async function sendRequest(commandKey) {
+        const host = document.getElementById("hostInput").value || "127.0.0.1";
+        const port = document.getElementById("portInput").value || "8080";
+        const baseUrl = `http://${host}:${port}`;
+
+        const command = commands[commandKey];
+        if (!command) {
+          responseArea.textContent = `Unknown command: ${commandKey}`;
+          return;
+        }
+
+        const path = typeof command.buildPath === "function" ? command.buildPath() : command.path;
+        const body =
+          typeof command.buildBody === "function" ? command.buildBody() : command.body ?? null;
+
+        const requestInit = {
+          method: command.method,
+          headers: {},
+        };
+
+        if (body) {
+          requestInit.body = body;
+          requestInit.headers["Content-Type"] = "application/json";
+        }
+
+        responseArea.textContent = `Sending ${command.method} ${baseUrl}${path}...`;
+
+        try {
+          const response = await fetch(`${baseUrl}${path}`, requestInit);
+          const text = await response.text();
+          let formatted = text;
+          try {
+            const json = JSON.parse(text);
+            formatted = JSON.stringify(json, null, 2);
+          } catch (_) {
+            // leave as-is
+          }
+          responseArea.textContent = `Status: ${response.status}\n${formatted}`;
+        } catch (error) {
+          responseArea.textContent = `Request failed: ${error.message}`;
+        }
+      }
+
+      document.querySelectorAll("button[data-command]").forEach((button) => {
+        button.addEventListener("click", () => sendRequest(button.dataset.command));
+      });
+    </script>
+  </body>
+</html>
