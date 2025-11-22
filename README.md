@@ -50,17 +50,39 @@ The server exposes four demo endpoints:
 ## PowerShell test client
 
 ```
-pwsh -File .\APIM-CPP-CLIENT\Invoke-DemoRequests.ps1 -Host 127.0.0.1 -Port 8080 -HelloName "Codex"
+pwsh -File .\APIM-CPP-CLIENT\Invoke-DemoRequests.ps1 -ServerHost 127.0.0.1 -Port 8080 -HelloName "Codex"
 ```
 
 The script enumerates every endpoint, sends the corresponding HTTP request, and prints the prettified
 JSON response (or raw body) so you can verify the server end-to-end.
 
-## Browser demo client
+### Automation scripts
 
-Open `APIM-CPP-CLIENT/web/index.html` in any modern browser. Provide the host/port (defaults to
-`127.0.0.1:8080`), edit the request payloads if desired, and click a button to send each command.
-Responses are shown immediately without needing any runtime dependencies.
+To run and monitor the server without leaving terminals blocked, use the helper scripts:
+
+```powershell
+pwsh .\tools\automation\start_apim_server.ps1   # launches in the background, waits for /api/health
+pwsh .\tools\automation\stop_apim_server.ps1    # stops the tracked PID and cleans up
+```
+
+Logs are written to `.apim/logs`, and the PID lives at `.apim/server.pid`. When you need to rebuild
+while a server binary is running, either stop it via the script above or point CMake at a new build
+tree (e.g., `cmake -S . -B build-new -G Ninja`) so you can compile and test without interrupting
+stakeholders who are connected to the existing process.
+
+## Web test console (man page)
+
+The HTML dashboard at `APIM-CPP-CLIENT/web/index.html` is the canonical "man page" for stakeholders.
+It runs in dark mode, lists every smoke-test command (with copy buttons and file/folder links), and
+lets you execute demo API calls inline.
+
+Serve it locally so browsers can reach `http://127.0.0.1:8080` without CORS issues:
+
+```powershell
+pwsh -File .\APIM-CPP-CLIENT\web\Start-WebDemo.ps1 -Port 8081
+```
+
+Then open `http://127.0.0.1:8081` to view the handbook and trigger HTTP requests directly.
 
 ## MCP bridge
 

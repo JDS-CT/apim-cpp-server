@@ -24,6 +24,7 @@
 !.clang-format
 !.clang-tidy
 !.editorconfig
+.apim/
 
 # Build and temp artifacts
 build/

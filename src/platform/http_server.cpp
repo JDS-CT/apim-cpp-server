@@ -75,6 +75,9 @@ void HttpServer::AddHandler(HttpMethod method, const std::string& path, HttpHand
     case HttpMethod::kPost:
       impl_->server.Post(path, std::move(wrapped_handler));
       break;
+    case HttpMethod::kOptions:
+      impl_->server.Options(path, std::move(wrapped_handler));
+      break;
     default:
       throw std::invalid_argument("Unsupported HTTP method");
   }

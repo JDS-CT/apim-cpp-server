@@ -1,10 +1,10 @@
 param(
-    [string]$Host = "127.0.0.1",
+    [string]$ServerHost = "127.0.0.1",
     [int]$Port = 8080,
     [string]$HelloName = $env:USERNAME
 )
 
-$baseUri = "http://$Host`:$Port"
+$baseUri = "http://$ServerHost`:$Port"
 $escapedName = [Uri]::EscapeDataString($HelloName)
 
 $commands = @(

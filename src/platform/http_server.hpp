@@ -7,7 +7,7 @@
 
 namespace platform {
 
-enum class HttpMethod { kGet = 0, kPost };
+enum class HttpMethod { kGet = 0, kPost, kOptions };
 
 struct HttpRequest {
   std::string path;

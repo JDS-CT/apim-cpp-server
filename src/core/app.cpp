@@ -60,11 +60,18 @@ std::string EscapeJson(const std::string& value) {
   return escaped;
 }
 
+void ApplyCors(platform::HttpResponse& response) {
+  response.headers["Access-Control-Allow-Origin"] = "*";
+  response.headers["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS";
+  response.headers["Access-Control-Allow-Headers"] = "Content-Type";
+}
+
 platform::HttpResponse JsonResponse(std::string body, int status = 200) {
   platform::HttpResponse response;
   response.status = status;
   response.content_type = "application/json";
   response.body = std::move(body);
+  ApplyCors(response);
   return response;
 }
 
@@ -116,6 +123,14 @@ platform::HttpResponse HandleEcho(const platform::HttpRequest& request) {
   return JsonResponse(payload.str());
 }
 
+platform::HttpResponse HandleCorsPreflight(const platform::HttpRequest&) {
+  platform::HttpResponse response;
+  response.status = 204;
+  response.content_type = "text/plain";
+  ApplyCors(response);
+  return response;
+}
+
 }  // namespace
 
 void ConfigureServer(platform::HttpServer& server) {
@@ -123,6 +138,10 @@ void ConfigureServer(platform::HttpServer& server) {
   server.AddHandler(platform::HttpMethod::kGet, "/api/health", HandleHealth);
   server.AddHandler(platform::HttpMethod::kGet, "/api/hello", HandleHello);
   server.AddHandler(platform::HttpMethod::kPost, "/api/echo", HandleEcho);
+  server.AddHandler(platform::HttpMethod::kOptions, "/api/commands", HandleCorsPreflight);
+  server.AddHandler(platform::HttpMethod::kOptions, "/api/health", HandleCorsPreflight);
+  server.AddHandler(platform::HttpMethod::kOptions, "/api/hello", HandleCorsPreflight);
+  server.AddHandler(platform::HttpMethod::kOptions, "/api/echo", HandleCorsPreflight);
 }
 
 ServerConfig LoadServerConfig() {
