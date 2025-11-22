@@ -468,6 +468,27 @@
       </section>
 
       <section class="panel">
+        <div class="inline" style="justify-content: space-between; align-items: center">
+          <div>
+            <h2>Markdown round-trip</h2>
+            <p class="note">
+              Export canonical Markdown for the selected checklist or import updated Markdown to
+              replace runtime state.
+            </p>
+          </div>
+          <div style="max-width: 260px; width: 100%">
+            <label for="mdChecklistSelect">Checklist</label>
+            <select id="mdChecklistSelect"></select>
+          </div>
+        </div>
+        <div class="inline" style="margin: 0.6rem 0; gap: 0.8rem">
+          <button class="secondary" id="exportMarkdownButton">Load Markdown</button>
+          <button id="importMarkdownButton">Import Markdown</button>
+        </div>
+        <textarea id="markdownArea" style="min-height: 220px" placeholder="# Section&#10;&#10;## Procedure&#10;- **Action**: ..."></textarea>
+      </section>
+
+      <section class="panel">
         <h2>API console</h2>
         <div class="command-grid">
           <div class="command-card">
@@ -533,9 +554,12 @@
       const checklistStat = document.getElementById("checklistStat");
       const challengePrompt = document.getElementById("challengePrompt");
       const challengeCurl = document.getElementById("challengeCurl");
+      const mdChecklistSelect = document.getElementById("mdChecklistSelect");
+      const markdownArea = document.getElementById("markdownArea");
 
       let state = {
         selectedChecklist: "",
+        selectedMarkdownChecklist: "",
         slugs: [],
         mode: "human",
         challenge: {
@@ -651,15 +675,23 @@
         const data = await fetchJson("/api/checklists");
         const lists = data.checklists || [];
         checklistSelect.innerHTML = "";
+        mdChecklistSelect.innerHTML = "";
         lists.forEach((name) => {
           const option = document.createElement("option");
           option.value = name;
           option.textContent = name;
           checklistSelect.appendChild(option);
+
+          const mdOpt = document.createElement("option");
+          mdOpt.value = name;
+          mdOpt.textContent = name;
+          mdChecklistSelect.appendChild(mdOpt);
         });
         if (lists.length > 0) {
           state.selectedChecklist = lists[0];
           checklistSelect.value = lists[0];
+          state.selectedMarkdownChecklist = lists[0];
+          mdChecklistSelect.value = lists[0];
         }
         checklistStat.textContent = `${lists.length} checklist(s)`;
         return state.selectedChecklist;
@@ -689,6 +721,54 @@
           const checklist = await loadChecklists();
           await loadSlugsForChecklist(checklist);
           setResponse("Refreshed checklist + health data.");
+        } catch (error) {
+          setResponse(error.message);
+        }
+      }
+
+      async function exportMarkdown() {
+        const checklist = state.selectedMarkdownChecklist;
+        if (!checklist) {
+          setResponse("Select a checklist to export.");
+          return;
+        }
+        setResponse(`Exporting Markdown for ${checklist}...`);
+        try {
+          const response = await fetch(`${baseUrl()}/api/export/markdown/${encodeURIComponent(checklist)}`);
+          const text = await response.text();
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${text}`);
+          }
+          markdownArea.value = text;
+          setResponse(`Loaded Markdown for ${checklist}.`);
+        } catch (error) {
+          setResponse(error.message);
+        }
+      }
+
+      async function importMarkdown() {
+        const checklist = state.selectedMarkdownChecklist;
+        const content = markdownArea.value;
+        if (!checklist) {
+          setResponse("Select a checklist to import.");
+          return;
+        }
+        if (!content.trim()) {
+          setResponse("Provide Markdown content to import.");
+          return;
+        }
+        setResponse(`Importing Markdown for ${checklist}...`);
+        try {
+          const response = await fetch(
+            `${baseUrl()}/api/import/markdown?checklist=${encodeURIComponent(checklist)}`,
+            { method: "POST", headers: { "Content-Type": "text/markdown" }, body: content }
+          );
+          const text = await response.text();
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${text}`);
+          }
+          setResponse(`Imported Markdown for ${checklist}: ${formatJSON(text)}`);
+          await loadSlugsForChecklist(checklist);
         } catch (error) {
           setResponse(error.message);
         }
@@ -818,6 +898,11 @@
         state.selectedChecklist = event.target.value;
         await loadSlugsForChecklist(state.selectedChecklist);
       });
+      mdChecklistSelect.addEventListener("change", (event) => {
+        state.selectedMarkdownChecklist = event.target.value;
+      });
+      document.getElementById("exportMarkdownButton").addEventListener("click", exportMarkdown);
+      document.getElementById("importMarkdownButton").addEventListener("click", importMarkdown);
 
       renderChallenge();
       refreshAll();

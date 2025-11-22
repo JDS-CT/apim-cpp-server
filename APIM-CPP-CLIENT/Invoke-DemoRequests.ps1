@@ -111,6 +111,35 @@ if ($seededSlug) {
             status       = "Other"
         } | ConvertTo-Json -Compress
     }
+    $commands += [PSCustomObject]@{
+        Name        = "Export Markdown"
+        Method      = "GET"
+        Path        = "/api/export/markdown/$seededChecklist"
+        Description = "Export checklist '$seededChecklist' as canonical Markdown."
+    }
+    $commands += [PSCustomObject]@{
+        Name        = "Import Markdown"
+        Method      = "POST"
+        Path        = "/api/import/markdown?checklist=$seededChecklist"
+        Description = "Import Markdown to replace checklist '$seededChecklist'."
+        Body        = @"
+# Demo import
+
+## Example procedure
+- **Action**: Replace runtime state
+- **Spec**: Spec text
+- **Result**: pending
+- **Status**: Other
+- **Comment**: Imported from PowerShell demo
+
+### Instructions
+Draft instructions.
+
+### Relationships
+**Checklist ID:** TEMPORARYID123456
+- depends_on $slugId
+"@
+    }
 }
 
 $commands += [PSCustomObject]@{

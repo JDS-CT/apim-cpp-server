@@ -117,6 +117,28 @@ const std::vector<ToolDefinition>& ToolCatalog() {
        "/api/export/json",
        "Export every slug as a JSON array for downstream processing.",
        nlohmann::json::object()},
+      {"apim.export_markdown",
+       "GET",
+       "/api/export/markdown/{checklist}",
+       "Export a checklist as Markdown for authoring.",
+       {{"type", "object"},
+        {"properties",
+         {{"checklist",
+           {{"type", "string"}, {"description", "Checklist name to export."}}}}},
+        {"required", {"checklist"}},
+        {"additionalProperties", false}}},
+      {"apim.import_markdown",
+       "POST",
+       "/api/import/markdown",
+       "Import Markdown for a checklist and replace its runtime state.",
+       {{"type", "object"},
+        {"properties",
+         {{"checklist",
+           {{"type", "string"}, {"description", "Checklist name to replace."}}},
+          {"markdown",
+           {{"type", "string"}, {"description", "Markdown content to ingest."}}}}},
+        {"required", {"checklist", "markdown"}},
+        {"additionalProperties", false}}},
   };
   return kTools;
 }
@@ -222,6 +244,16 @@ platform::HttpClientResponse Bridge::CallTool(const std::string& name,
   }
   if (name == "apim.export_json") {
     return client_.Get("/api/export/json");
+  }
+  if (name == "apim.export_markdown") {
+    const auto checklist = EncodePathSegment(RequireStringArg(arguments, "checklist"));
+    return client_.Get("/api/export/markdown/" + checklist);
+  }
+  if (name == "apim.import_markdown") {
+    const auto checklist = RequireStringArg(arguments, "checklist");
+    const auto markdown = RequireStringArg(arguments, "markdown");
+    return client_.Post("/api/import/markdown", markdown, {{"checklist", checklist}},
+                        "text/markdown");
   }
   throw std::invalid_argument("Unknown tool: " + name);
 }

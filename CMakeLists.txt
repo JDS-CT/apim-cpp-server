@@ -48,6 +48,7 @@ target_compile_options(apim-mcp PUBLIC ${APIM_WARNINGS})
 
 add_executable(apim-cpp-server
   src/core/app.cpp
+  src/core/checklist_markdown.cpp
   src/core/checklist_store.cpp
   src/core/logging.cpp
   src/core/main.cpp
@@ -77,6 +78,7 @@ target_include_directories(apim-mcp-bridge PRIVATE ${APIM_INCLUDE_DIRS})
 add_executable(mcp-bridge-test
   tests/mcp_bridge_test.cpp
   src/core/app.cpp
+  src/core/checklist_markdown.cpp
   src/core/checklist_store.cpp
   src/core/logging.cpp
   src/platform/http_server.cpp

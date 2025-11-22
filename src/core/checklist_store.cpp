@@ -336,6 +336,10 @@ void ChecklistStore::SeedDemoData() {
 
 void ChecklistStore::UpsertSlug(const ChecklistSlug& slug) {
   std::lock_guard<std::mutex> lock(mutex_);
+  UpsertSlugUnlocked(slug);
+}
+
+void ChecklistStore::UpsertSlugUnlocked(const ChecklistSlug& slug) {
   sqlite3_stmt* stmt = nullptr;
   const std::string sql =
       "INSERT INTO slugs (checklist_id, checklist, section, procedure, action, spec, result, "
@@ -527,6 +531,113 @@ void ChecklistStore::ApplyUpdate(const SlugUpdate& update) {
   StepOrThrow(stmt, "slug update");
   Finalize(stmt);
   InsertHistorySnapshot(mutated);
+}
+
+void ChecklistStore::ReplaceChecklist(const std::string& checklist,
+                                      const std::vector<ChecklistSlug>& slugs) {
+  if (checklist.empty()) {
+    throw std::invalid_argument("Checklist name must not be empty.");
+  }
+  for (const auto& slug : slugs) {
+    if (slug.checklist != checklist) {
+      throw std::invalid_argument("All slugs must belong to checklist '" + checklist + "'.");
+    }
+  }
+
+  std::lock_guard<std::mutex> lock(mutex_);
+
+  char* errmsg = nullptr;
+  sqlite3_exec(db_, "BEGIN IMMEDIATE;", nullptr, nullptr, &errmsg);
+  if (errmsg) {
+    std::string message = errmsg;
+    sqlite3_free(errmsg);
+    throw std::runtime_error("Failed to begin transaction for checklist replace: " + message);
+  }
+
+  auto rollback = [&]() {
+    sqlite3_exec(db_, "ROLLBACK;", nullptr, nullptr, nullptr);
+  };
+
+  sqlite3_stmt* delete_rels_subject = nullptr;
+  sqlite3_stmt* delete_rels_target = nullptr;
+  sqlite3_stmt* delete_history = nullptr;
+  sqlite3_stmt* delete_slugs = nullptr;
+  sqlite3_stmt* insert_rel = nullptr;
+
+  try {
+    const std::string rel_subject_sql =
+        "DELETE FROM relationships WHERE subject_id IN "
+        "(SELECT checklist_id FROM slugs WHERE checklist=?);";
+    const std::string rel_target_sql =
+        "DELETE FROM relationships WHERE target_id IN "
+        "(SELECT checklist_id FROM slugs WHERE checklist=?);";
+    const std::string history_sql =
+        "DELETE FROM history WHERE checklist_id IN (SELECT checklist_id FROM slugs WHERE checklist=?);";
+    const std::string slugs_sql = "DELETE FROM slugs WHERE checklist=?;";
+
+    if (Prepare(db_, rel_subject_sql, &delete_rels_subject) != SQLITE_OK ||
+        Prepare(db_, rel_target_sql, &delete_rels_target) != SQLITE_OK ||
+        Prepare(db_, history_sql, &delete_history) != SQLITE_OK ||
+        Prepare(db_, slugs_sql, &delete_slugs) != SQLITE_OK) {
+      throw std::runtime_error("Failed to prepare checklist cleanup statements.");
+    }
+
+    sqlite3_bind_text(delete_rels_subject, 1, checklist.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(delete_rels_target, 1, checklist.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(delete_history, 1, checklist.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(delete_slugs, 1, checklist.c_str(), -1, SQLITE_TRANSIENT);
+
+    StepOrThrow(delete_rels_subject, "relationship delete (subject)");
+    StepOrThrow(delete_rels_target, "relationship delete (target)");
+    StepOrThrow(delete_history, "history delete");
+    StepOrThrow(delete_slugs, "slug delete");
+
+    Finalize(delete_rels_subject);
+    delete_rels_subject = nullptr;
+    Finalize(delete_rels_target);
+    delete_rels_target = nullptr;
+    Finalize(delete_history);
+    delete_history = nullptr;
+    Finalize(delete_slugs);
+    delete_slugs = nullptr;
+
+    // Insert all slugs first to satisfy foreign keys, then batch relationships.
+    std::vector<std::pair<std::string, RelationshipEdge>> pending_edges;
+    for (const auto& slug : slugs) {
+      UpsertSlugUnlocked(slug);
+      for (const auto& edge : slug.relationships) {
+        pending_edges.emplace_back(slug.checklist_id, edge);
+      }
+    }
+
+    const std::string rel_insert_sql =
+        "INSERT INTO relationships (subject_id, predicate, target_id) VALUES (?,?,?);";
+    if (Prepare(db_, rel_insert_sql, &insert_rel) != SQLITE_OK) {
+      throw std::runtime_error("Failed to prepare relationship insert for checklist replace.");
+    }
+
+    for (const auto& item : pending_edges) {
+      const auto& subject = item.first;
+      const auto& edge = item.second;
+      sqlite3_reset(insert_rel);
+      sqlite3_bind_text(insert_rel, 1, subject.c_str(), -1, SQLITE_TRANSIENT);
+      sqlite3_bind_text(insert_rel, 2, edge.predicate.c_str(), -1, SQLITE_TRANSIENT);
+      sqlite3_bind_text(insert_rel, 3, edge.target.c_str(), -1, SQLITE_TRANSIENT);
+      StepOrThrow(insert_rel, "relationship insert");
+    }
+
+    Finalize(insert_rel);
+    insert_rel = nullptr;
+    sqlite3_exec(db_, "COMMIT;", nullptr, nullptr, nullptr);
+  } catch (...) {
+    Finalize(delete_rels_subject);
+    Finalize(delete_rels_target);
+    Finalize(delete_history);
+    Finalize(delete_slugs);
+    Finalize(insert_rel);
+    rollback();
+    throw;
+  }
 }
 
 void ChecklistStore::ApplyBulkUpdates(const std::vector<SlugUpdate>& updates) {

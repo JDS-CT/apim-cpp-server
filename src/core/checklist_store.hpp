@@ -60,6 +60,7 @@ class ChecklistStore {
   RelationshipGraph GetRelationships(const std::string& checklist_id) const;
   void ApplyUpdate(const SlugUpdate& update);
   void ApplyBulkUpdates(const std::vector<SlugUpdate>& updates);
+  void ReplaceChecklist(const std::string& checklist, const std::vector<ChecklistSlug>& slugs);
   std::vector<ChecklistSlug> ExportAllSlugs() const;
   std::vector<std::string> ListChecklists() const;
 
@@ -68,6 +69,7 @@ class ChecklistStore {
   bool HasAnySlugs() const;
   void SeedDemoData();
   void UpsertSlug(const ChecklistSlug& slug);
+  void UpsertSlugUnlocked(const ChecklistSlug& slug);
   void ReplaceRelationships(const std::string& subject_id,
                             const std::vector<RelationshipEdge>& edges);
   void InsertHistorySnapshot(const ChecklistSlug& slug);

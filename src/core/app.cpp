@@ -8,6 +8,7 @@
 #include <string_view>
 #include <vector>
 
+#include "core/checklist_markdown.hpp"
 #include "core/checklist_store.hpp"
 #include "core/logging.hpp"
 #include "nlohmann/json.hpp"
@@ -40,6 +41,10 @@ const std::vector<DemoCommand> kCommandCatalog = {
     {"PATCH", "/api/update_bulk", "Apply minimal state updates to multiple slugs."},
     {"GET", "/api/export/json", "Export all slugs as a JSON array."},
     {"GET", "/api/export/jsonl", "Export all slugs as JSON Lines."},
+    {"GET", "/api/export/markdown/<checklist>",
+     "Export a checklist as canonical Markdown for authors."},
+    {"POST", "/api/import/markdown?checklist=<name>",
+     "Import Markdown for a checklist and replace its runtime state."},
 };
 
 const auto kServerStart = std::chrono::steady_clock::now();
@@ -312,6 +317,42 @@ void ConfigureServer(platform::HttpServer& server, ChecklistStore& store) {
     return TextResponse(stream.str(), "application/json", 200);
   };
 
+  auto handle_export_markdown = [&store](const platform::HttpRequest& request) {
+    if (request.path_params.empty()) {
+      return ErrorResponse("Missing checklist path parameter.", 400);
+    }
+    const std::string checklist = request.path_params.front();
+    LogInfo("GET /api/export/markdown/" + checklist);
+    const auto slugs = store.GetSlugsForChecklist(checklist);
+    if (slugs.empty()) {
+      return ErrorResponse("Checklist not found: " + checklist, 404);
+    }
+    try {
+      const auto markdown = core::markdown::ExportChecklistMarkdown(checklist, slugs);
+      return TextResponse(markdown, "text/markdown; charset=utf-8", 200);
+    } catch (const std::exception& ex) {
+      return ErrorResponse(ex.what(), 400);
+    }
+  };
+
+  auto handle_import_markdown = [&store](const platform::HttpRequest& request) {
+    const std::string checklist = GetQueryParam(request, "checklist", "");
+    if (checklist.empty()) {
+      return ErrorResponse("Query parameter 'checklist' is required.", 400);
+    }
+    if (request.body.empty()) {
+      return ErrorResponse("Request body must contain Markdown content.", 400);
+    }
+    try {
+      const auto parsed = core::markdown::ParseChecklistMarkdown(checklist, request.body);
+      store.ReplaceChecklist(checklist, parsed.slugs);
+      LogInfo("POST /api/import/markdown checklist=" + checklist);
+      return JsonResponse(json{{"checklist", checklist}, {"imported", parsed.slugs.size()}});
+    } catch (const std::exception& ex) {
+      return ErrorResponse(ex.what(), 400);
+    }
+  };
+
   server.AddHandler(platform::HttpMethod::kGet, "/api/commands", handle_commands);
   server.AddHandler(platform::HttpMethod::kGet, "/api/health", handle_health);
   server.AddHandler(platform::HttpMethod::kGet, "/api/hello", handle_hello);
@@ -325,6 +366,9 @@ void ConfigureServer(platform::HttpServer& server, ChecklistStore& store) {
   server.AddHandler(platform::HttpMethod::kPatch, "/api/update_bulk", handle_update_bulk);
   server.AddHandler(platform::HttpMethod::kGet, "/api/export/json", handle_export_json);
   server.AddHandler(platform::HttpMethod::kGet, "/api/export/jsonl", handle_export_jsonl);
+  server.AddHandler(platform::HttpMethod::kGet, R"(/api/export/markdown/(.+))",
+                    handle_export_markdown);
+  server.AddHandler(platform::HttpMethod::kPost, "/api/import/markdown", handle_import_markdown);
 
   server.AddHandler(platform::HttpMethod::kOptions, "/api/commands", HandleCorsPreflight);
   server.AddHandler(platform::HttpMethod::kOptions, "/api/health", HandleCorsPreflight);
@@ -339,6 +383,9 @@ void ConfigureServer(platform::HttpServer& server, ChecklistStore& store) {
   server.AddHandler(platform::HttpMethod::kOptions, "/api/update_bulk", HandleCorsPreflight);
   server.AddHandler(platform::HttpMethod::kOptions, "/api/export/json", HandleCorsPreflight);
   server.AddHandler(platform::HttpMethod::kOptions, "/api/export/jsonl", HandleCorsPreflight);
+  server.AddHandler(platform::HttpMethod::kOptions, R"(/api/export/markdown/.*)",
+                    HandleCorsPreflight);
+  server.AddHandler(platform::HttpMethod::kOptions, "/api/import/markdown", HandleCorsPreflight);
 }
 
 ServerConfig LoadServerConfig() {

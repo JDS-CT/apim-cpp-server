@@ -28,6 +28,14 @@ class TestServer {
     core::ConfigureServer(server_, store_);
   }
 
+  ~TestServer() {
+    try {
+      Stop();
+    } catch (...) {
+      // swallow in destructor
+    }
+  }
+
   void Start(const std::string& host, int port) {
     host_ = host;
     port_ = port;
@@ -78,7 +86,7 @@ void RunTests() {
 
   const auto tools = bridge.ToolSchemasJson();
   Assert(tools.is_array(), "Tool schema response must be an array");
-  Assert(tools.size() == 10, "Unexpected number of MCP tools exposed");
+  Assert(tools.size() == 12, "Unexpected number of MCP tools exposed");
 
   const auto hello_response =
       bridge.CallTool("apim.hello", nlohmann::json::object({{"name", "Agent"}}));
@@ -101,6 +109,7 @@ void RunTests() {
 
   const auto checklist_id = export_json.at(0).value("checklist_id", "");
   Assert(!checklist_id.empty(), "Seed slug must include checklist_id");
+  const auto checklist_name = export_json.at(0).value("checklist", "");
 
   const auto slug_response =
       bridge.CallTool("apim.get_slug", nlohmann::json::object({{"checklist_id", checklist_id}}));
@@ -120,6 +129,17 @@ void RunTests() {
   const auto relationships_response = bridge.CallTool(
       "apim.relationships", nlohmann::json::object({{"checklist_id", checklist_id}}));
   Assert(relationships_response.status == 200, "apim.relationships status must be 200");
+
+  const auto export_md_response =
+      bridge.CallTool("apim.export_markdown", nlohmann::json::object({{"checklist", checklist_name}}));
+  Assert(export_md_response.status == 200, "apim.export_markdown status must be 200");
+  Assert(!export_md_response.body.empty(), "apim.export_markdown should return markdown content");
+
+  const auto import_md_response = bridge.CallTool(
+      "apim.import_markdown",
+      nlohmann::json::object({{"checklist", checklist_name},
+                              {"markdown", export_md_response.body}}));
+  Assert(import_md_response.status == 200, "apim.import_markdown status must be 200");
 
   server.Stop();
 }

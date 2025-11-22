@@ -57,6 +57,8 @@ The server exposes the checklist runtime API:
 | PATCH  | `/api/update_bulk`              | Minimal update contract applied to many slugs               |
 | GET    | `/api/export/json`              | Export all slugs as a JSON array                            |
 | GET    | `/api/export/jsonl`             | Export all slugs as JSON Lines                              |
+| GET    | `/api/export/markdown/<checklist>` | Export a checklist as canonical Markdown for authors     |
+| POST   | `/api/import/markdown?checklist=<name>` | Import Markdown for a checklist and replace its runtime state |
 
 ## PowerShell test client
 

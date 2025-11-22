@@ -18,6 +18,8 @@ interact with the backend using the MCP transport.
 | `apim.relationships`   | `GET /api/relationships/{id}` | Returns incoming/outgoing edges for the supplied Checklist ID. | `checklist_id` _(string, required)_         |
 | `apim.update_slug`     | `PATCH /api/update`      | Applies the minimal update contract (result/status/comment).      | `checklist_id` _(string, required)_, `status`, `result`, `comment`, `timestamp` _(optional strings)_ |
 | `apim.export_json`     | `GET /api/export/json`   | Exports all slugs as a JSON array.                                | _none_                                      |
+| `apim.export_markdown` | `GET /api/export/markdown/{c}` | Exports a checklist as canonical Markdown for authors.        | `checklist` _(string, required)_            |
+| `apim.import_markdown` | `POST /api/import/markdown` | Ingests Markdown for a checklist and replaces its runtime state. | `checklist` _(string, required)_, `markdown` _(string, required)_ |
 
 ## Usage
 
