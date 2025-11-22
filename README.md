@@ -1,8 +1,9 @@
 # apim-cpp-server
 
-A minimal cross-platform HTTP server written in modern C++ that advertises a handful of API
-endpoints for demos and smoke testing. The repository also contains a PowerShell client and a very
-simple browser UI so you can exercise the endpoints from multiple contexts.
+A cross-platform HTTP server written in modern C++ with a SQLite-backed checklist runtime. It
+implements the minimal update contract from `docs/design/apim_checklist_specification.md`, ships with
+PowerShell + MCP clients for agents, and includes a browser console that follows the CAPTCHA and
+indicator plans.
 
 ## Prerequisites
 
@@ -37,15 +38,25 @@ Configuration knobs:
 - `APIM_CPP_HOST` – interface to bind (defaults to `127.0.0.1`)
 - `APIM_CPP_PORT` – port to bind (defaults to `8080`)
 - `APIM_CPP_LOG_LEVEL` – `error`, `warn`, `info`, or `debug`
+- `APIM_CPP_DB` – SQLite runtime store path (defaults to `.apim/checklists.db`)
+- `APIM_CPP_SEED_DEMO` – set to `0`/`false` to skip seeding demo slugs
 
-The server exposes four demo endpoints:
+The server exposes the checklist runtime API:
 
-| Method | Path           | Description                                               |
-| ------ | -------------- | --------------------------------------------------------- |
-| GET    | `/api/commands`| Lists every sample endpoint                               |
-| GET    | `/api/health`  | Reports uptime and version                                |
-| GET    | `/api/hello`   | Returns a greeting (optional `name` query parameter)      |
-| POST   | `/api/echo`    | Echoes the provided JSON payload                          |
+| Method | Path                            | Description                                                 |
+| ------ | ------------------------------- | ----------------------------------------------------------- |
+| GET    | `/api/commands`                 | Lists every API endpoint                                    |
+| GET    | `/api/health`                   | Readiness, uptime, and version metadata                     |
+| GET    | `/api/hello`                    | Greeting (optional `name` query parameter)                  |
+| POST   | `/api/echo`                     | Echoes the provided JSON payload                            |
+| GET    | `/api/checklists`               | Lists every checklist in the runtime store                  |
+| GET    | `/api/checklist/<checklist>`    | Returns slugs for the given checklist                       |
+| GET    | `/api/slug/<checklist_id>`      | Returns a single slug by Checklist ID                       |
+| GET    | `/api/relationships/<id>`       | Incoming/outgoing relationships for the slug                |
+| PATCH  | `/api/update`                   | Minimal update contract (result/status/comment/timestamp)   |
+| PATCH  | `/api/update_bulk`              | Minimal update contract applied to many slugs               |
+| GET    | `/api/export/json`              | Export all slugs as a JSON array                            |
+| GET    | `/api/export/jsonl`             | Export all slugs as JSON Lines                              |
 
 ## PowerShell test client
 
@@ -53,8 +64,9 @@ The server exposes four demo endpoints:
 pwsh -File .\APIM-CPP-CLIENT\Invoke-DemoRequests.ps1 -ServerHost 127.0.0.1 -Port 8080 -HelloName "Codex"
 ```
 
-The script enumerates every endpoint, sends the corresponding HTTP request, and prints the prettified
-JSON response (or raw body) so you can verify the server end-to-end.
+The script enumerates every endpoint, sends the corresponding HTTP request (including the minimal
+update contract when seeded data is available), and prints the prettified JSON response (or raw
+body) so you can verify the server end-to-end.
 
 ### Automation scripts
 
@@ -73,8 +85,8 @@ stakeholders who are connected to the existing process.
 ## Web test console (man page)
 
 The HTML dashboard at `APIM-CPP-CLIENT/web/index.html` is the canonical "man page" for stakeholders.
-It runs in dark mode, lists every smoke-test command (with copy buttons and file/folder links), and
-lets you execute demo API calls inline.
+It opens with the CAPTCHA landing (human + AI paths), renders indicator badges for checklist slugs,
+and lets you exercise every API endpoint inline.
 
 Serve it locally so browsers can reach `http://127.0.0.1:8080` without CORS issues:
 
@@ -86,7 +98,7 @@ Then open `http://127.0.0.1:8081` to view the handbook and trigger HTTP requests
 
 ## MCP bridge
 
-An MCP-compatible bridge is built as part of the repo (`apim-mcp-bridge`). It exposes the four demo
+An MCP-compatible bridge is built as part of the repo (`apim-mcp-bridge`). It exposes the checklist
 HTTP endpoints as MCP tools so agents (Cursor, Claude Desktop, etc.) can call them over stdio.
 
 1. Build the bridge target (once per environment):
@@ -102,12 +114,13 @@ HTTP endpoints as MCP tools so agents (Cursor, Claude Desktop, etc.) can call th
    .\build\apim-mcp-bridge.exe
    ```
 
-4. The host will gain four tools: `apim.list_commands`, `apim.health`, `apim.hello`, and `apim.echo`.
-   Their schemas and test coverage live in `docs/mcp_tools.md`. You can run the automated MCP smoke
-   test via `ctest --output-on-failure` after building.
+4. The host will gain tools such as `apim.list_commands`, `apim.health`, `apim.get_slug`,
+   `apim.update_slug`, and `apim.export_json`. Schemas and coverage live in `docs/mcp_tools.md`.
+   You can run the automated MCP smoke test via `ctest --output-on-failure` after building.
 
 ## Third-party notice
 
-This repo vendors the single-header [`cpp-httplib`](https://github.com/yhirose/cpp-httplib)
-implementation under `third_party/cpp-httplib` (MIT license) to keep the demo HTTP adapter
-self-contained.
+This repo vendors the single-header [`cpp-httplib`](https://github.com/yhirose/cpp-httplib),
+[`sqlite`](https://sqlite.org), [`xxHash`](https://github.com/Cyan4973/xxHash), and
+[`nlohmann/json`](https://github.com/nlohmann/json) implementations under `third_party/` to keep the
+demo HTTP adapter and runtime store self-contained.

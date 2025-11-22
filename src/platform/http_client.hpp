@@ -25,6 +25,9 @@ class HttpClient {
   HttpClientResponse Post(const std::string& path, const std::string& body,
                           const std::map<std::string, std::string>& query = {},
                           const std::string& content_type = "application/json") const;
+  HttpClientResponse Patch(const std::string& path, const std::string& body,
+                           const std::map<std::string, std::string>& query = {},
+                           const std::string& content_type = "application/json") const;
 
  private:
   std::string BuildTarget(const std::string& path,

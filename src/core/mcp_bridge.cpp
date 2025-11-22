@@ -7,12 +7,33 @@
 namespace core::mcp {
 namespace {
 
+std::string EncodePathSegment(const std::string& value) {
+  static constexpr char kHex[] = "0123456789ABCDEF";
+  std::string encoded;
+  for (unsigned char ch : value) {
+    if ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9') ||
+        ch == '-' || ch == '_' || ch == '.' || ch == '~') {
+      encoded.push_back(static_cast<char>(ch));
+    } else {
+      encoded.push_back('%');
+      encoded.push_back(kHex[(ch >> 4) & 0x0F]);
+      encoded.push_back(kHex[ch & 0x0F]);
+    }
+  }
+  return encoded;
+}
+
 const std::vector<ToolDefinition>& ToolCatalog() {
   static const std::vector<ToolDefinition> kTools = {
       {"apim.list_commands",
        "GET",
        "/api/commands",
        "List every HTTP API command exposed by the demo server.",
+       nlohmann::json::object()},
+      {"apim.list_checklists",
+       "GET",
+       "/api/checklists",
+       "Enumerate every checklist currently present in the runtime store.",
        nlohmann::json::object()},
       {"apim.health",
        "GET",
@@ -28,7 +49,7 @@ const std::vector<ToolDefinition>& ToolCatalog() {
            {"properties",
             {
                 {"name",
-                 {{"type", "string"}, {"description", "Name used in the hello response."}}}
+                {{"type", "string"}, {"description", "Name used in the hello response."}}}
             }},
            {"additionalProperties", false},
        }},
@@ -45,6 +66,57 @@ const std::vector<ToolDefinition>& ToolCatalog() {
            {"required", {"payload"}},
            {"additionalProperties", false},
        }},
+      {"apim.get_slug",
+       "GET",
+       "/api/slug/{checklist_id}",
+       "Fetch a single slug by Checklist ID.",
+       {{"type", "object"},
+        {"properties",
+         {{"checklist_id",
+           {{"type", "string"}, {"description", "Checklist ID to retrieve."}}}}},
+        {"required", {"checklist_id"}},
+        {"additionalProperties", false}}},
+      {"apim.get_checklist",
+       "GET",
+       "/api/checklist/{checklist}",
+       "Fetch all slugs belonging to a checklist.",
+       {{"type", "object"},
+        {"properties",
+         {{"checklist",
+           {{"type", "string"}, {"description", "Checklist name to retrieve."}}}}},
+        {"required", {"checklist"}},
+        {"additionalProperties", false}}},
+      {"apim.relationships",
+       "GET",
+       "/api/relationships/{checklist_id}",
+       "Inspect incoming and outgoing relationships for a slug.",
+       {{"type", "object"},
+        {"properties",
+         {{"checklist_id",
+           {{"type", "string"}, {"description", "Checklist ID whose graph should be returned."}}}}},
+        {"required", {"checklist_id"}},
+        {"additionalProperties", false}}},
+      {"apim.update_slug",
+       "PATCH",
+       "/api/update",
+       "Apply the minimal update contract to a slug (result/status/comment/timestamp).",
+       {{"type", "object"},
+        {"properties",
+         {{"checklist_id",
+           {{"type", "string"},
+            {"description", "Slug to update (required)."}}},
+          {"status", {{"type", "string"}, {"description", "Pass, Fail, NA, or Other."}}},
+          {"result", {{"type", "string"}, {"description", "New measured result value."}}},
+          {"comment", {{"type", "string"}, {"description", "Operator note or annotation."}}},
+          {"timestamp",
+           {{"type", "string"}, {"description", "ISO8601 timestamp override (optional)."}}}}},
+        {"required", {"checklist_id"}},
+        {"additionalProperties", false}}},
+      {"apim.export_json",
+       "GET",
+       "/api/export/json",
+       "Export every slug as a JSON array for downstream processing.",
+       nlohmann::json::object()},
   };
   return kTools;
 }
@@ -71,6 +143,14 @@ std::string ToString(const nlohmann::json& value) {
   return value.dump();
 }
 
+std::string RequireStringArg(const nlohmann::json& arguments, const std::string& key) {
+  const auto it = arguments.find(key);
+  if (it == arguments.end() || !it->is_string()) {
+    throw std::invalid_argument("Missing or invalid argument: " + key);
+  }
+  return it->get<std::string>();
+}
+
 }  // namespace
 
 Bridge::Bridge(std::string base_url) : client_(std::move(base_url)) {}
@@ -90,6 +170,9 @@ platform::HttpClientResponse Bridge::CallTool(const std::string& name,
   if (name == "apim.list_commands") {
     return client_.Get("/api/commands");
   }
+  if (name == "apim.list_checklists") {
+    return client_.Get("/api/checklists");
+  }
   if (name == "apim.health") {
     return client_.Get("/api/health");
   }
@@ -107,6 +190,38 @@ platform::HttpClientResponse Bridge::CallTool(const std::string& name,
     }
     const std::string payload = ToString(*it);
     return client_.Post("/api/echo", payload);
+  }
+  if (name == "apim.get_slug") {
+    const auto id = EncodePathSegment(RequireStringArg(arguments, "checklist_id"));
+    return client_.Get("/api/slug/" + id);
+  }
+  if (name == "apim.get_checklist") {
+    const auto checklist = EncodePathSegment(RequireStringArg(arguments, "checklist"));
+    return client_.Get("/api/checklist/" + checklist);
+  }
+  if (name == "apim.relationships") {
+    const auto id = EncodePathSegment(RequireStringArg(arguments, "checklist_id"));
+    return client_.Get("/api/relationships/" + id);
+  }
+  if (name == "apim.update_slug") {
+    nlohmann::json payload = nlohmann::json::object();
+    payload["checklist_id"] = RequireStringArg(arguments, "checklist_id");
+    if (const auto it = arguments.find("status"); it != arguments.end()) {
+      payload["status"] = ToString(*it);
+    }
+    if (const auto it = arguments.find("result"); it != arguments.end()) {
+      payload["result"] = ToString(*it);
+    }
+    if (const auto it = arguments.find("comment"); it != arguments.end()) {
+      payload["comment"] = ToString(*it);
+    }
+    if (const auto it = arguments.find("timestamp"); it != arguments.end()) {
+      payload["timestamp"] = ToString(*it);
+    }
+    return client_.Patch("/api/update", payload.dump());
+  }
+  if (name == "apim.export_json") {
+    return client_.Get("/api/export/json");
   }
   throw std::invalid_argument("Unknown tool: " + name);
 }

@@ -6,12 +6,18 @@ interact with the backend using the MCP transport.
 
 ## Tool catalog
 
-| Tool name            | Method/Path     | Description                                                     | Arguments                        |
-| -------------------- | --------------- | --------------------------------------------------------------- | -------------------------------- |
-| `apim.list_commands` | `GET /api/commands` | Returns the canonical list of demo HTTP commands.                | _none_                           |
-| `apim.health`        | `GET /api/health`   | Reports readiness, uptime, and server version metadata.          | _none_                           |
-| `apim.hello`         | `GET /api/hello`    | Sends a greeting to the provided `name` (defaults to `world`).   | `name` _(string, optional)_      |
-| `apim.echo`          | `POST /api/echo`    | Echoes the JSON payload that agents supply for smoke testing.    | `payload` _(string, required)_   |
+| Tool name              | Method/Path              | Description                                                       | Arguments                                   |
+| ---------------------- | ------------------------ | ----------------------------------------------------------------- | ------------------------------------------- |
+| `apim.list_commands`   | `GET /api/commands`      | Returns the canonical list of HTTP commands.                      | _none_                                      |
+| `apim.list_checklists` | `GET /api/checklists`    | Lists all checklist names currently in the SQLite runtime store.  | _none_                                      |
+| `apim.health`          | `GET /api/health`        | Reports readiness, uptime, and server version metadata.           | _none_                                      |
+| `apim.hello`           | `GET /api/hello`         | Sends a greeting to the provided `name` (defaults to `world`).    | `name` _(string, optional)_                 |
+| `apim.echo`            | `POST /api/echo`         | Echoes the JSON payload that agents supply for smoke testing.     | `payload` _(string, required)_              |
+| `apim.get_slug`        | `GET /api/slug/{id}`     | Fetches a single slug by Checklist ID.                            | `checklist_id` _(string, required)_         |
+| `apim.get_checklist`   | `GET /api/checklist/{c}` | Fetches every slug for the named checklist.                       | `checklist` _(string, required)_            |
+| `apim.relationships`   | `GET /api/relationships/{id}` | Returns incoming/outgoing edges for the supplied Checklist ID. | `checklist_id` _(string, required)_         |
+| `apim.update_slug`     | `PATCH /api/update`      | Applies the minimal update contract (result/status/comment).      | `checklist_id` _(string, required)_, `status`, `result`, `comment`, `timestamp` _(optional strings)_ |
+| `apim.export_json`     | `GET /api/export/json`   | Exports all slugs as a JSON array.                                | _none_                                      |
 
 ## Usage
 

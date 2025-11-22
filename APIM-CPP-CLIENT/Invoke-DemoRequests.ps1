@@ -7,40 +7,118 @@ param(
 $baseUri = "http://$ServerHost`:$Port"
 $escapedName = [Uri]::EscapeDataString($HelloName)
 
-$commands = @(
-    [PSCustomObject]@{
-        Name        = "Command Catalog"
-        Method      = "GET"
-        Path        = "/api/commands"
-        Description = "List every API endpoint exposed by the demo server."
-    },
-    [PSCustomObject]@{
-        Name        = "Health Check"
-        Method      = "GET"
-        Path        = "/api/health"
-        Description = "Validate the server is responsive and show uptime/version."
-    },
-    [PSCustomObject]@{
-        Name        = "Hello World"
-        Method      = "GET"
-        Path        = "/api/hello?name=$escapedName"
-        Description = "Send a greeting that includes the supplied name."
-    },
-    [PSCustomObject]@{
-        Name        = "Echo"
-        Method      = "POST"
-        Path        = "/api/echo"
-        Description = "POST a JSON payload and read the echoed content."
-        Body        = @{
-            client    = "PowerShell"
-            timestamp = (Get-Date).ToString("o")
-        } | ConvertTo-Json -Compress
-    }
-)
-
 Write-Host "APIM demo client" -ForegroundColor Cyan
 Write-Host "Base URL: $baseUri" -ForegroundColor Cyan
 Write-Host ""
+
+$commands = @()
+
+$commands += [PSCustomObject]@{
+    Name        = "Command Catalog"
+    Method      = "GET"
+    Path        = "/api/commands"
+    Description = "List every API endpoint exposed by the server."
+}
+
+$commands += [PSCustomObject]@{
+    Name        = "Health Check"
+    Method      = "GET"
+    Path        = "/api/health"
+    Description = "Validate the server is responsive and show uptime/version."
+}
+
+$commands += [PSCustomObject]@{
+    Name        = "Hello World"
+    Method      = "GET"
+    Path        = "/api/hello?name=$escapedName"
+    Description = "Send a greeting that includes the supplied name."
+}
+
+$commands += [PSCustomObject]@{
+    Name        = "Echo"
+    Method      = "POST"
+    Path        = "/api/echo"
+    Description = "POST a JSON payload and read the echoed content."
+    Body        = @{
+        client    = "PowerShell"
+        timestamp = (Get-Date).ToString("o")
+    } | ConvertTo-Json -Compress
+}
+
+$commands += [PSCustomObject]@{
+    Name        = "Checklists"
+    Method      = "GET"
+    Path        = "/api/checklists"
+    Description = "List every checklist present in the SQLite runtime store."
+}
+
+$seededChecklist = $null
+$seededSlug = $null
+
+try {
+    $checklistResponse = Invoke-WebRequest -UseBasicParsing -Uri "$baseUri/api/checklists" -Method Get -ErrorAction Stop
+    $checklistJson = $checklistResponse.Content | ConvertFrom-Json -ErrorAction Stop
+    if ($checklistJson.checklists.Count -gt 0) {
+        $seededChecklist = $checklistJson.checklists[0]
+    }
+}
+catch {
+    Write-Host "Could not pre-load checklist names: $($_.Exception.Message)" -ForegroundColor Yellow
+}
+
+if ($seededChecklist) {
+    $commands += [PSCustomObject]@{
+        Name        = "Checklist slugs"
+        Method      = "GET"
+        Path        = "/api/checklist/$seededChecklist"
+        Description = "Retrieve slugs for checklist '$seededChecklist'."
+    }
+
+    try {
+        $slugResponse = Invoke-WebRequest -UseBasicParsing -Uri "$baseUri/api/checklist/$seededChecklist" -Method Get -ErrorAction Stop
+        $slugJson = $slugResponse.Content | ConvertFrom-Json -ErrorAction Stop
+        if ($slugJson.slugs.Count -gt 0) {
+            $seededSlug = $slugJson.slugs[0]
+        }
+    }
+    catch {
+        Write-Host "Could not load slugs for $seededChecklist: $($_.Exception.Message)" -ForegroundColor Yellow
+    }
+}
+
+if ($seededSlug) {
+    $slugId = $seededSlug.checklist_id
+    $commands += [PSCustomObject]@{
+        Name        = "Slug by ID"
+        Method      = "GET"
+        Path        = "/api/slug/$slugId"
+        Description = "Return the seeded slug identified by '$slugId'."
+    }
+    $commands += [PSCustomObject]@{
+        Name        = "Relationships"
+        Method      = "GET"
+        Path        = "/api/relationships/$slugId"
+        Description = "Return graph edges for '$slugId'."
+    }
+    $commands += [PSCustomObject]@{
+        Name        = "Update slug"
+        Method      = "PATCH"
+        Path        = "/api/update"
+        Description = "Minimal update contract for the seeded slug."
+        Body        = @{
+            checklist_id = $slugId
+            comment      = "Updated via PowerShell demo"
+            status       = "Other"
+        } | ConvertTo-Json -Compress
+    }
+}
+
+$commands += [PSCustomObject]@{
+    Name        = "Export JSON"
+    Method      = "GET"
+    Path        = "/api/export/json"
+    Description = "Export all slugs as a JSON array."
+}
 
 foreach ($command in $commands) {
     $uri = "$baseUri$($command.Path)"
@@ -51,6 +129,9 @@ foreach ($command in $commands) {
         }
         elseif ($command.Method -eq "POST") {
             $response = Invoke-WebRequest -UseBasicParsing -Uri $uri -Method Post -Body $command.Body -ContentType "application/json" -ErrorAction Stop
+        }
+        elseif ($command.Method -eq "PATCH") {
+            $response = Invoke-WebRequest -UseBasicParsing -Uri $uri -Method Patch -Body $command.Body -ContentType "application/json" -ErrorAction Stop
         }
         else {
             throw "Unsupported HTTP method: $($command.Method)"

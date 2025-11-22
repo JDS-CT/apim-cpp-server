@@ -28,6 +28,11 @@ HttpRequest ConvertRequest(const httplib::Request& req) {
   for (const auto& header : req.headers) {
     request.headers[header.first] = header.second;
   }
+  if (!req.matches.empty()) {
+    for (std::size_t i = 1; i < req.matches.size(); ++i) {
+      request.path_params.emplace_back(req.matches[i]);
+    }
+  }
   return request;
 }
 
@@ -77,6 +82,9 @@ void HttpServer::AddHandler(HttpMethod method, const std::string& path, HttpHand
       break;
     case HttpMethod::kOptions:
       impl_->server.Options(path, std::move(wrapped_handler));
+      break;
+    case HttpMethod::kPatch:
+      impl_->server.Patch(path, std::move(wrapped_handler));
       break;
     default:
       throw std::invalid_argument("Unsupported HTTP method");

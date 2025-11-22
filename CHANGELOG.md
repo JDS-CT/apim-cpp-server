@@ -1,5 +1,9 @@
 # CHANGELOG
 
+- 2025-11-22T12:51:14-05:00 (p1) Implemented the SQLite-backed checklist runtime (deterministic IDs via xxHash/Base32), relationships, bulk updates, and exports aligned with the checklist specification.
+- 2025-11-22T12:51:14-05:00 (p1) Rebuilt the web console with the CAPTCHA landing, indicator-driven checklist board, and inline minimal-update workflow for humans and agents.
+- 2025-11-22T12:51:14-05:00 (p2) Expanded MCP and PowerShell clients, docs, and build/test coverage to surface the new API endpoints and runtime store configuration.
+- 2025-11-22T12:28:01-05:00 (p3) Registered active plans: docs/design/captcha_plan.md and docs/design/indicator_plan.md for the web landing + indicator work.
 - 2025-11-16T13:29:44-05:00 (p1) Bootstrapped the hello-world HTTP server with CMake scaffolding and the cross-platform HTTP adapter.
 - 2025-11-16T13:29:44-05:00 (p1) Added PowerShell and HTML demo clients for exercising the API endpoints.
 - 2025-11-16T13:29:44-05:00 (p2) Documented build, configuration, and demo client usage in README.md.

@@ -2,137 +2,148 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>APIM Test Console</title>
+    <title>APIM Checklist Console</title>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@500;700&display=swap"
+    />
     <style>
       :root {
-        font-family: "Segoe UI", Arial, sans-serif;
+        font-family: "Space Grotesk", "Manrope", "Segoe UI", sans-serif;
         color: #f8fbff;
-        background-color: #0b0f19;
+        background: radial-gradient(circle at 10% 20%, #19233a, #0a0f1c 60%);
+      }
+
+      * {
+        box-sizing: border-box;
       }
 
       body {
         margin: 0;
-        padding: 0;
-        background: radial-gradient(circle at top, #1b2236, #090d17);
-        color: #e8edf9;
+        background: radial-gradient(circle at 80% 10%, rgba(88, 135, 255, 0.2), transparent 25%),
+          linear-gradient(140deg, #0d1221, #0a0f1c 50%, #0c182a);
+        color: #e7edff;
       }
 
       a {
-        color: #8cc7ff;
+        color: #8fc7ff;
+      }
+
+      header.hero {
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr;
+        gap: 1.5rem;
+        padding: 2.5rem 1.5rem 1rem;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .hero-card,
+      .panel {
+        background: rgba(13, 19, 35, 0.75);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(12px);
+      }
+
+      .hero-text h1 {
+        margin: 0.2rem 0 0.4rem 0;
+        font-size: 2.6rem;
+        letter-spacing: -0.02em;
+      }
+
+      .eyebrow {
+        color: #8fc7ff;
+        letter-spacing: 0.1em;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        margin: 0;
+      }
+
+      .hero-text p {
+        color: #b7c5e7;
+        max-width: 620px;
+        line-height: 1.5;
+        margin-top: 0;
+      }
+
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+      }
+
+      .chip {
+        padding: 0.4rem 0.8rem;
+        background: rgba(255, 255, 255, 0.06);
+        border-radius: 999px;
+        font-size: 0.85rem;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+      }
+
+      .hero-card {
+        padding: 1.2rem;
+      }
+
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 0.8rem;
+      }
+
+      .stat {
+        background: rgba(255, 255, 255, 0.04);
+        padding: 0.9rem;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.07);
+      }
+
+      .stat strong {
+        display: block;
+        font-size: 1.2rem;
+        margin-top: 0.2rem;
       }
 
       main {
-        max-width: 1100px;
+        max-width: 1200px;
         margin: 0 auto;
-        padding: 2rem 1.5rem 3rem;
+        padding: 0 1.5rem 2.5rem;
       }
 
       .panel {
-        background: #12192b;
-        border-radius: 14px;
-        padding: 1.5rem;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
-        margin-bottom: 1.5rem;
-        border: 1px solid rgba(255, 255, 255, 0.05);
+        margin-bottom: 1.2rem;
+        padding: 1.4rem;
       }
 
-      .hero h1 {
+      .panel h2 {
         margin-top: 0;
-        font-size: 2rem;
+        letter-spacing: 0.01em;
       }
 
-      .hero p {
-        color: #a6b4d7;
-      }
-
-      h2 {
-        margin-top: 0;
-        letter-spacing: 0.02em;
-      }
-
-      .playbook-grid {
+      .endpoint-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
         gap: 1rem;
-      }
-
-      .playbook-card {
-        background: #0f1523;
-        border-radius: 12px;
-        padding: 1rem;
-        border: 1px solid rgba(255, 255, 255, 0.07);
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
-      }
-
-      .playbook-card header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
-
-      .tag {
-        font-size: 0.7rem;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        background: #1f2b44;
-        padding: 0.2rem 0.8rem;
-        border-radius: 999px;
-        color: #9eb6ff;
-      }
-
-      code {
-        display: block;
-        background: #111a2c;
-        padding: 0.75rem;
-        border-radius: 6px;
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        color: #f4f7ff;
-        font-size: 0.9rem;
-      }
-
-      .playbook-links {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-      }
-
-      button {
-        font: inherit;
-        border: none;
-        border-radius: 6px;
-        padding: 0.4rem 0.9rem;
-        cursor: pointer;
-        color: #fff;
-        background: linear-gradient(120deg, #2972ff, #5ad1ff);
-      }
-
-      button:hover {
-        filter: brightness(1.05);
-      }
-
-      .secondary {
-        background: transparent;
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        color: #d7e3ff;
+        align-items: end;
       }
 
       label {
-        font-weight: 600;
         display: block;
-        margin-bottom: 0.3rem;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
       }
 
       input,
-      textarea {
+      textarea,
+      select {
         width: 100%;
-        padding: 0.6rem;
-        border-radius: 8px;
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 0.65rem 0.75rem;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
         background: rgba(255, 255, 255, 0.04);
         color: #f8fbff;
-        box-sizing: border-box;
+        font-family: inherit;
       }
 
       textarea {
@@ -140,167 +151,214 @@
         min-height: 90px;
       }
 
-      .inline-inputs {
+      button {
+        font: inherit;
+        border: none;
+        border-radius: 10px;
+        padding: 0.7rem 1.2rem;
+        cursor: pointer;
+        color: #0a1020;
+        background: linear-gradient(135deg, #7cd3ff, #5fa8ff);
+        font-weight: 700;
+        letter-spacing: 0.01em;
+        transition: transform 0.1s ease, box-shadow 0.2s ease;
+      }
+
+      button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 10px 18px rgba(92, 180, 255, 0.3);
+      }
+
+      button.secondary {
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.28);
+        color: #d9e4ff;
+      }
+
+      .captcha-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
         gap: 1rem;
+      }
+
+      .card {
+        padding: 1rem;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.02);
+      }
+
+      .card h3 {
+        margin: 0 0 0.5rem 0;
+      }
+
+      .note {
+        color: #9cb5dd;
+        font-size: 0.95rem;
+        line-height: 1.5;
+      }
+
+      .code-block {
+        background: #0a0f1c;
+        border-radius: 10px;
+        padding: 0.85rem;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+        color: #dfe7ff;
+        font-size: 0.9rem;
+        overflow-x: auto;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 1rem;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        border-spacing: 0;
+      }
+
+      th,
+      td {
+        padding: 0.6rem;
+        text-align: left;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      th {
+        color: #a8b8de;
+        font-weight: 700;
+        font-size: 0.9rem;
+      }
+
+      .indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.25rem 0.65rem;
+        border-radius: 999px;
+        font-weight: 700;
+        font-size: 0.8rem;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+      }
+
+      .tone-success {
+        background: rgba(0, 205, 136, 0.15);
+        color: #81ffcd;
+        border-color: rgba(129, 255, 205, 0.4);
+      }
+
+      .tone-danger {
+        background: rgba(255, 112, 112, 0.14);
+        color: #ffb3b3;
+        border-color: rgba(255, 112, 112, 0.3);
+      }
+
+      .tone-warning {
+        background: rgba(255, 196, 86, 0.14);
+        color: #ffe2a6;
+        border-color: rgba(255, 196, 86, 0.3);
+      }
+
+      .tone-info {
+        background: rgba(140, 199, 255, 0.14);
+        color: #cce5ff;
+        border-color: rgba(140, 199, 255, 0.35);
+      }
+
+      .tone-neutral {
+        background: rgba(255, 255, 255, 0.06);
+        color: #e7edff;
+        border-color: rgba(255, 255, 255, 0.1);
+      }
+
+      .tone-base {
+        background: rgba(255, 255, 255, 0.03);
+        color: #cfd8f5;
+        border-color: rgba(255, 255, 255, 0.08);
       }
 
       .command-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-        gap: 1rem;
+        gap: 0.8rem;
       }
 
       .command-card {
+        padding: 0.8rem;
         border-radius: 10px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      pre#responseArea {
+        background: #050811;
         padding: 1rem;
-        background: #161f33;
-        display: flex;
-        flex-direction: column;
-        gap: 0.6rem;
-        border: 1px solid rgba(255, 255, 255, 0.05);
-      }
-
-      .badge {
-        display: inline-block;
-        padding: 0.2rem 0.6rem;
-        border-radius: 999px;
-        font-size: 0.75rem;
-        color: #fff;
-      }
-
-      .badge.get {
-        background: #13a77b;
-      }
-
-      .badge.post {
-        background: #d76d5b;
-      }
-
-      pre {
-        background: #050913;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
         color: #dbe6ff;
-        padding: 1rem;
-        border-radius: 10px;
-        min-height: 160px;
-        overflow-x: auto;
-        border: 1px solid rgba(255, 255, 255, 0.05);
+        min-height: 200px;
+        white-space: pre-wrap;
       }
 
-      .note {
-        color: #98a6cc;
+      .inline {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        flex-wrap: wrap;
+      }
+
+      @media (max-width: 900px) {
+        header.hero {
+          grid-template-columns: 1fr;
+        }
       }
     </style>
   </head>
   <body>
-    <main>
-      <section class="panel hero">
-        <h1>APIM Test Console</h1>
+    <header class="hero">
+      <div class="hero-text">
+        <p class="eyebrow">APIM runtime</p>
+        <h1>Checklist + CAPTCHA landing</h1>
         <p>
-          This dark-mode dashboard is the single source of truth for smoke tests, automation scripts,
-          and API poking tools. Use the cards below as your "man page" for stakeholders and keep every
-          command discoverable in one place.
+          Choose a path (human UI or AI terminal), inspect live checklist slugs backed by SQLite, and
+          exercise the HTTP API without switching tools. Agents and humans use the same controls;
+          the entry panel simply clarifies intent.
         </p>
-      </section>
-
-      <section class="panel">
-        <h2>Test Playbook</h2>
-        <p class="note">
-          Click "Copy command" to grab a ready-to-run snippet. The "Open file" links download the script
-          and "Open folder" links browse the repo via this local server.
-        </p>
-        <div class="playbook-grid">
-          <article class="playbook-card">
-            <header>
-              <h3>Start server (background)</h3>
-              <span class="tag">Automation</span>
-            </header>
-            <p>Launches <code>apim-cpp-server.exe</code>, captures logs under <code>.apim/logs</code>, and waits for <code>/api/health</code>.</p>
-            <code>pwsh .\tools\automation\start_apim_server.ps1</code>
-            <div class="playbook-links">
-              <button class="copy-button" data-copy="pwsh .\tools\automation\start_apim_server.ps1">Copy command</button>
-              <a class="secondary" href="../../tools/automation/start_apim_server.ps1" target="_blank">Open file</a>
-              <a class="secondary" href="../../tools/automation/" target="_blank">Open folder</a>
-            </div>
-          </article>
-
-          <article class="playbook-card">
-            <header>
-              <h3>Stop server</h3>
-              <span class="tag">Automation</span>
-            </header>
-            <p>Reads <code>.apim/server.pid</code> and terminates the tracked process so you can rebuild safely.</p>
-            <code>pwsh .\tools\automation\stop_apim_server.ps1</code>
-            <div class="playbook-links">
-              <button class="copy-button" data-copy="pwsh .\tools\automation\stop_apim_server.ps1">Copy command</button>
-              <a class="secondary" href="../../tools/automation/stop_apim_server.ps1" target="_blank">Open file</a>
-              <a class="secondary" href="../../tools/automation/" target="_blank">Open folder</a>
-            </div>
-          </article>
-
-          <article class="playbook-card">
-            <header>
-              <h3>CLI smoke test (PowerShell)</h3>
-              <span class="tag">Client</span>
-            </header>
-            <p>Exercises every API endpoint sequentially and prints prettified JSON responses.</p>
-            <code>pwsh .\APIM-CPP-CLIENT\Invoke-DemoRequests.ps1</code>
-            <div class="playbook-links">
-              <button class="copy-button" data-copy="pwsh .\APIM-CPP-CLIENT\Invoke-DemoRequests.ps1">Copy command</button>
-              <a class="secondary" href="../Invoke-DemoRequests.ps1" target="_blank">Open file</a>
-              <a class="secondary" href=".." target="_blank">Open folder</a>
-            </div>
-          </article>
-
-          <article class="playbook-card">
-            <header>
-              <h3>Host this dashboard</h3>
-              <span class="tag">Utility</span>
-            </header>
-            <p>Runs a lightweight HTTP server (loopback only) so browsers can fetch the API without CORS drama.</p>
-            <code>pwsh .\APIM-CPP-CLIENT\web\Start-WebDemo.ps1</code>
-            <div class="playbook-links">
-              <button class="copy-button" data-copy="pwsh .\APIM-CPP-CLIENT\web\Start-WebDemo.ps1">Copy command</button>
-              <a class="secondary" href="Start-WebDemo.ps1" target="_blank">Open file</a>
-              <a class="secondary" href="." target="_blank">Open folder</a>
-            </div>
-          </article>
-
-          <article class="playbook-card">
-            <header>
-              <h3>MCP bridge</h3>
-              <span class="tag">Agents</span>
-            </header>
-            <p>Expose the demo API as Model Context Protocol tools for Cursor, Claude Desktop, or any MCP host.</p>
-            <code>.\build\apim-mcp-bridge.exe</code>
-            <div class="playbook-links">
-              <button class="copy-button" data-copy=".\build\apim-mcp-bridge.exe">Copy command</button>
-              <a class="secondary" href="../../build/apim-mcp-bridge.exe" target="_blank">Open file</a>
-              <a class="secondary" href="../../build/" target="_blank">Open folder</a>
-            </div>
-          </article>
-
-          <article class="playbook-card">
-            <header>
-              <h3>Build + test sweep</h3>
-              <span class="tag">CI step</span>
-            </header>
-            <p>Configure + build with Ninja and run the MCP ctest target to ensure the bridge stays healthy.</p>
-            <code>cmake --build build &amp;&amp; ctest --output-on-failure</code>
-            <div class="playbook-links">
-              <button class="copy-button" data-copy="cmake --build build && ctest --output-on-failure">Copy command</button>
-              <a class="secondary" href="../../build/" target="_blank">Open build folder</a>
-              <a class="secondary" href="../../" target="_blank">Repo root</a>
-            </div>
-          </article>
+        <div class="chips">
+          <span class="chip">SQLite runtime store</span>
+          <span class="chip">Minimal update contract</span>
+          <span class="chip">MCP + HTTP parity</span>
         </div>
-      </section>
+      </div>
+      <div class="hero-card">
+        <div class="stat-grid">
+          <div class="stat">
+            <small>Runtime DB</small>
+            <strong>.apim/checklists.db</strong>
+            <div class="note">Seeded on first launch for demo traffic.</div>
+          </div>
+          <div class="stat">
+            <small>Uptime</small>
+            <strong id="uptimeStat">--</strong>
+            <div class="note" id="versionStat">Version --</div>
+          </div>
+          <div class="stat">
+            <small>Slugs Loaded</small>
+            <strong id="slugStat">--</strong>
+            <div class="note" id="checklistStat">--</div>
+          </div>
+        </div>
+      </div>
+    </header>
 
+    <main>
       <section class="panel">
-        <h2>Live endpoint</h2>
-        <p class="note">Point these controls at localhost or any forwarded host/port combo before clicking the API buttons.</p>
-        <div class="inline-inputs">
+        <h2>Endpoint</h2>
+        <div class="endpoint-grid">
           <div>
             <label for="hostInput">Host</label>
             <input id="hostInput" value="127.0.0.1" />
@@ -309,145 +367,460 @@
             <label for="portInput">Port</label>
             <input id="portInput" value="8080" type="number" min="1" max="65535" />
           </div>
+          <div>
+            <button id="refreshButton">Refresh data</button>
+          </div>
         </div>
       </section>
 
       <section class="panel">
-        <h2>Commands</h2>
+        <h2>Choose your CAPTCHA</h2>
+        <div class="captcha-grid">
+          <div class="card">
+            <h3>Human CAPTCHA</h3>
+            <p class="note">
+              Button sets the UI into "human" focus. Agents can still use it; nothing is blocked or
+              hidden.
+            </p>
+            <button id="humanCaptchaButton">I am a human</button>
+            <p class="note" style="margin-top: 0.6rem">
+              AI bots: you can still browse this panel, but the AI terminal below is tuned for you.
+            </p>
+          </div>
+
+          <div class="card">
+            <h3>AI CAPTCHA</h3>
+            <p class="note">
+              Read the prompt, send the JSON payload, and you're in. This mirrors the plan in
+              <code>docs/design/captcha_plan.md</code>.
+            </p>
+            <div class="code-block" id="challengePrompt"></div>
+            <div class="code-block" style="margin-top: 0.6rem">
+              <code id="challengeCurl"></code>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="inline" style="justify-content: space-between; align-items: flex-end">
+          <div>
+            <h2>Checklist board</h2>
+            <p class="note">
+              Slugs are loaded from SQLite and tagged with indicators derived from
+              <code>docs/design/indicator_plan.md</code>.
+            </p>
+          </div>
+          <div style="max-width: 260px; width: 100%">
+            <label for="checklistSelect">Checklist</label>
+            <select id="checklistSelect"></select>
+          </div>
+        </div>
+        <div style="overflow-x: auto">
+          <table>
+            <thead>
+              <tr>
+                <th>Indicator</th>
+                <th>Procedure</th>
+                <th>Action / Spec</th>
+                <th>Status</th>
+                <th>Result</th>
+                <th>Comment</th>
+                <th>ID</th>
+              </tr>
+            </thead>
+            <tbody id="slugTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Update state (minimal contract)</h2>
+        <div class="grid">
+          <div>
+            <label for="slugSelect">Checklist ID</label>
+            <select id="slugSelect"></select>
+          </div>
+          <div>
+            <label for="statusSelect">Status</label>
+            <select id="statusSelect">
+              <option>Pass</option>
+              <option>Fail</option>
+              <option>NA</option>
+              <option>Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid" style="margin-top: 1rem">
+          <div>
+            <label for="resultInput">Result</label>
+            <input id="resultInput" placeholder="e.g., 24.1V, link up, pending" />
+          </div>
+          <div>
+            <label for="commentInput">Comment</label>
+            <textarea id="commentInput" placeholder="Notes, observations, or flags"></textarea>
+          </div>
+        </div>
+        <div style="margin-top: 0.8rem" class="inline">
+          <button id="updateButton">Send update</button>
+          <button class="secondary" id="loadSlugButton">Load slug details</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>API console</h2>
         <div class="command-grid">
-          <article class="command-card">
-            <h3>Command Catalog</h3>
-            <span class="badge get">GET</span>
-            <small>/api/commands</small>
-            <p>Enumerate every API endpoint exposed by this server.</p>
-            <button data-command="commands" class="secondary">Send Request</button>
-          </article>
-
-          <article class="command-card">
-            <h3>Health</h3>
-            <span class="badge get">GET</span>
-            <small>/api/health</small>
-            <p>Confirm readiness and inspect uptime/version information.</p>
-            <button data-command="health" class="secondary">Send Request</button>
-          </article>
-
-          <article class="command-card">
-            <h3>Hello World</h3>
-            <span class="badge get">GET</span>
-            <small>/api/hello?name=...</small>
-            <p>Returns a friendly greeting for the supplied name.</p>
-            <label for="helloName">Name</label>
-            <input id="helloName" placeholder="Web Client" value="Web Client" />
-            <button data-command="hello" class="secondary">Send Request</button>
-          </article>
-
-          <article class="command-card">
-            <h3>Echo</h3>
-            <span class="badge post">POST</span>
-            <small>/api/echo</small>
-            <p>POST a JSON document and read the server's echo.</p>
-            <label for="echoBody">Payload</label>
-            <textarea id="echoBody">
-{
-  "client": "web-demo",
-  "message": "Hello from the browser!"
-}
-            </textarea>
-            <button data-command="echo" class="secondary">Send Request</button>
-          </article>
+          <div class="command-card">
+            <h4>Command catalog</h4>
+            <p class="note">Enumerate every API surface.</p>
+            <button data-command="commands" class="secondary">Send request</button>
+          </div>
+          <div class="command-card">
+            <h4>Health</h4>
+            <p class="note">Readiness + uptime + version.</p>
+            <button data-command="health" class="secondary">Send request</button>
+          </div>
+          <div class="command-card">
+            <h4>Checklists</h4>
+            <p class="note">List all checklist names.</p>
+            <button data-command="checklists" class="secondary">Send request</button>
+          </div>
+          <div class="command-card">
+            <h4>Get slug</h4>
+            <p class="note">Uses the selected ID.</p>
+            <button data-command="slug" class="secondary">Send request</button>
+          </div>
+          <div class="command-card">
+            <h4>Checklist slugs</h4>
+            <p class="note">Uses the selected checklist.</p>
+            <button data-command="checklist" class="secondary">Send request</button>
+          </div>
+          <div class="command-card">
+            <h4>Relationships</h4>
+            <p class="note">Graph edges for the selected ID.</p>
+            <button data-command="relationships" class="secondary">Send request</button>
+          </div>
+          <div class="command-card">
+            <h4>Export JSON</h4>
+            <p class="note">Full slug export.</p>
+            <button data-command="exportJson" class="secondary">Send request</button>
+          </div>
+          <div class="command-card">
+            <h4>Sample update</h4>
+            <p class="note">PATCH minimal contract for the selected ID.</p>
+            <button data-command="updateSample" class="secondary">Send request</button>
+          </div>
         </div>
       </section>
 
       <section class="panel">
         <h2>Response</h2>
-        <pre id="responseArea">Click a command to see the server response.</pre>
+        <pre id="responseArea">Waiting for a command...</pre>
       </section>
     </main>
 
     <script>
       const responseArea = document.getElementById("responseArea");
-      const helloInput = document.getElementById("helloName");
-      const echoInput = document.getElementById("echoBody");
+      const checklistSelect = document.getElementById("checklistSelect");
+      const slugTableBody = document.getElementById("slugTableBody");
+      const slugSelect = document.getElementById("slugSelect");
+      const statusSelect = document.getElementById("statusSelect");
+      const resultInput = document.getElementById("resultInput");
+      const commentInput = document.getElementById("commentInput");
+      const uptimeStat = document.getElementById("uptimeStat");
+      const versionStat = document.getElementById("versionStat");
+      const slugStat = document.getElementById("slugStat");
+      const checklistStat = document.getElementById("checklistStat");
+      const challengePrompt = document.getElementById("challengePrompt");
+      const challengeCurl = document.getElementById("challengeCurl");
 
-      document.querySelectorAll(".copy-button").forEach((button) => {
-        button.addEventListener("click", async () => {
-          const text = button.dataset.copy;
-          try {
-            await navigator.clipboard.writeText(text);
-            button.textContent = "Copied!";
-            setTimeout(() => (button.textContent = "Copy command"), 1400);
-          } catch (_) {
-            responseArea.textContent = `Clipboard unavailable. Command: ${text}`;
-          }
-        });
-      });
-
-      const commands = {
-        commands: { method: "GET", path: "/api/commands" },
-        health: { method: "GET", path: "/api/health" },
-        hello: {
-          method: "GET",
-          buildPath: () => {
-            const name = helloInput.value.trim() || "web-client";
-            return `/api/hello?name=${encodeURIComponent(name)}`;
-          },
-        },
-        echo: {
-          method: "POST",
-          path: "/api/echo",
-          buildBody: () => {
-            const raw = echoInput.value.trim();
-            return raw || '{"client":"web-demo","message":"Hello from the browser!"}';
-          },
+      let state = {
+        selectedChecklist: "",
+        slugs: [],
+        mode: "human",
+        challenge: {
+          challenge_id: "demo-captcha-001",
+          prompt:
+            'Return the Base32-safe ID for "apim-demo||Networking||Switch bring-up||Verify uplink||1GbE link up".',
+          api_endpoint: "/api/echo",
         },
       };
 
-      async function sendRequest(commandKey) {
+      function baseUrl() {
         const host = document.getElementById("hostInput").value || "127.0.0.1";
         const port = document.getElementById("portInput").value || "8080";
-        const baseUrl = `http://${host}:${port}`;
+        return `http://${host}:${port}`;
+      }
 
-        const command = commands[commandKey];
-        if (!command) {
-          responseArea.textContent = `Unknown command: ${commandKey}`;
+      function indicator(status, comment) {
+        const trimmed = (comment || "").trim();
+        switch (status) {
+          case "Pass":
+            return { label: "PASS", tone: "tone-success", tooltip: "Meets the required spec." };
+          case "Fail":
+            return trimmed
+              ? {
+                  label: "FLAG",
+                  tone: "tone-warning",
+                  tooltip: "Failure with context. Double-check the note.",
+                }
+              : {
+                  label: "FAIL",
+                  tone: "tone-danger",
+                  tooltip: "Add a comment or update the status.",
+                };
+          case "Other":
+            return trimmed
+              ? {
+                  label: "OTHER",
+                  tone: "tone-info",
+                  tooltip: "Non-standard state documented in the comment.",
+                }
+              : {
+                  label: "OTHER",
+                  tone: "tone-warning",
+                  tooltip: "Please explain this deviation in the comment.",
+                };
+          case "NA":
+            return { label: "N/A", tone: "tone-neutral", tooltip: "Not applicable for this run." };
+          default:
+            return { label: "--", tone: "tone-base", tooltip: "No valid status selected yet." };
+        }
+      }
+
+      function setResponse(text) {
+        responseArea.textContent = text;
+      }
+
+      function formatJSON(text) {
+        try {
+          const json = JSON.parse(text);
+          return JSON.stringify(json, null, 2);
+        } catch (_) {
+          return text;
+        }
+      }
+
+      function renderChallenge() {
+        challengePrompt.textContent = `challenge (${state.challenge.challenge_id}): ${state.challenge.prompt}`;
+        challengeCurl.textContent = `$ curl -i -X POST "${baseUrl()}${state.challenge.api_endpoint}" \\\n  -H "Content-Type: application/json" \\\n  -d '{\"challenge_id\":\"${state.challenge.challenge_id}\",\"answer\":\"<decoded>\",\"timestamp\":\"<ISO8601>\"}'`;
+      }
+
+      function renderSlugs(slugs) {
+        slugTableBody.innerHTML = "";
+        slugSelect.innerHTML = "";
+
+        slugs.forEach((slug) => {
+          const row = document.createElement("tr");
+          const mark = indicator(slug.status, slug.comment);
+
+          row.innerHTML = `
+            <td title="${mark.tooltip}"><span class="indicator ${mark.tone}">${mark.label}</span></td>
+            <td><strong>${slug.procedure}</strong><div class="note">${slug.section}</div></td>
+            <td><div>${slug.action}</div><div class="note">${slug.spec}</div></td>
+            <td>${slug.status}</td>
+            <td>${slug.result || ""}</td>
+            <td>${slug.comment || ""}</td>
+            <td class="note">${slug.checklist_id}</td>
+          `;
+          slugTableBody.appendChild(row);
+
+          const option = document.createElement("option");
+          option.value = slug.checklist_id;
+          option.textContent = `${slug.procedure} (${slug.checklist_id.slice(0, 6)}...)`;
+          slugSelect.appendChild(option);
+        });
+
+        if (slugs.length > 0 && !slugSelect.value) {
+          slugSelect.value = slugs[0].checklist_id;
+        }
+        slugStat.textContent = slugs.length.toString();
+      }
+
+      async function fetchJson(path, options = {}) {
+        const target = `${baseUrl()}${path}`;
+        const response = await fetch(target, options);
+        const text = await response.text();
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${text}`);
+        }
+        return JSON.parse(text);
+      }
+
+      async function loadChecklists() {
+        const data = await fetchJson("/api/checklists");
+        const lists = data.checklists || [];
+        checklistSelect.innerHTML = "";
+        lists.forEach((name) => {
+          const option = document.createElement("option");
+          option.value = name;
+          option.textContent = name;
+          checklistSelect.appendChild(option);
+        });
+        if (lists.length > 0) {
+          state.selectedChecklist = lists[0];
+          checklistSelect.value = lists[0];
+        }
+        checklistStat.textContent = `${lists.length} checklist(s)`;
+        return state.selectedChecklist;
+      }
+
+      async function loadSlugsForChecklist(checklist) {
+        if (!checklist) {
+          slugTableBody.innerHTML = "";
+          slugSelect.innerHTML = "";
           return;
         }
+        const data = await fetchJson(`/api/checklist/${encodeURIComponent(checklist)}`);
+        state.slugs = data.slugs || [];
+        renderSlugs(state.slugs);
+      }
 
-        const path = typeof command.buildPath === "function" ? command.buildPath() : command.path;
-        const body =
-            typeof command.buildBody === "function" ? command.buildBody() : command.body ?? null;
+      async function refreshHealth() {
+        const data = await fetchJson("/api/health");
+        uptimeStat.textContent = `${Math.round((data.uptime_ms || 0) / 1000)}s`;
+        versionStat.textContent = `Version ${data.version || "--"}`;
+      }
 
-        const requestInit = {
-          method: command.method,
-          headers: {},
+      async function refreshAll() {
+        setResponse("Refreshing data...");
+        try {
+          await refreshHealth();
+          const checklist = await loadChecklists();
+          await loadSlugsForChecklist(checklist);
+          setResponse("Refreshed checklist + health data.");
+        } catch (error) {
+          setResponse(error.message);
+        }
+      }
+
+      async function sendUpdate() {
+        const checklist_id = slugSelect.value;
+        if (!checklist_id) {
+          setResponse("Select a checklist ID first.");
+          return;
+        }
+        const payload = {
+          checklist_id,
+          status: statusSelect.value,
+          result: resultInput.value.trim(),
+          comment: commentInput.value.trim(),
         };
+        try {
+          const data = await fetchJson("/api/update", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          setResponse(JSON.stringify(data, null, 2));
+          await loadSlugsForChecklist(state.selectedChecklist);
+        } catch (error) {
+          setResponse(error.message);
+        }
+      }
 
+      async function loadSingleSlug() {
+        const checklist_id = slugSelect.value;
+        if (!checklist_id) {
+          setResponse("Select a checklist ID first.");
+          return;
+        }
+        try {
+          const data = await fetchJson(`/api/slug/${encodeURIComponent(checklist_id)}`);
+          resultInput.value = data.result || "";
+          commentInput.value = data.comment || "";
+          statusSelect.value = data.status || "Pass";
+          setResponse(JSON.stringify(data, null, 2));
+        } catch (error) {
+          setResponse(error.message);
+        }
+      }
+
+      async function sendCommand(commandKey) {
+        const command = commands[commandKey];
+        if (!command) {
+          setResponse(`Unknown command: ${commandKey}`);
+          return;
+        }
+        const path = typeof command.buildPath === "function" ? command.buildPath() : command.path;
+        if (!path) {
+          setResponse("Missing required path inputs for this command.");
+          return;
+        }
+        const body =
+          typeof command.buildBody === "function" ? command.buildBody() : command.body ?? null;
+
+        const requestInit = { method: command.method, headers: {} };
         if (body) {
           requestInit.body = body;
           requestInit.headers["Content-Type"] = "application/json";
         }
 
-        responseArea.textContent = `Sending ${command.method} ${baseUrl}${path}...`;
+        setResponse(`Sending ${command.method} ${baseUrl()}${path}...`);
 
         try {
-          const response = await fetch(`${baseUrl}${path}`, requestInit);
+          const response = await fetch(`${baseUrl()}${path}`, requestInit);
           const text = await response.text();
-          let formatted = text;
-          try {
-            const json = JSON.parse(text);
-            formatted = JSON.stringify(json, null, 2);
-          } catch (_) {
-            // leave as-is
-          }
-          responseArea.textContent = `Status: ${response.status}\n${formatted}`;
+          setResponse(`Status: ${response.status}\n${formatJSON(text)}`);
         } catch (error) {
-          responseArea.textContent = `Request failed: ${error.message}`;
+          setResponse(`Request failed: ${error.message}`);
         }
       }
 
+      const commands = {
+        commands: { method: "GET", path: "/api/commands" },
+        health: { method: "GET", path: "/api/health" },
+        checklists: { method: "GET", path: "/api/checklists" },
+        slug: {
+          method: "GET",
+          buildPath: () =>
+            slugSelect.value ? `/api/slug/${encodeURIComponent(slugSelect.value)}` : "",
+        },
+        checklist: {
+          method: "GET",
+          buildPath: () =>
+            state.selectedChecklist
+              ? `/api/checklist/${encodeURIComponent(state.selectedChecklist)}`
+              : "",
+        },
+        relationships: {
+          method: "GET",
+          buildPath: () =>
+            slugSelect.value ? `/api/relationships/${encodeURIComponent(slugSelect.value)}` : "",
+        },
+        exportJson: { method: "GET", path: "/api/export/json" },
+        updateSample: {
+          method: "PATCH",
+          path: "/api/update",
+          buildBody: () => {
+            if (!slugSelect.value) return null;
+            return JSON.stringify({
+              checklist_id: slugSelect.value,
+              status: "Other",
+              comment: "Updated from web console",
+            });
+          },
+        },
+      };
+
       document.querySelectorAll("button[data-command]").forEach((button) => {
-        button.addEventListener("click", () => sendRequest(button.dataset.command));
+        button.addEventListener("click", () => sendCommand(button.dataset.command));
       });
+
+      document.getElementById("refreshButton").addEventListener("click", refreshAll);
+      document.getElementById("updateButton").addEventListener("click", sendUpdate);
+      document.getElementById("loadSlugButton").addEventListener("click", loadSingleSlug);
+      document.getElementById("humanCaptchaButton").addEventListener("click", () => {
+        state.mode = "human";
+        setResponse("Human mode acknowledged. Continue via UI or API.");
+      });
+      checklistSelect.addEventListener("change", async (event) => {
+        state.selectedChecklist = event.target.value;
+        await loadSlugsForChecklist(state.selectedChecklist);
+      });
+
+      renderChallenge();
+      refreshAll();
     </script>
   </body>
 </html>

@@ -116,6 +116,22 @@ HttpClientResponse HttpClient::Post(const std::string& path, const std::string& 
   return ConvertResponse(*response);
 }
 
+HttpClientResponse HttpClient::Patch(const std::string& path, const std::string& body,
+                                     const std::map<std::string, std::string>& query,
+                                     const std::string& content_type) const {
+  httplib::Client client(host_.c_str(), port_);
+  client.set_connection_timeout(timeout_seconds_);
+  client.set_read_timeout(timeout_seconds_);
+  client.set_write_timeout(timeout_seconds_);
+
+  const auto target = BuildTarget(path, query);
+  auto response = client.Patch(target.c_str(), body, content_type.c_str());
+  if (!response) {
+    Raise(target);
+  }
+  return ConvertResponse(*response);
+}
+
 std::string HttpClient::BuildTarget(const std::string& path,
                                     const std::map<std::string, std::string>& query) const {
   if (query.empty()) {

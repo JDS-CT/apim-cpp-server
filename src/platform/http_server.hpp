@@ -4,16 +4,18 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <vector>
 
 namespace platform {
 
-enum class HttpMethod { kGet = 0, kPost, kOptions };
+enum class HttpMethod { kGet = 0, kPost, kOptions, kPatch };
 
 struct HttpRequest {
   std::string path;
   std::string body;
   std::map<std::string, std::string> query_params;
   std::map<std::string, std::string> headers;
+  std::vector<std::string> path_params;
 };
 
 struct HttpResponse {
