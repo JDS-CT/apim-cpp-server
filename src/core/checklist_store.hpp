@@ -22,7 +22,7 @@ struct RelationshipGraph {
 };
 
 struct ChecklistSlug {
-  std::string checklist_id;
+  std::string address_id;
   std::string checklist;
   std::string section;
   std::string procedure;
@@ -39,7 +39,7 @@ struct ChecklistSlug {
 };
 
 struct SlugUpdate {
-  std::string checklist_id;
+  std::string address_id;
   std::optional<std::string> result;
   std::optional<ChecklistStatus> status;
   std::optional<std::string> comment;
@@ -55,9 +55,9 @@ class ChecklistStore {
   ChecklistStore& operator=(const ChecklistStore&) = delete;
 
   void Initialize(bool seed_demo_data);
-  ChecklistSlug GetSlugOrThrow(const std::string& checklist_id) const;
+  ChecklistSlug GetSlugOrThrow(const std::string& address_id) const;
   std::vector<ChecklistSlug> GetSlugsForChecklist(const std::string& checklist) const;
-  RelationshipGraph GetRelationships(const std::string& checklist_id) const;
+  RelationshipGraph GetRelationships(const std::string& address_id) const;
   void ApplyUpdate(const SlugUpdate& update);
   void ApplyBulkUpdates(const std::vector<SlugUpdate>& updates);
   void ReplaceChecklist(const std::string& checklist, const std::vector<ChecklistSlug>& slugs);
@@ -73,7 +73,7 @@ class ChecklistStore {
   void ReplaceRelationships(const std::string& subject_id,
                             const std::vector<RelationshipEdge>& edges);
   void InsertHistorySnapshot(const ChecklistSlug& slug);
-  std::vector<RelationshipEdge> LoadOutgoingEdges(const std::string& checklist_id) const;
+  std::vector<RelationshipEdge> LoadOutgoingEdges(const std::string& address_id) const;
 
   sqlite3* db_ = nullptr;
   std::string db_path_;
@@ -82,9 +82,9 @@ class ChecklistStore {
 
 ChecklistStatus ParseStatus(const std::string& value);
 std::string StatusToString(ChecklistStatus status);
-std::string ComputeChecklistId(const std::string& checklist, const std::string& section,
-                               const std::string& procedure, const std::string& action,
-                               const std::string& spec);
+std::string ComputeAddressId(const std::string& checklist, const std::string& section,
+                             const std::string& procedure, const std::string& action,
+                             const std::string& spec);
 std::string CurrentTimestampIsoUtc();
 
 }  // namespace core

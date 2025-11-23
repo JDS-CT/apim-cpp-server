@@ -4,6 +4,7 @@
    1. Ensure AGENTS.md, TODO.md, and PROBLEMS.md exist. No other initialization is required.
    1. Use TODO.md and PROBLEMS.md as active inputs to the iteration cycle. They do not need special formatting beyond having top-level headers.
    1. Verify .gitignore uses an allowlist pattern and properly ignores build/, compiler artifacts, and OS temp files.
+   1. PowerShell sessions: set the console to UTF-8 to avoid mojibake when viewing/editing files: `chcp 65001; $OutputEncoding = [Console]::OutputEncoding = [Text.Encoding]::UTF8`. Note: this is safe for PowerShell/.NET usage; if you need to run legacy cmd/batch tools that dislike code page 65001, run them in a separate shell or switch back with `chcp 437`.
 
 1. ITERATION CYCLES
    1. Before selecting tasks, integrate feedback by:

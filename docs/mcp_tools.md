@@ -13,10 +13,10 @@ interact with the backend using the MCP transport.
 | `apim.health`          | `GET /api/health`        | Reports readiness, uptime, and server version metadata.           | _none_                                      |
 | `apim.hello`           | `GET /api/hello`         | Sends a greeting to the provided `name` (defaults to `world`).    | `name` _(string, optional)_                 |
 | `apim.echo`            | `POST /api/echo`         | Echoes the JSON payload that agents supply for smoke testing.     | `payload` _(string, required)_              |
-| `apim.get_slug`        | `GET /api/slug/{id}`     | Fetches a single slug by Checklist ID.                            | `checklist_id` _(string, required)_         |
+| `apim.get_slug`        | `GET /api/slug/{id}`     | Fetches a single slug by Address ID.                            | `address_id` _(string, required)_         |
 | `apim.get_checklist`   | `GET /api/checklist/{c}` | Fetches every slug for the named checklist.                       | `checklist` _(string, required)_            |
-| `apim.relationships`   | `GET /api/relationships/{id}` | Returns incoming/outgoing edges for the supplied Checklist ID. | `checklist_id` _(string, required)_         |
-| `apim.update_slug`     | `PATCH /api/update`      | Applies the minimal update contract (result/status/comment).      | `checklist_id` _(string, required)_, `status`, `result`, `comment`, `timestamp` _(optional strings)_ |
+| `apim.relationships`   | `GET /api/relationships/{id}` | Returns incoming/outgoing edges for the supplied Address ID. | `address_id` _(string, required)_         |
+| `apim.update_slug`     | `PATCH /api/update`      | Applies the minimal update contract (result/status/comment).      | `address_id` _(string, required)_, `status`, `result`, `comment`, `timestamp` _(optional strings)_ |
 | `apim.export_json`     | `GET /api/export/json`   | Exports all slugs as a JSON array.                                | _none_                                      |
 | `apim.export_markdown` | `GET /api/export/markdown/{c}` | Exports a checklist as canonical Markdown for authors.        | `checklist` _(string, required)_            |
 | `apim.import_markdown` | `POST /api/import/markdown` | Ingests Markdown for a checklist and replaces its runtime state. | `checklist` _(string, required)_, `markdown` _(string, required)_ |
@@ -44,3 +44,4 @@ implements `tools/list`, `apim.hello`, and `apim.echo` end-to-end.
 ```powershell
 ctest --output-on-failure
 ```
+

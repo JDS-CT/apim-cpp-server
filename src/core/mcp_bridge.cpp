@@ -68,13 +68,13 @@ const std::vector<ToolDefinition>& ToolCatalog() {
        }},
       {"apim.get_slug",
        "GET",
-       "/api/slug/{checklist_id}",
-       "Fetch a single slug by Checklist ID.",
+       "/api/slug/{address_id}",
+       "Fetch a single slug by Address ID.",
        {{"type", "object"},
         {"properties",
-         {{"checklist_id",
-           {{"type", "string"}, {"description", "Checklist ID to retrieve."}}}}},
-        {"required", {"checklist_id"}},
+         {{"address_id",
+           {{"type", "string"}, {"description", "Address ID to retrieve."}}}}},
+        {"required", {"address_id"}},
         {"additionalProperties", false}}},
       {"apim.get_checklist",
        "GET",
@@ -88,13 +88,13 @@ const std::vector<ToolDefinition>& ToolCatalog() {
         {"additionalProperties", false}}},
       {"apim.relationships",
        "GET",
-       "/api/relationships/{checklist_id}",
+       "/api/relationships/{address_id}",
        "Inspect incoming and outgoing relationships for a slug.",
        {{"type", "object"},
         {"properties",
-         {{"checklist_id",
-           {{"type", "string"}, {"description", "Checklist ID whose graph should be returned."}}}}},
-        {"required", {"checklist_id"}},
+         {{"address_id",
+           {{"type", "string"}, {"description", "Address ID whose graph should be returned."}}}}},
+        {"required", {"address_id"}},
         {"additionalProperties", false}}},
       {"apim.update_slug",
        "PATCH",
@@ -102,7 +102,7 @@ const std::vector<ToolDefinition>& ToolCatalog() {
        "Apply the minimal update contract to a slug (result/status/comment/timestamp).",
        {{"type", "object"},
         {"properties",
-         {{"checklist_id",
+         {{"address_id",
            {{"type", "string"},
             {"description", "Slug to update (required)."}}},
           {"status", {{"type", "string"}, {"description", "Pass, Fail, NA, or Other."}}},
@@ -110,7 +110,7 @@ const std::vector<ToolDefinition>& ToolCatalog() {
           {"comment", {{"type", "string"}, {"description", "Operator note or annotation."}}},
           {"timestamp",
            {{"type", "string"}, {"description", "ISO8601 timestamp override (optional)."}}}}},
-        {"required", {"checklist_id"}},
+        {"required", {"address_id"}},
         {"additionalProperties", false}}},
       {"apim.export_json",
        "GET",
@@ -214,7 +214,7 @@ platform::HttpClientResponse Bridge::CallTool(const std::string& name,
     return client_.Post("/api/echo", payload);
   }
   if (name == "apim.get_slug") {
-    const auto id = EncodePathSegment(RequireStringArg(arguments, "checklist_id"));
+    const auto id = EncodePathSegment(RequireStringArg(arguments, "address_id"));
     return client_.Get("/api/slug/" + id);
   }
   if (name == "apim.get_checklist") {
@@ -222,12 +222,12 @@ platform::HttpClientResponse Bridge::CallTool(const std::string& name,
     return client_.Get("/api/checklist/" + checklist);
   }
   if (name == "apim.relationships") {
-    const auto id = EncodePathSegment(RequireStringArg(arguments, "checklist_id"));
+    const auto id = EncodePathSegment(RequireStringArg(arguments, "address_id"));
     return client_.Get("/api/relationships/" + id);
   }
   if (name == "apim.update_slug") {
     nlohmann::json payload = nlohmann::json::object();
-    payload["checklist_id"] = RequireStringArg(arguments, "checklist_id");
+    payload["address_id"] = RequireStringArg(arguments, "address_id");
     if (const auto it = arguments.find("status"); it != arguments.end()) {
       payload["status"] = ToString(*it);
     }
@@ -276,3 +276,4 @@ std::string FormatResponseForDisplay(const platform::HttpClientResponse& respons
 }
 
 }  // namespace core::mcp
+

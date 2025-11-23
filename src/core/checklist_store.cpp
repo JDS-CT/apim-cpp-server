@@ -58,7 +58,7 @@ std::string ColumnText(sqlite3_stmt* stmt, int column) {
 
 ChecklistSlug BuildSlug(sqlite3_stmt* stmt) {
   ChecklistSlug slug;
-  slug.checklist_id = ColumnText(stmt, 0);
+  slug.address_id = ColumnText(stmt, 0);
   slug.checklist = ColumnText(stmt, 1);
   slug.section = ColumnText(stmt, 2);
   slug.procedure = ColumnText(stmt, 3);
@@ -146,9 +146,9 @@ std::string CurrentTimestampIsoUtc() {
   return oss.str();
 }
 
-std::string ComputeChecklistId(const std::string& checklist, const std::string& section,
-                               const std::string& procedure, const std::string& action,
-                               const std::string& spec) {
+std::string ComputeAddressId(const std::string& checklist, const std::string& section,
+                             const std::string& procedure, const std::string& action,
+                             const std::string& spec) {
   const std::string canonical =
       checklist + "||" + section + "||" + procedure + "||" + action + "||" + spec;
   const XXH128_hash_t hash = XXH3_128bits(canonical.data(), canonical.size());
@@ -212,7 +212,7 @@ void ChecklistStore::Initialize(bool seed_demo_data) {
 void ChecklistStore::EnsureSchema() {
   const char* kSchema = R"sql(
     CREATE TABLE IF NOT EXISTS slugs (
-        checklist_id    TEXT PRIMARY KEY,
+        address_id    TEXT PRIMARY KEY,
         checklist       TEXT NOT NULL,
         section         TEXT NOT NULL,
         procedure       TEXT NOT NULL,
@@ -228,22 +228,22 @@ void ChecklistStore::EnsureSchema() {
         subject_id  TEXT NOT NULL,
         predicate   TEXT NOT NULL,
         target_id   TEXT NOT NULL,
-        FOREIGN KEY(subject_id) REFERENCES slugs(checklist_id),
-        FOREIGN KEY(target_id)  REFERENCES slugs(checklist_id)
+        FOREIGN KEY(subject_id) REFERENCES slugs(address_id),
+        FOREIGN KEY(target_id)  REFERENCES slugs(address_id)
     );
     CREATE TABLE IF NOT EXISTS history (
-        checklist_id  TEXT NOT NULL,
+        address_id  TEXT NOT NULL,
         timestamp     TEXT NOT NULL,
         result        TEXT,
         status        TEXT,
         comment       TEXT,
-        FOREIGN KEY(checklist_id) REFERENCES slugs(checklist_id),
-        PRIMARY KEY (checklist_id, timestamp)
+        FOREIGN KEY(address_id) REFERENCES slugs(address_id),
+        PRIMARY KEY (address_id, timestamp)
     );
     CREATE INDEX IF NOT EXISTS idx_slugs_checklist ON slugs(checklist);
     CREATE INDEX IF NOT EXISTS idx_relationships_subject ON relationships(subject_id);
     CREATE INDEX IF NOT EXISTS idx_relationships_target ON relationships(target_id);
-    CREATE INDEX IF NOT EXISTS idx_history_checklist ON history(checklist_id);
+    CREATE INDEX IF NOT EXISTS idx_history_checklist ON history(address_id);
   )sql";
 
   char* errmsg = nullptr;
@@ -271,7 +271,7 @@ bool ChecklistStore::HasAnySlugs() const {
 void ChecklistStore::SeedDemoData() {
   LogInfo("Seeding demo checklist data");
   ChecklistSlug power_check{
-      /*checklist_id=*/{},
+      /*address_id=*/{},
       /*checklist=*/"apim-demo",
       /*section=*/"Site Readiness",
       /*procedure=*/"Power Bring-up",
@@ -285,7 +285,7 @@ void ChecklistStore::SeedDemoData() {
       /*relationships=*/{}};
 
   ChecklistSlug uplink_check{
-      /*checklist_id=*/{},
+      /*address_id=*/{},
       /*checklist=*/"apim-demo",
       /*section=*/"Networking",
       /*procedure=*/"Switch bring-up",
@@ -299,7 +299,7 @@ void ChecklistStore::SeedDemoData() {
       /*relationships=*/{}};
 
   ChecklistSlug dhcp_check{
-      /*checklist_id=*/{},
+      /*address_id=*/{},
       /*checklist=*/"apim-demo",
       /*section=*/"Networking",
       /*procedure=*/"DHCP scope",
@@ -312,26 +312,26 @@ void ChecklistStore::SeedDemoData() {
       /*instructions=*/"Use iperf client once uplink is established to verify end-to-end path.",
       /*relationships=*/{}};
 
-  power_check.checklist_id = ComputeChecklistId(
+  power_check.address_id = ComputeAddressId(
       power_check.checklist, power_check.section, power_check.procedure, power_check.action,
       power_check.spec);
-  uplink_check.checklist_id = ComputeChecklistId(
+  uplink_check.address_id = ComputeAddressId(
       uplink_check.checklist, uplink_check.section, uplink_check.procedure, uplink_check.action,
       uplink_check.spec);
-  dhcp_check.checklist_id = ComputeChecklistId(
+  dhcp_check.address_id = ComputeAddressId(
       dhcp_check.checklist, dhcp_check.section, dhcp_check.procedure, dhcp_check.action,
       dhcp_check.spec);
 
-  uplink_check.relationships = {RelationshipEdge{"depends_on", power_check.checklist_id}};
-  dhcp_check.relationships = {RelationshipEdge{"depends_on", uplink_check.checklist_id}};
+  uplink_check.relationships = {RelationshipEdge{"depends_on", power_check.address_id}};
+  dhcp_check.relationships = {RelationshipEdge{"depends_on", uplink_check.address_id}};
 
   UpsertSlug(power_check);
   UpsertSlug(uplink_check);
   UpsertSlug(dhcp_check);
 
-  ReplaceRelationships(power_check.checklist_id, power_check.relationships);
-  ReplaceRelationships(uplink_check.checklist_id, uplink_check.relationships);
-  ReplaceRelationships(dhcp_check.checklist_id, dhcp_check.relationships);
+  ReplaceRelationships(power_check.address_id, power_check.relationships);
+  ReplaceRelationships(uplink_check.address_id, uplink_check.relationships);
+  ReplaceRelationships(dhcp_check.address_id, dhcp_check.relationships);
 }
 
 void ChecklistStore::UpsertSlug(const ChecklistSlug& slug) {
@@ -342,9 +342,9 @@ void ChecklistStore::UpsertSlug(const ChecklistSlug& slug) {
 void ChecklistStore::UpsertSlugUnlocked(const ChecklistSlug& slug) {
   sqlite3_stmt* stmt = nullptr;
   const std::string sql =
-      "INSERT INTO slugs (checklist_id, checklist, section, procedure, action, spec, result, "
+      "INSERT INTO slugs (address_id, checklist, section, procedure, action, spec, result, "
       "status, comment, timestamp, instructions) VALUES (?,?,?,?,?,?,?,?,?,?,?) "
-      "ON CONFLICT(checklist_id) DO UPDATE SET result=excluded.result, status=excluded.status, "
+      "ON CONFLICT(address_id) DO UPDATE SET result=excluded.result, status=excluded.status, "
       "comment=excluded.comment, timestamp=excluded.timestamp, instructions=excluded.instructions;";
 
   if (Prepare(db_, sql, &stmt) != SQLITE_OK) {
@@ -352,7 +352,7 @@ void ChecklistStore::UpsertSlugUnlocked(const ChecklistSlug& slug) {
     throw std::runtime_error("Failed to prepare slug upsert");
   }
 
-  sqlite3_bind_text(stmt, 1, slug.checklist_id.c_str(), -1, SQLITE_TRANSIENT);
+  sqlite3_bind_text(stmt, 1, slug.address_id.c_str(), -1, SQLITE_TRANSIENT);
   sqlite3_bind_text(stmt, 2, slug.checklist.c_str(), -1, SQLITE_TRANSIENT);
   sqlite3_bind_text(stmt, 3, slug.section.c_str(), -1, SQLITE_TRANSIENT);
   sqlite3_bind_text(stmt, 4, slug.procedure.c_str(), -1, SQLITE_TRANSIENT);
@@ -410,26 +410,26 @@ void ChecklistStore::ReplaceRelationships(const std::string& subject_id,
   sqlite3_exec(db_, "COMMIT;", nullptr, nullptr, nullptr);
 }
 
-ChecklistSlug ChecklistStore::GetSlugOrThrow(const std::string& checklist_id) const {
+ChecklistSlug ChecklistStore::GetSlugOrThrow(const std::string& address_id) const {
   std::lock_guard<std::mutex> lock(mutex_);
   sqlite3_stmt* stmt = nullptr;
   const std::string sql =
-      "SELECT checklist_id, checklist, section, procedure, action, spec, result, status, "
-      "comment, timestamp, instructions FROM slugs WHERE checklist_id=?;";
+      "SELECT address_id, checklist, section, procedure, action, spec, result, status, "
+      "comment, timestamp, instructions FROM slugs WHERE address_id=?;";
   if (Prepare(db_, sql, &stmt) != SQLITE_OK) {
     Finalize(stmt);
     throw std::runtime_error("Failed to prepare slug lookup");
   }
-  sqlite3_bind_text(stmt, 1, checklist_id.c_str(), -1, SQLITE_TRANSIENT);
+  sqlite3_bind_text(stmt, 1, address_id.c_str(), -1, SQLITE_TRANSIENT);
 
   if (sqlite3_step(stmt) != SQLITE_ROW) {
     Finalize(stmt);
-    throw std::runtime_error("Checklist ID not found: " + checklist_id);
+    throw std::runtime_error("Address ID not found: " + address_id);
   }
 
   ChecklistSlug slug = BuildSlug(stmt);
   Finalize(stmt);
-  slug.relationships = LoadOutgoingEdges(checklist_id);
+  slug.relationships = LoadOutgoingEdges(address_id);
   return slug;
 }
 
@@ -439,7 +439,7 @@ std::vector<ChecklistSlug> ChecklistStore::GetSlugsForChecklist(
   std::lock_guard<std::mutex> lock(mutex_);
   sqlite3_stmt* stmt = nullptr;
   const std::string sql =
-      "SELECT checklist_id, checklist, section, procedure, action, spec, result, status, "
+      "SELECT address_id, checklist, section, procedure, action, spec, result, status, "
       "comment, timestamp, instructions FROM slugs WHERE checklist=? "
       "ORDER BY section, procedure, action;";
 
@@ -455,13 +455,13 @@ std::vector<ChecklistSlug> ChecklistStore::GetSlugsForChecklist(
   Finalize(stmt);
 
   for (auto& slug : slugs) {
-    slug.relationships = LoadOutgoingEdges(slug.checklist_id);
+    slug.relationships = LoadOutgoingEdges(slug.address_id);
   }
 
   return slugs;
 }
 
-RelationshipGraph ChecklistStore::GetRelationships(const std::string& checklist_id) const {
+RelationshipGraph ChecklistStore::GetRelationships(const std::string& address_id) const {
   RelationshipGraph graph;
   std::lock_guard<std::mutex> lock(mutex_);
 
@@ -471,7 +471,7 @@ RelationshipGraph ChecklistStore::GetRelationships(const std::string& checklist_
     Finalize(outgoing_stmt);
     throw std::runtime_error("Failed to prepare outgoing relationship lookup");
   }
-  sqlite3_bind_text(outgoing_stmt, 1, checklist_id.c_str(), -1, SQLITE_TRANSIENT);
+  sqlite3_bind_text(outgoing_stmt, 1, address_id.c_str(), -1, SQLITE_TRANSIENT);
   while (sqlite3_step(outgoing_stmt) == SQLITE_ROW) {
     RelationshipEdge edge;
     edge.predicate = ColumnText(outgoing_stmt, 0);
@@ -486,7 +486,7 @@ RelationshipGraph ChecklistStore::GetRelationships(const std::string& checklist_
     Finalize(incoming_stmt);
     throw std::runtime_error("Failed to prepare incoming relationship lookup");
   }
-  sqlite3_bind_text(incoming_stmt, 1, checklist_id.c_str(), -1, SQLITE_TRANSIENT);
+  sqlite3_bind_text(incoming_stmt, 1, address_id.c_str(), -1, SQLITE_TRANSIENT);
   while (sqlite3_step(incoming_stmt) == SQLITE_ROW) {
     RelationshipEdge edge;
     edge.target = ColumnText(incoming_stmt, 0);
@@ -499,7 +499,7 @@ RelationshipGraph ChecklistStore::GetRelationships(const std::string& checklist_
 }
 
 void ChecklistStore::ApplyUpdate(const SlugUpdate& update) {
-  const ChecklistSlug existing = GetSlugOrThrow(update.checklist_id);
+  const ChecklistSlug existing = GetSlugOrThrow(update.address_id);
   ChecklistSlug mutated = existing;
 
   if (update.result) {
@@ -516,7 +516,7 @@ void ChecklistStore::ApplyUpdate(const SlugUpdate& update) {
   std::lock_guard<std::mutex> lock(mutex_);
   sqlite3_stmt* stmt = nullptr;
   const std::string sql =
-      "UPDATE slugs SET result=?, status=?, comment=?, timestamp=? WHERE checklist_id=?;";
+      "UPDATE slugs SET result=?, status=?, comment=?, timestamp=? WHERE address_id=?;";
   if (Prepare(db_, sql, &stmt) != SQLITE_OK) {
     Finalize(stmt);
     throw std::runtime_error("Failed to prepare slug update");
@@ -526,7 +526,7 @@ void ChecklistStore::ApplyUpdate(const SlugUpdate& update) {
   sqlite3_bind_text(stmt, 2, StatusToString(mutated.status).c_str(), -1, SQLITE_TRANSIENT);
   sqlite3_bind_text(stmt, 3, mutated.comment.c_str(), -1, SQLITE_TRANSIENT);
   sqlite3_bind_text(stmt, 4, mutated.timestamp.c_str(), -1, SQLITE_TRANSIENT);
-  sqlite3_bind_text(stmt, 5, mutated.checklist_id.c_str(), -1, SQLITE_TRANSIENT);
+  sqlite3_bind_text(stmt, 5, mutated.address_id.c_str(), -1, SQLITE_TRANSIENT);
 
   StepOrThrow(stmt, "slug update");
   Finalize(stmt);
@@ -567,12 +567,12 @@ void ChecklistStore::ReplaceChecklist(const std::string& checklist,
   try {
     const std::string rel_subject_sql =
         "DELETE FROM relationships WHERE subject_id IN "
-        "(SELECT checklist_id FROM slugs WHERE checklist=?);";
+        "(SELECT address_id FROM slugs WHERE checklist=?);";
     const std::string rel_target_sql =
         "DELETE FROM relationships WHERE target_id IN "
-        "(SELECT checklist_id FROM slugs WHERE checklist=?);";
+        "(SELECT address_id FROM slugs WHERE checklist=?);";
     const std::string history_sql =
-        "DELETE FROM history WHERE checklist_id IN (SELECT checklist_id FROM slugs WHERE checklist=?);";
+        "DELETE FROM history WHERE address_id IN (SELECT address_id FROM slugs WHERE checklist=?);";
     const std::string slugs_sql = "DELETE FROM slugs WHERE checklist=?;";
 
     if (Prepare(db_, rel_subject_sql, &delete_rels_subject) != SQLITE_OK ||
@@ -606,7 +606,7 @@ void ChecklistStore::ReplaceChecklist(const std::string& checklist,
     for (const auto& slug : slugs) {
       UpsertSlugUnlocked(slug);
       for (const auto& edge : slug.relationships) {
-        pending_edges.emplace_back(slug.checklist_id, edge);
+        pending_edges.emplace_back(slug.address_id, edge);
       }
     }
 
@@ -667,14 +667,14 @@ void ChecklistStore::ApplyBulkUpdates(const std::vector<SlugUpdate>& updates) {
 void ChecklistStore::InsertHistorySnapshot(const ChecklistSlug& slug) {
   sqlite3_stmt* stmt = nullptr;
   const std::string sql =
-      "INSERT OR IGNORE INTO history (checklist_id, timestamp, result, status, comment) "
+      "INSERT OR IGNORE INTO history (address_id, timestamp, result, status, comment) "
       "VALUES (?,?,?,?,?);";
   if (Prepare(db_, sql, &stmt) != SQLITE_OK) {
     Finalize(stmt);
     throw std::runtime_error("Failed to prepare history insert");
   }
 
-  sqlite3_bind_text(stmt, 1, slug.checklist_id.c_str(), -1, SQLITE_TRANSIENT);
+  sqlite3_bind_text(stmt, 1, slug.address_id.c_str(), -1, SQLITE_TRANSIENT);
   sqlite3_bind_text(stmt, 2, slug.timestamp.c_str(), -1, SQLITE_TRANSIENT);
   sqlite3_bind_text(stmt, 3, slug.result.c_str(), -1, SQLITE_TRANSIENT);
   sqlite3_bind_text(stmt, 4, StatusToString(slug.status).c_str(), -1, SQLITE_TRANSIENT);
@@ -685,7 +685,7 @@ void ChecklistStore::InsertHistorySnapshot(const ChecklistSlug& slug) {
 }
 
 std::vector<RelationshipEdge> ChecklistStore::LoadOutgoingEdges(
-    const std::string& checklist_id) const {
+    const std::string& address_id) const {
   std::vector<RelationshipEdge> edges;
   sqlite3_stmt* stmt = nullptr;
   if (Prepare(db_, "SELECT predicate, target_id FROM relationships WHERE subject_id=?;",
@@ -694,7 +694,7 @@ std::vector<RelationshipEdge> ChecklistStore::LoadOutgoingEdges(
     throw std::runtime_error("Failed to prepare outgoing relationships query");
   }
 
-  sqlite3_bind_text(stmt, 1, checklist_id.c_str(), -1, SQLITE_TRANSIENT);
+  sqlite3_bind_text(stmt, 1, address_id.c_str(), -1, SQLITE_TRANSIENT);
   while (sqlite3_step(stmt) == SQLITE_ROW) {
     RelationshipEdge edge;
     edge.predicate = ColumnText(stmt, 0);
@@ -710,7 +710,7 @@ std::vector<ChecklistSlug> ChecklistStore::ExportAllSlugs() const {
   std::lock_guard<std::mutex> lock(mutex_);
   sqlite3_stmt* stmt = nullptr;
   const std::string sql =
-      "SELECT checklist_id, checklist, section, procedure, action, spec, result, status, "
+      "SELECT address_id, checklist, section, procedure, action, spec, result, status, "
       "comment, timestamp, instructions FROM slugs ORDER BY checklist, section, procedure;";
 
   if (Prepare(db_, sql, &stmt) != SQLITE_OK) {
@@ -724,7 +724,7 @@ std::vector<ChecklistSlug> ChecklistStore::ExportAllSlugs() const {
   Finalize(stmt);
 
   for (auto& slug : slugs) {
-    slug.relationships = LoadOutgoingEdges(slug.checklist_id);
+    slug.relationships = LoadOutgoingEdges(slug.address_id);
   }
   return slugs;
 }
@@ -747,3 +747,4 @@ std::vector<std::string> ChecklistStore::ListChecklists() const {
 }
 
 }  // namespace core
+

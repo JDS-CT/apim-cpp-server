@@ -11,7 +11,7 @@
 This document defines the canonical specification for:
 
 - Checklist slugs
-- Checklist IDs
+- Address IDs
 - The canonical data model (addressing, state, instructions, relationships)
 - The Markdown authoring format
 - The SQLite runtime storage model
@@ -38,14 +38,14 @@ This specification defines:
    - state fields  
    - instructions  
    - relationships  
-   - deterministic Checklist ID
+   - deterministic Address ID
 
 2. **Canonical representations:**
    - **Markdown** as the canonical human authoring format (client-side)
    - **SQLite** as the canonical runtime store (server-side)
 
 3. **Reference encodings and interfaces:**
-   - A minimal API update contract: `Checklist ID + field(s) to update`
+   - A minimal API update contract: `Address ID + field(s) to update`
    - Example JSON/JSONL payloads for transport
    - A relationship model for dependency graphs between procedures
 
@@ -54,12 +54,12 @@ Operationally:
 - Stakeholders author or revise procedures in Markdown using a standard template.
 - A parser ingests Markdown into the canonical data model and persists it in SQLite.
 - Runtime systems (CLI, UI, automations, MCP tools) interact with a server that exposes the state via an API backed by SQLite.
-- The only required information to update a procedure state at runtime is a `checklist_id` plus one or more state fields.
+- The only required information to update a procedure state at runtime is a `address_id` plus one or more state fields.
 
 The specification is written to allow:
 
 - **Provisional rows** (new procedures added by front-line users) that are immediately executable, and can later be reviewed/edited without breaking IDs.
-- **Deterministic updates**: given a stable set of addressing fields, the same procedure always has the same Checklist ID.
+- **Deterministic updates**: given a stable set of addressing fields, the same procedure always has the same Address ID.
 
 ---
 
@@ -84,12 +84,12 @@ For this specification, the following terms are used:
 - **Instructions**  
   Freeform text providing detailed guidance, SOP steps, or references associated with a slug.
 
-- **Checklist ID**  
+- **Address ID**  
   A deterministic 16-character Base32 identifier derived from the addressing fields. Used for relationships, API updates, and storage. Recomputed from addressing fields; not directly edited by humans.
 
 - **Semantic Relationship**  
   A directed triple of the form:
-  `(subject_checklist_id, predicate, target_checklist_id)`.
+  `(subject_address_id, predicate, target_address_id)`.
 
 - **Relationship Predicate**  
   A lowercase ASCII token (e.g., `depends_on`, `fulfills`, `satisfied_by`) describing how one slug relates to another.
@@ -115,14 +115,14 @@ A **checklist slug** consists of:
 2. **State fields**  
 3. **Instructions**  
 4. **Relationships**  
-5. **Checklist ID**
+5. **Address ID**
 
 Each slug represents one actionable procedure step in a checklist.
 
 ### 3.1 Addressing Fields
 
 Addressing fields identify and locate a checklist slug within a checklist.  
-They define the stable semantic address of a procedure and are the sole inputs used to compute the `checklist_id`.
+They define the stable semantic address of a procedure and are the sole inputs used to compute the `address_id`.
 
 #### `checklist`
 A stable identifier for the checklist as a whole. Typically derived from the filename or a system-assigned slug.  
@@ -154,7 +154,7 @@ Used for verification and automated status logic.
 Soft limit: ~28 characters.
 
 These addressing fields collectively define the canonical identity of a slug.  
-Any change to an addressing field produces a new `checklist_id`.
+Any change to an addressing field produces a new `address_id`.
 
 
 ### 3.2 State Fields
@@ -190,7 +190,7 @@ Comments often serve as:
 #### `timestamp`
 ISO 8601 UTC timestamp indicating when this slug was last updated (e.g., `2023-10-01T12:00:00Z`).
 
-State fields are mutable and may change over time; they do not affect the `checklist_id`.
+State fields are mutable and may change over time; they do not affect the `address_id`.
 
 ### 3.2 State Fields
 
@@ -200,7 +200,7 @@ State fields capture the mutable outcome of executing the procedure:
   A concise, human-readable summary of the observed result (soft limit ~28 characters).
 
 
-These fields may change over time; addressing fields must remain stable for the slug to retain the same `checklist_id`.
+These fields may change over time; addressing fields must remain stable for the slug to retain the same `address_id`.
 
 ### 3.3 Instructions
 
@@ -216,9 +216,9 @@ Instructions may include references to external documents, training modules, or 
 
 Each slug may reference other slugs using semantic relationships. Relationships are represented conceptually as directed triples:
 
-- `subject_checklist_id` — the slug defining the relationship  
+- `subject_address_id` — the slug defining the relationship  
 - `predicate` — the relationship type (e.g., `depends_on`, `fulfills`)  
-- `target_checklist_id` — the slug being referenced
+- `target_address_id` — the slug being referenced
 
 Although relationships are **authored as outgoing links** from the subject slug, the system must also expose **incoming links** when displaying or querying a checklist. This prevents stakeholders from unintentionally duplicating existing relationships simply because they originated in another checklist or section.
 
@@ -235,9 +235,9 @@ The relationship graph supports:
 - hierarchical or roll-up structures (`fulfills`, `satisfied_by`)  
 - additional predicates defined in the relationship model (see Section 8)
 
-### 3.5 Checklist ID
+### 3.5 Address ID
 
-Every slug has a **Checklist ID**:
+Every slug has a **Address ID**:
 
 - Computed deterministically from the addressing fields only.
 - Represented as a 16-character Crockford Base32 string (uppercase).
@@ -246,28 +246,28 @@ Every slug has a **Checklist ID**:
   - relationship edges
   - references in external systems
 
-The hashing and encoding algorithm is defined in detail in Section 4. The important property is that **addressing fields uniquely determine the Checklist ID**, and the ID is never edited directly by users.
+The hashing and encoding algorithm is defined in detail in Section 4. The important property is that **addressing fields uniquely determine the Address ID**, and the ID is never edited directly by users.
 
-## 4. Checklist ID Specification
+## 4. Address ID Specification
 
-The `checklist_id` is the stable, deterministic identifier for a checklist slug.  
+The `address_id` is the stable, deterministic identifier for a checklist slug.  
 It is derived solely from the addressing fields (`checklist`, `section`, `procedure`, `action`, `spec`) and is unaffected by state fields or instructions.
 
 ### 4.1 Purpose
 
-The Checklist ID serves as:
+The Address ID serves as:
 
 - the stable primary key in the runtime store (SQLite),
 - the target and source of relationship triples,
 - the addressing token for all API updates,
 - a durable reference for external systems, exports, and reports.
 
-Two slugs with identical addressing fields must always produce the same `checklist_id`.  
+Two slugs with identical addressing fields must always produce the same `address_id`.  
 Any change to an addressing field produces a new ID.
 
 ### 4.2 Canonical Addressing String
 
-The Checklist ID is computed from a canonical, delimiter-encoded string:
+The Address ID is computed from a canonical, delimiter-encoded string:
 
 <checklist> || <section> || <procedure> || <action> || <spec>
 
@@ -281,7 +281,7 @@ This canonical string forms the input to the hashing step.
 
 ### 4.3 Hashing and Encoding
 
-Checklist IDs use a compact 16-character Crockford Base32 string derived as follows:
+Address IDs use a compact 16-character Crockford Base32 string derived as follows:
 
 1. Compute the **xxHash128** of the canonical addressing string.  
 2. Extract the **lowest 80 bits (10 bytes)** of the hash output.  
@@ -312,7 +312,7 @@ F7W4X2J9T3B6P8KD
   this is equivalent to creating a new slug with a new identity.
 - State fields (`result`, `status`, `comment`, `timestamp`) do **not** affect the ID.
 
-Checklist IDs therefore provide a stable linking mechanism across Markdown, API payloads, exports, and the SQLite runtime store.
+Address IDs therefore provide a stable linking mechanism across Markdown, API payloads, exports, and the SQLite runtime store.
 
 ## 5. Markdown Authoring Specification (Canonical at Authoring Time)
 
@@ -352,9 +352,9 @@ Example Structure
 Freeform guidance (links permitted).
 
 ### Relationships
-**Checklist ID:** <THIS_CHECKLIST_ID>
-- depends_on <OTHER_CHECKLIST_ID>
-- fulfills <OTHER_CHECKLIST_ID>
+**Address ID:** <THIS_address_id>
+- depends_on <OTHER_address_id>
+- fulfills <OTHER_address_id>
 ```
 
 The parser extracts the addressing fields, state fields, instructions, and outgoing relationships from this structure.
@@ -430,16 +430,16 @@ Outgoing relationships are defined using a dedicated **Relationships** subsectio
 
 ```markdown
 ### Relationships
-- depends_on <CHECKLIST_ID>
-- fulfills <CHECKLIST_ID>
+- depends_on <address_id>
+- fulfills <address_id>
 ```
 
 Rules:
 
 - Each bullet defines a single outgoing relationship from this slug.  
-- `<CHECKLIST_ID>` must be a 16-character Base32 ID.  
+- `<address_id>` must be a 16-character Base32 ID.  
 - Invalid or missing IDs generate warnings but do not halt parsing.  
-- Relationship subjects are always implicitly the current slug’s `checklist_id`.
+- Relationship subjects are always implicitly the current slug’s `address_id`.
 
 The runtime store exposes both outgoing and incoming relationships; Markdown only describes outgoing edges.
 
@@ -454,7 +454,7 @@ The `checklist` field is derived from the filename of the Markdown file:
 SQLite is the canonical runtime store for APIM checklists. All slug data, relationships, and state histories are persisted here. Markdown authoring is transformed into the canonical data model and stored in SQLite, and all API operations read/write exclusively from the runtime database.
 
 The schema is optimized for:
-- deterministic identity (`checklist_id`),
+- deterministic identity (`address_id`),
 - compact storage,
 - fast lookup by ID,
 - efficient traversal of relationship graphs,
@@ -476,7 +476,7 @@ Stores the canonical representation of each checklist slug.
 
 ```sql
 CREATE TABLE slugs (
-    checklist_id    TEXT PRIMARY KEY,
+    address_id    TEXT PRIMARY KEY,
     checklist       TEXT NOT NULL,
     section         TEXT NOT NULL,
     procedure       TEXT NOT NULL,
@@ -494,7 +494,7 @@ CREATE TABLE slugs (
 
 #### Field rules enforced by the database
 
-- `checklist_id` is unique and stable.  
+- `address_id` is unique and stable.  
 - Addressing fields (`checklist`, `section`, `procedure`, `action`, `spec`) must match exactly what the parser extracted from Markdown.  
 - Mutating state fields does **not** alter the addressing fields or the ID.  
 - `status` is constrained to the allowed tokens.
@@ -509,8 +509,8 @@ CREATE TABLE relationships (
     predicate   TEXT NOT NULL,
     target_id   TEXT NOT NULL,
 
-    FOREIGN KEY(subject_id) REFERENCES slugs(checklist_id),
-    FOREIGN KEY(target_id)  REFERENCES slugs(checklist_id)
+    FOREIGN KEY(subject_id) REFERENCES slugs(address_id),
+    FOREIGN KEY(target_id)  REFERENCES slugs(address_id)
 );
 ```
 
@@ -525,28 +525,28 @@ CREATE TABLE relationships (
 ### 6.4 Table: `history` (Optional but Recommended)
 
 The `history` table stores **snapshot records** of a slug’s mutable state at specific points in time.  
-Each row represents the full recorded state for one `checklist_id` at one `timestamp`.
+Each row represents the full recorded state for one `address_id` at one `timestamp`.
 
 This table provides long-term auditability and supports analytics, reviews, compliance, and rollback inspection.  
 It is **not** intended for high-frequency telemetry or continuous sensor logging; such timeseries storage is out of scope for APIM and should be handled by a separate subsystem.
 
 ```sql
 CREATE TABLE history (
-    checklist_id  TEXT NOT NULL,
+    address_id  TEXT NOT NULL,
     timestamp     TEXT NOT NULL,   -- ISO8601 UTC
     result        TEXT,
     status        TEXT,
     comment       TEXT,
 
-    FOREIGN KEY(checklist_id) REFERENCES slugs(checklist_id),
+    FOREIGN KEY(address_id) REFERENCES slugs(address_id),
 
-    PRIMARY KEY (checklist_id, timestamp)
+    PRIMARY KEY (address_id, timestamp)
 );
 ```
 
 #### Notes
 
-- The primary key is the natural composite key `(checklist_id, timestamp)`, since each timestamped snapshot must be unique.
+- The primary key is the natural composite key `(address_id, timestamp)`, since each timestamped snapshot must be unique.
 - There is no artificial `id` column.
 - Storing the full mutable state at each timestamp avoids diff reconstruction and simplifies analytics.
 - To view the “previous value,” clients simply query the most recent earlier timestamp.
@@ -562,7 +562,7 @@ Recommended indexes for performance:
 CREATE INDEX idx_slugs_checklist          ON slugs(checklist);
 CREATE INDEX idx_relationships_subject    ON relationships(subject_id);
 CREATE INDEX idx_relationships_target     ON relationships(target_id);
-CREATE INDEX idx_history_checklist        ON history(checklist_id);
+CREATE INDEX idx_history_checklist        ON history(address_id);
 ```
 
 ### 6.6 Mapping Markdown → SQLite
@@ -572,7 +572,7 @@ During ingest:
 1. Parse each Markdown procedure.  
 2. Extract addressing fields exactly as written.  
 3. Construct the canonical addressing string.  
-4. Regenerate `checklist_id`.  
+4. Regenerate `address_id`.  
 5. Insert or update the corresponding row in `slugs`.  
 6. Insert all outgoing relationships into `relationships`.  
 7. Preserve `instructions` as raw text.
@@ -587,7 +587,7 @@ State updates via the API:
 - **must not** modify instructions  
 - do not touch Markdown
 
-Addressing-field changes require revising the Markdown source and re-ingesting, which produces a new slug with a new `checklist_id`.
+Addressing-field changes require revising the Markdown source and re-ingesting, which produces a new slug with a new `address_id`.
 
 ### 6.8 Deletions and Deactivation
 
@@ -634,13 +634,13 @@ API and MCP serve as transport and automation layers.
 
 #### Minimal update contract
 State updates require only:
-- `checklist_id`
+- `address_id`
 - one or more mutable fields (`result`, `status`, `comment`)
 
 Addressing fields are immutable in place.
 
 #### Addressing changes create new slugs
-If a client (human or agent) submits a complete slug with **changed addressing fields**, a **new slug** is created with a newly generated `checklist_id`.  
+If a client (human or agent) submits a complete slug with **changed addressing fields**, a **new slug** is created with a newly generated `address_id`.  
 This preserves the immutability of identity while allowing programmatic creation of new procedures.
 
 #### Markdown defines authored structure
@@ -680,7 +680,7 @@ Transport interfaces exchange slugs using a unified JSON object shape:
 
 ```json
 {
-  "checklist_id": "<BASE32_ID>",
+  "address_id": "<BASE32_ID>",
   "checklist": "<string>",
   "section": "<string>",
   "procedure": "<string>",
@@ -720,7 +720,7 @@ JSONL is a transport format, not a canonical storage mechanism.
 
 A classical REST-style transport interface.
 
-### 7.4.1 GET /api/slug/<checklist_id>
+### 7.4.1 GET /api/slug/<address_id>
 
 Returns the full slug.
 
@@ -732,13 +732,13 @@ Returns the full slug.
 
 Returns all slugs for a given checklist.
 
-### 7.4.3 GET /api/relationships/<checklist_id>
+### 7.4.3 GET /api/relationships/<address_id>
 
 Returns incoming and outgoing relationships:
 
 ```json
 {
-  "checklist_id": "<BASE32_ID>",
+  "address_id": "<BASE32_ID>",
   "outgoing": [
     { "predicate": "<p>", "target": "<BASE32_ID>" }
   ],
@@ -754,7 +754,7 @@ Minimal update contract:
 
 ```json
 {
-  "checklist_id": "<BASE32_ID>",
+  "address_id": "<BASE32_ID>",
   "status": "Pass",
   "comment": "Adjusted",
   "result": "20 C"
@@ -795,7 +795,7 @@ APIM exposes the following MCP “tools”:
 #### `apim.get_slug`
 Inputs:
 ```json
-{ "checklist_id": "<BASE32_ID>" }
+{ "address_id": "<BASE32_ID>" }
 ```
 Output: slug object.
 
@@ -810,7 +810,7 @@ Output: list of slug objects.
 Inputs:
 ```json
 {
-  "checklist_id": "<BASE32_ID>",
+  "address_id": "<BASE32_ID>",
   "result": "<optional>",
   "status": "<optional>",
   "comment": "<optional>"
@@ -840,7 +840,7 @@ Inputs:
 ```
 Output:
 ```
-{ "checklist_id": "<NEW_BASE32_ID>" }
+{ "address_id": "<NEW_BASE32_ID>" }
 ```
 
 (This mirrors the addressing-field rules: new addressing → new ID.)
@@ -910,7 +910,7 @@ Relationships are authored in Markdown (outgoing edges only) and expanded at run
 A relationship is defined as:
 
 ```
-(subject_checklist_id, predicate, target_checklist_id)
+(subject_address_id, predicate, target_address_id)
 ```
 
 - **subject** — the slug declaring the relationship  
@@ -977,7 +977,7 @@ Markdown only stores outgoing relationships:
 
 ```
 ### Relationships
-**Checklist ID:** <THIS_ID>
+**Address ID:** <THIS_ID>
 - depends_on <OTHER_ID>
 - fulfills <OTHER_ID>
 ```
@@ -1136,7 +1136,7 @@ The state machine may return:
 - `ok`: dependency chain satisfied  
 - `blocked`: a dependent slug is not passable  
 - `cycle_detected`: circular dependency chain  
-- `missing_target`: dependency refers to unknown `checklist_id`
+- `missing_target`: dependency refers to unknown `address_id`
 
 These flags do **not** automatically update the slug status; they inform client logic or automations.
 
@@ -1287,7 +1287,7 @@ Only mutable fields may be modified.
 
 A valid update must contain:
 
-- a `checklist_id` (16-character Base32), and  
+- a `address_id` (16-character Base32), and  
 - one or more mutable fields:
 
 ```
@@ -1303,7 +1303,7 @@ Addressing fields (`checklist`, `section`, `procedure`, `action`, `spec`), instr
 
 ```json
 {
-  "checklist_id": "F7W4X2J9T3B6P8KD",
+  "address_id": "F7W4X2J9T3B6P8KD",
   "status": "Pass",
   "comment": "Measured at 20 °C",
   "result": "20"
@@ -1314,7 +1314,7 @@ Addressing fields (`checklist`, `section`, `procedure`, `action`, `spec`), instr
 
 When a minimal update is received:
 
-1. The runtime store retrieves the slug by `checklist_id`.  
+1. The runtime store retrieves the slug by `address_id`.  
 2. Only provided mutable fields are updated.  
 3. `timestamp` is regenerated in UTC (ISO8601).  
 4. The updated slug is persisted to SQLite.  
@@ -1327,7 +1327,7 @@ When a minimal update is received:
 ```json
 {
   "ok": true,
-  "checklist_id": "F7W4X2J9T3B6P8KD",
+  "address_id": "F7W4X2J9T3B6P8KD",
   "updated_fields": ["status", "comment", "result"],
   "timestamp": "2024-12-18T15:23:11Z",
   "warnings": []
@@ -1341,7 +1341,7 @@ If evaluation generates warnings (e.g., unresolved dependencies), the `warnings`
 Invalid update attempts result in structured error responses.  
 Examples of invalid updates:
 
-- missing `checklist_id`  
+- missing `address_id`  
 - updating addressing fields  
 - malformed `status` value  
 - attempts to modify instructions or relationships  
@@ -1384,7 +1384,7 @@ This contract is the foundation for all runtime modifications in APIM.
 
 The full slug creation contract defines how a new checklist slug is introduced into the runtime store.  
 Creation may occur through Markdown ingestion, API submission, MCP tools, or automated agent workflows.  
-A new slug always results in a newly computed `checklist_id`.
+A new slug always results in a newly computed `address_id`.
 
 #### 10.8.1 Required Addressing Fields
 
@@ -1399,7 +1399,7 @@ spec
 ```
 
 Addressing fields define slug identity.  
-Any modification to these fields produces a new `checklist_id` (Section 3).
+Any modification to these fields produces a new `address_id` (Section 3).
 
 #### 10.8.2 Optional Mutable Fields
 
@@ -1462,12 +1462,12 @@ Upon creation:
 
 1. Validate addressing fields.  
 2. Normalize instructions and relationship arrays.  
-3. Compute the canonical `checklist_id` from addressing fields.  
+3. Compute the canonical `address_id` from addressing fields.  
 4. Insert the slug into `slugs`.  
 5. Insert any outgoing relationships into `relationships`.  
 6. Generate a new `timestamp` (UTC, ISO8601).  
 7. Optionally write a snapshot to `history`.  
-8. Return the newly created `checklist_id`.
+8. Return the newly created `address_id`.
 
 No attempt is made to deduplicate addressing fields; new slugs are always distinct.
 
@@ -1476,7 +1476,7 @@ No attempt is made to deduplicate addressing fields; new slugs are always distin
 ```json
 {
   "ok": true,
-  "checklist_id": "F7W4X2J9T3B6P8KD",
+  "address_id": "F7W4X2J9T3B6P8KD",
   "created": true,
   "timestamp": "2024-12-18T15:31:22Z"
 }
@@ -1505,9 +1505,9 @@ This preserves Markdown as the authoring format without constraining automated w
 This section defines the character-level constraints used throughout APIM to ensure reliable parsing across Markdown, SQLite, JSON/JSONL, API, and MCP interfaces.  
 These rules prevent accidental Markdown interference, shell escapes, ambiguous identifiers, or incompatible encodings.
 
-### 11.1 Checklist ID Encoding
+### 11.1 Address ID Encoding
 
-Checklist IDs use **Crockford Base32**, uppercase, using only the unambiguous subset:
+Address IDs use **Crockford Base32**, uppercase, using only the unambiguous subset:
 
 ```
 ABCDEFGHJKMNPQRSTVWXYZ234567
@@ -1520,7 +1520,7 @@ ABCDEFGHJKMNPQRSTVWXYZ234567
 - safe for filenames, URLs, database keys, JSON keys, and shell usage  
 - double-click selects entire ID in most UIs  
 
-Checklist IDs MUST NOT include:
+Address IDs MUST NOT include:
 - I, L, O, U (removed in Crockford Base32 to prevent visual confusion)
 
 ### 11.2 Canonical Addressing String Delimiter
@@ -1615,7 +1615,7 @@ Predicates must be treated as literal tokens.
 
 ### 11.7 Relationship Target Encoding
 
-Targets reference other procedures using Checklist IDs:
+Targets reference other procedures using Address IDs:
 
 ```
 <predicate> <TARGET_ID>
@@ -1658,7 +1658,7 @@ The database MUST NOT normalize whitespace in addressing fields.
 
 ### 11.10 Safety and Shell Compatibility
 
-Checklist IDs, predicates, and JSON keys are chosen to be safe in:
+Address IDs, predicates, and JSON keys are chosen to be safe in:
 
 - shell scripts  
 - filenames  
@@ -1679,7 +1679,7 @@ The following characters are reserved or restricted in specific contexts:
 
 | Context | Restricted Characters |
 |--------|------------------------|
-| Checklist ID | all chars except Crockford Base32 uppercase |
+| Address ID | all chars except Crockford Base32 uppercase |
 | Canonical delimiter | `||` sequence reserved for hashing; forbidden inside addressing fields |
 | Predicate | anything outside `[a-z0-9_]` |
 | JSON keys | must follow canonical field names (Section 3) |
@@ -1709,7 +1709,7 @@ Together, these components allow APIM to function as a stable, deterministic sys
    - instructions
    - outgoing relationships
    - initial state fields (optional)
-3. Markdown ingestion tools parse the file, compute `checklist_id` values, and generate slugs.
+3. Markdown ingestion tools parse the file, compute `address_id` values, and generate slugs.
 4. Slugs are inserted into SQLite, becoming the canonical runtime representation.
 5. Markdown and SQLite remain continuously synchronizable; updates to either layer can regenerate the other.
 
@@ -1843,7 +1843,7 @@ The complete APIM lifecycle:
 ```
 Markdown authoring (Section 5)
         ↓
-Ingestion (compute checklist_id, normalize relationships)
+Ingestion (compute address_id, normalize relationships)
         ↓
 SQLite canonical runtime (Section 6)
         ↓
@@ -1869,3 +1869,4 @@ This closed loop ensures:
 - predictable transformations at every step  
 
 This workflow is the operational backbone of APIM.
+

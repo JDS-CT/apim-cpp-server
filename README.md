@@ -51,7 +51,7 @@ The server exposes the checklist runtime API:
 | POST   | `/api/echo`                     | Echoes the provided JSON payload                            |
 | GET    | `/api/checklists`               | Lists every checklist in the runtime store                  |
 | GET    | `/api/checklist/<checklist>`    | Returns slugs for the given checklist                       |
-| GET    | `/api/slug/<checklist_id>`      | Returns a single slug by Checklist ID                       |
+| GET    | `/api/slug/<address_id>`      | Returns a single slug by Address ID                       |
 | GET    | `/api/relationships/<id>`       | Incoming/outgoing relationships for the slug                |
 | PATCH  | `/api/update`                   | Minimal update contract (result/status/comment/timestamp)   |
 | PATCH  | `/api/update_bulk`              | Minimal update contract applied to many slugs               |
@@ -126,3 +126,4 @@ This repo vendors the single-header [`cpp-httplib`](https://github.com/yhirose/c
 [`sqlite`](https://sqlite.org), [`xxHash`](https://github.com/Cyan4973/xxHash), and
 [`nlohmann/json`](https://github.com/nlohmann/json) implementations under `third_party/` to keep the
 demo HTTP adapter and runtime store self-contained.
+

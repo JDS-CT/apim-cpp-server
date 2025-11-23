@@ -87,7 +87,7 @@ if ($seededChecklist) {
 }
 
 if ($seededSlug) {
-    $slugId = $seededSlug.checklist_id
+    $slugId = $seededSlug.address_id
     $commands += [PSCustomObject]@{
         Name        = "Slug by ID"
         Method      = "GET"
@@ -106,7 +106,7 @@ if ($seededSlug) {
         Path        = "/api/update"
         Description = "Minimal update contract for the seeded slug."
         Body        = @{
-            checklist_id = $slugId
+            address_id = $slugId
             comment      = "Updated via PowerShell demo"
             status       = "Other"
         } | ConvertTo-Json -Compress
@@ -136,7 +136,7 @@ if ($seededSlug) {
 Draft instructions.
 
 ### Relationships
-**Checklist ID:** TEMPORARYID123456
+**Address ID:** TEMPORARYID123456
 - depends_on $slugId
 "@
     }
@@ -182,3 +182,4 @@ foreach ($command in $commands) {
         Write-Host "Request failed: $($_.Exception.Message)" -ForegroundColor Red
     }
 }
+

@@ -63,7 +63,7 @@ struct ProcedureBuilder {
   std::string timestamp;
   std::string instructions;
   std::vector<RelationshipEdge> relationships;
-  std::string checklist_id_hint;
+  std::string address_id_hint;
 };
 
 ChecklistSlug FinalizeSlug(const std::string& checklist, ProcedureBuilder builder) {
@@ -86,15 +86,15 @@ ChecklistSlug FinalizeSlug(const std::string& checklist, ProcedureBuilder builde
   slug.comment = builder.comment;
   slug.timestamp = builder.timestamp;
   slug.instructions = builder.instructions;
-  slug.checklist_id =
-      core::ComputeChecklistId(slug.checklist, slug.section, slug.procedure, slug.action,
-                               slug.spec);
+  slug.address_id =
+      core::ComputeAddressId(slug.checklist, slug.section, slug.procedure, slug.action,
+                             slug.spec);
 
-  if (!builder.checklist_id_hint.empty() &&
-      builder.checklist_id_hint != slug.checklist_id) {
-    throw std::runtime_error("Checklist ID mismatch for procedure '" + slug.procedure +
-                             "': expected " + slug.checklist_id + " but found " +
-                             builder.checklist_id_hint);
+  if (!builder.address_id_hint.empty() &&
+      builder.address_id_hint != slug.address_id) {
+    throw std::runtime_error("Address ID mismatch for procedure '" + slug.procedure +
+                             "': expected " + slug.address_id + " but found " +
+                             builder.address_id_hint);
   }
 
   slug.relationships = std::move(builder.relationships);
@@ -182,9 +182,10 @@ ParsedChecklist ParseChecklistMarkdown(const std::string& checklist_name,
     }
 
     if (in_relationships) {
-      if (StartsWith(ToLower(line), "**checklist id:**")) {
-        const auto value = Trim(StripPrefix(line, "**Checklist ID:**"));
-        builder.checklist_id_hint = value;
+      const std::string lowered = ToLower(line);
+      if (StartsWith(lowered, "**address id:**")) {
+        const auto value = Trim(StripPrefix(line, "**Address ID:**"));
+        builder.address_id_hint = value;
       } else if (StartsWith(line, "-")) {
         const auto edge_text = Trim(line.substr(1));
         if (ToLower(edge_text) == "(none)") {
@@ -273,7 +274,7 @@ std::string ExportChecklistMarkdown(const std::string& checklist_name,
     out << "### Instructions\n";
     out << (slug.instructions.empty() ? "TBD" : slug.instructions) << "\n\n";
     out << "### Relationships\n";
-    out << "**Checklist ID:** " << slug.checklist_id << "\n";
+    out << "**Address ID:** " << slug.address_id << "\n";
     if (slug.relationships.empty()) {
       out << "- (none)\n";
     } else {
@@ -288,3 +289,4 @@ std::string ExportChecklistMarkdown(const std::string& checklist_name,
 }
 
 }  // namespace core::markdown
+

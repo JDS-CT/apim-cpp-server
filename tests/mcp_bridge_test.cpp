@@ -107,27 +107,27 @@ void RunTests() {
   Assert(export_json.is_array(), "apim.export_json must return an array");
   Assert(!export_json.empty(), "apim.export_json should return seeded slugs");
 
-  const auto checklist_id = export_json.at(0).value("checklist_id", "");
-  Assert(!checklist_id.empty(), "Seed slug must include checklist_id");
+  const auto address_id = export_json.at(0).value("address_id", "");
+  Assert(!address_id.empty(), "Seed slug must include address_id");
   const auto checklist_name = export_json.at(0).value("checklist", "");
 
   const auto slug_response =
-      bridge.CallTool("apim.get_slug", nlohmann::json::object({{"checklist_id", checklist_id}}));
+      bridge.CallTool("apim.get_slug", nlohmann::json::object({{"address_id", address_id}}));
   Assert(slug_response.status == 200, "apim.get_slug status must be 200");
   const auto slug_json = nlohmann::json::parse(slug_response.body, nullptr, false);
-  Assert(slug_json.value("checklist_id", "") == checklist_id, "Slug ID mismatch");
+  Assert(slug_json.value("address_id", "") == address_id, "Slug ID mismatch");
 
   const std::string updated_comment = "Updated via MCP test";
   const auto update_response = bridge.CallTool(
       "apim.update_slug",
-      nlohmann::json::object({{"checklist_id", checklist_id}, {"comment", updated_comment}}));
+      nlohmann::json::object({{"address_id", address_id}, {"comment", updated_comment}}));
   Assert(update_response.status == 200, "apim.update_slug status must be 200");
   const auto update_json = nlohmann::json::parse(update_response.body, nullptr, false);
   Assert(update_json.value("comment", "") == updated_comment,
          "apim.update_slug did not persist comment");
 
   const auto relationships_response = bridge.CallTool(
-      "apim.relationships", nlohmann::json::object({{"checklist_id", checklist_id}}));
+      "apim.relationships", nlohmann::json::object({{"address_id", address_id}}));
   Assert(relationships_response.status == 200, "apim.relationships status must be 200");
 
   const auto export_md_response =
@@ -155,3 +155,4 @@ int main() {
   }
   return 0;
 }
+

@@ -33,10 +33,10 @@ const std::vector<DemoCommand> kCommandCatalog = {
     {"GET", "/api/hello", "Send a greeting back. Optional query parameter 'name'."},
     {"POST", "/api/echo", "Echo the provided payload for integration smoke tests."},
     {"GET", "/api/checklists", "List available checklist slugs in the runtime store."},
-    {"GET", "/api/slug/<checklist_id>", "Return a single checklist slug by ID."},
+    {"GET", "/api/slug/<address_id>", "Return a single checklist slug by Address ID."},
     {"GET", "/api/checklist/<checklist>", "Return every slug for the named checklist."},
-    {"GET", "/api/relationships/<checklist_id>",
-     "Return incoming and outgoing relationships for a slug."},
+    {"GET", "/api/relationships/<address_id>",
+     "Return incoming and outgoing relationships for a slug by Address ID."},
     {"PATCH", "/api/update", "Apply a minimal state update to a single slug."},
     {"PATCH", "/api/update_bulk", "Apply minimal state updates to multiple slugs."},
     {"GET", "/api/export/json", "Export all slugs as a JSON array."},
@@ -104,7 +104,7 @@ json SlugToJson(const ChecklistSlug& slug) {
     relationships.push_back({{"predicate", edge.predicate}, {"target", edge.target}});
   }
 
-  return {{"checklist_id", slug.checklist_id},
+  return {{"address_id", slug.address_id},
           {"checklist", slug.checklist},
           {"section", slug.section},
           {"procedure", slug.procedure},
@@ -122,13 +122,13 @@ SlugUpdate ParseUpdatePayload(const json& payload) {
   if (!payload.is_object()) {
     throw std::invalid_argument("Payload must be a JSON object.");
   }
-  const auto it = payload.find("checklist_id");
+  const auto it = payload.find("address_id");
   if (it == payload.end() || !it->is_string()) {
-    throw std::invalid_argument("Field 'checklist_id' is required and must be a string.");
+    throw std::invalid_argument("Field 'address_id' is required and must be a string.");
   }
 
   SlugUpdate update;
-  update.checklist_id = it->get<std::string>();
+  update.address_id = it->get<std::string>();
 
   if (const auto result_it = payload.find("result"); result_it != payload.end() &&
                                                      (result_it->is_string() || result_it->is_null())) {
@@ -225,11 +225,11 @@ void ConfigureServer(platform::HttpServer& server, ChecklistStore& store) {
 
   auto handle_slug = [&store](const platform::HttpRequest& request) {
     if (request.path_params.empty()) {
-      return ErrorResponse("Missing checklist_id path parameter.", 400);
+      return ErrorResponse("Missing address_id path parameter.", 400);
     }
-    const std::string checklist_id = request.path_params.front();
-    LogInfo("GET /api/slug/" + checklist_id);
-    const auto slug = store.GetSlugOrThrow(checklist_id);
+    const std::string address_id = request.path_params.front();
+    LogInfo("GET /api/slug/" + address_id);
+    const auto slug = store.GetSlugOrThrow(address_id);
     return JsonResponse(SlugToJson(slug));
   };
 
@@ -249,13 +249,13 @@ void ConfigureServer(platform::HttpServer& server, ChecklistStore& store) {
 
   auto handle_relationships = [&store](const platform::HttpRequest& request) {
     if (request.path_params.empty()) {
-      return ErrorResponse("Missing checklist_id path parameter.", 400);
+      return ErrorResponse("Missing address_id path parameter.", 400);
     }
-    const std::string checklist_id = request.path_params.front();
-    LogInfo("GET /api/relationships/" + checklist_id);
-    const auto graph = store.GetRelationships(checklist_id);
+    const std::string address_id = request.path_params.front();
+    LogInfo("GET /api/relationships/" + address_id);
+    const auto graph = store.GetRelationships(address_id);
     json payload = RelationshipsToJson(graph);
-    payload["checklist_id"] = checklist_id;
+    payload["address_id"] = address_id;
     return JsonResponse(payload);
   };
 
@@ -267,8 +267,8 @@ void ConfigureServer(platform::HttpServer& server, ChecklistStore& store) {
     try {
       const auto update = ParseUpdatePayload(payload);
       store.ApplyUpdate(update);
-      const auto updated = store.GetSlugOrThrow(update.checklist_id);
-      LogInfo("PATCH /api/update checklist_id=" + update.checklist_id);
+      const auto updated = store.GetSlugOrThrow(update.address_id);
+      LogInfo("PATCH /api/update address_id=" + update.address_id);
       return JsonResponse(SlugToJson(updated));
     } catch (const std::exception& ex) {
       return ErrorResponse(ex.what(), 400);
@@ -285,7 +285,7 @@ void ConfigureServer(platform::HttpServer& server, ChecklistStore& store) {
       store.ApplyBulkUpdates(updates);
       json updated = json::array();
       for (const auto& update : updates) {
-        updated.push_back(SlugToJson(store.GetSlugOrThrow(update.checklist_id)));
+        updated.push_back(SlugToJson(store.GetSlugOrThrow(update.address_id)));
       }
       LogInfo("PATCH /api/update_bulk count=" + std::to_string(updates.size()));
       return JsonResponse(json{{"updated", updated}});
@@ -418,3 +418,4 @@ ServerConfig LoadServerConfig() {
 }
 
 }  // namespace core
+

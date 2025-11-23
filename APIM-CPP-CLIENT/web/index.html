@@ -304,6 +304,89 @@
         white-space: pre-wrap;
       }
 
+      /* Human portal preview */
+      .human-portal {
+        display: none;
+      }
+
+      .human-portal.active {
+        display: block;
+      }
+
+      .portal-bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.8rem;
+        align-items: center;
+        margin-bottom: 0.8rem;
+      }
+
+      .portal-rail {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+
+      .portal-chip {
+        padding: 0.4rem 0.8rem;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.04);
+        color: #dfe6ff;
+        font-size: 0.9rem;
+      }
+
+      .human-table {
+        width: 100%;
+        border-collapse: collapse;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .human-table th,
+      .human-table td {
+        padding: 0.5rem 0.7rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        border-right: 1px solid rgba(255, 255, 255, 0.04);
+        vertical-align: top;
+        font-size: 0.92rem;
+      }
+
+      .human-table th:last-child,
+      .human-table td:last-child {
+        border-right: none;
+      }
+
+      .human-table thead {
+        background: rgba(255, 255, 255, 0.04);
+      }
+
+      .compact-spec {
+        font-size: 0.85rem;
+        color: #c9d6f5;
+        line-height: 1.2;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 220px;
+      }
+
+      .mini-label {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #8aa2ce;
+      }
+
+      .detail-row {
+        background: rgba(255, 255, 255, 0.02);
+      }
+
+      .detail-box {
+        padding: 0.5rem 0.4rem;
+        color: #cfd8f5;
+        font-size: 0.92rem;
+      }
+
       .inline {
         display: flex;
         align-items: center;
@@ -438,7 +521,7 @@
         <h2>Update state (minimal contract)</h2>
         <div class="grid">
           <div>
-            <label for="slugSelect">Checklist ID</label>
+            <label for="slugSelect">Address ID</label>
             <select id="slugSelect"></select>
           </div>
           <div>
@@ -538,6 +621,43 @@
         <h2>Response</h2>
         <pre id="responseArea">Waiting for a command...</pre>
       </section>
+
+      <section class="panel human-portal" id="humanPortal">
+        <div class="portal-bar">
+          <div>
+            <p class="mini-label">Portal</p>
+            <div class="portal-rail">
+              <span class="portal-chip">Checklist Portal</span>
+              <span class="portal-chip">Survey Portal</span>
+              <span class="portal-chip">Data Portal</span>
+            </div>
+          </div>
+          <div style="margin-left:auto; min-width:240px;">
+            <label for="humanChecklistSelect">Checklist</label>
+            <select id="humanChecklistSelect"></select>
+          </div>
+        </div>
+        <div class="portal-bar">
+          <button class="secondary" id="portalExportJson">Export JSON</button>
+          <button class="secondary" id="portalExportJsonl">Export JSONL</button>
+          <button class="secondary" id="portalExportMarkdown">Export Markdown</button>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="human-table">
+            <thead>
+              <tr>
+                <th>Procedure</th>
+                <th>Spec</th>
+                <th>Status</th>
+                <th>Result</th>
+                <th>Comment</th>
+                <th>Ind</th>
+              </tr>
+            </thead>
+            <tbody id="humanTableBody"></tbody>
+          </table>
+        </div>
+      </section>
     </main>
 
     <script>
@@ -556,10 +676,14 @@
       const challengeCurl = document.getElementById("challengeCurl");
       const mdChecklistSelect = document.getElementById("mdChecklistSelect");
       const markdownArea = document.getElementById("markdownArea");
+      const humanChecklistSelect = document.getElementById("humanChecklistSelect");
+      const humanPortal = document.getElementById("humanPortal");
+      const humanTableBody = document.getElementById("humanTableBody");
 
       let state = {
         selectedChecklist: "",
         selectedMarkdownChecklist: "",
+        humanMode: false,
         slugs: [],
         mode: "human",
         challenge: {
@@ -645,18 +769,18 @@
             <td>${slug.status}</td>
             <td>${slug.result || ""}</td>
             <td>${slug.comment || ""}</td>
-            <td class="note">${slug.checklist_id}</td>
+            <td class="note">${slug.address_id}</td>
           `;
           slugTableBody.appendChild(row);
 
           const option = document.createElement("option");
-          option.value = slug.checklist_id;
-          option.textContent = `${slug.procedure} (${slug.checklist_id.slice(0, 6)}...)`;
+          option.value = slug.address_id;
+          option.textContent = `${slug.procedure} (${slug.address_id.slice(0, 6)}...)`;
           slugSelect.appendChild(option);
         });
 
         if (slugs.length > 0 && !slugSelect.value) {
-          slugSelect.value = slugs[0].checklist_id;
+          slugSelect.value = slugs[0].address_id;
         }
         slugStat.textContent = slugs.length.toString();
       }
@@ -676,6 +800,7 @@
         const lists = data.checklists || [];
         checklistSelect.innerHTML = "";
         mdChecklistSelect.innerHTML = "";
+        humanChecklistSelect.innerHTML = "";
         lists.forEach((name) => {
           const option = document.createElement("option");
           option.value = name;
@@ -686,12 +811,18 @@
           mdOpt.value = name;
           mdOpt.textContent = name;
           mdChecklistSelect.appendChild(mdOpt);
+
+          const humanOpt = document.createElement("option");
+          humanOpt.value = name;
+          humanOpt.textContent = name;
+          humanChecklistSelect.appendChild(humanOpt);
         });
         if (lists.length > 0) {
           state.selectedChecklist = lists[0];
           checklistSelect.value = lists[0];
           state.selectedMarkdownChecklist = lists[0];
           mdChecklistSelect.value = lists[0];
+          humanChecklistSelect.value = lists[0];
         }
         checklistStat.textContent = `${lists.length} checklist(s)`;
         return state.selectedChecklist;
@@ -706,6 +837,9 @@
         const data = await fetchJson(`/api/checklist/${encodeURIComponent(checklist)}`);
         state.slugs = data.slugs || [];
         renderSlugs(state.slugs);
+        if (state.humanMode) {
+          renderHumanPortal();
+        }
       }
 
       async function refreshHealth() {
@@ -774,14 +908,85 @@
         }
       }
 
+      function ensureHumanPortalActive() {
+        if (humanPortal && !humanPortal.classList.contains("active")) {
+          humanPortal.classList.add("active");
+        }
+      }
+
+      function renderHumanPortal() {
+        if (!humanPortal || !humanTableBody) return;
+        humanTableBody.innerHTML = "";
+        const rows = state.slugs || [];
+        rows.forEach((slug, idx) => {
+          const tr = document.createElement("tr");
+
+          const procTd = document.createElement("td");
+          const strong = document.createElement("strong");
+          strong.textContent = slug.procedure;
+          const detailLink = document.createElement("a");
+          detailLink.href = "#";
+          detailLink.textContent = "[details]";
+          detailLink.style.marginLeft = "8px";
+          procTd.appendChild(strong);
+          procTd.appendChild(detailLink);
+          tr.appendChild(procTd);
+
+          const specTd = document.createElement("td");
+          specTd.className = "compact-spec";
+          specTd.textContent = slug.spec || "";
+          tr.appendChild(specTd);
+
+          const statusTd = document.createElement("td");
+          statusTd.textContent = slug.status || "";
+          tr.appendChild(statusTd);
+
+          const resultTd = document.createElement("td");
+          resultTd.textContent = slug.result || "";
+          tr.appendChild(resultTd);
+
+          const commentTd = document.createElement("td");
+          commentTd.textContent = slug.comment || "";
+          tr.appendChild(commentTd);
+
+          const indicatorTd = document.createElement("td");
+          const mark = indicator(slug.status, slug.comment);
+          indicatorTd.innerHTML = `<span class="indicator ${mark.tone}" title="${mark.tooltip}">${mark.label}</span>`;
+          tr.appendChild(indicatorTd);
+
+          const detailTr = document.createElement("tr");
+          detailTr.className = "detail-row";
+          detailTr.style.display = "none";
+          const detailTd = document.createElement("td");
+          detailTd.colSpan = 6;
+          detailTd.className = "detail-box";
+          detailTd.innerHTML = `<div class="mini-label">Instructions</div><div>${slug.instructions || "—"}</div><div class="mini-label" style="margin-top:6px;">Relationships</div><div>${
+            (slug.relationships || [])
+              .map((edge) => `${edge.predicate} ${edge.target}`)
+              .join("<br>") || "(none)"
+          }</div>`;
+          detailTr.appendChild(detailTd);
+
+          detailLink.addEventListener("click", (event) => {
+            event.preventDefault();
+            const open = detailTr.style.display !== "none";
+            detailTr.style.display = open ? "none" : "table-row";
+            detailLink.textContent = open ? "[details]" : "[hide]";
+          });
+
+          humanTableBody.appendChild(tr);
+          humanTableBody.appendChild(detailTr);
+        });
+      }
+
       async function sendUpdate() {
-        const checklist_id = slugSelect.value;
-        if (!checklist_id) {
-          setResponse("Select a checklist ID first.");
+        const address_id = slugSelect.value;
+        if (!address_id) {
+          setResponse("Select an Address ID first.");
           return;
         }
         const payload = {
-          checklist_id,
+          address_id,
           status: statusSelect.value,
           result: resultInput.value.trim(),
           comment: commentInput.value.trim(),
@@ -800,13 +1005,13 @@
       }
 
       async function loadSingleSlug() {
-        const checklist_id = slugSelect.value;
-        if (!checklist_id) {
-          setResponse("Select a checklist ID first.");
+        const address_id = slugSelect.value;
+        if (!address_id) {
+          setResponse("Select an Address ID first.");
           return;
         }
         try {
-          const data = await fetchJson(`/api/slug/${encodeURIComponent(checklist_id)}`);
+          const data = await fetchJson(`/api/slug/${encodeURIComponent(address_id)}`);
           resultInput.value = data.result || "";
           commentInput.value = data.comment || "";
           statusSelect.value = data.status || "Pass";
@@ -875,7 +1080,7 @@
           buildBody: () => {
             if (!slugSelect.value) return null;
             return JSON.stringify({
-              checklist_id: slugSelect.value,
+              address_id: slugSelect.value,
               status: "Other",
               comment: "Updated from web console",
             });
@@ -892,6 +1097,9 @@
       document.getElementById("loadSlugButton").addEventListener("click", loadSingleSlug);
       document.getElementById("humanCaptchaButton").addEventListener("click", () => {
         state.mode = "human";
+        state.humanMode = true;
+        ensureHumanPortalActive();
+        renderHumanPortal();
         setResponse("Human mode acknowledged. Continue via UI or API.");
       });
       checklistSelect.addEventListener("change", async (event) => {
@@ -903,9 +1111,34 @@
       });
       document.getElementById("exportMarkdownButton").addEventListener("click", exportMarkdown);
       document.getElementById("importMarkdownButton").addEventListener("click", importMarkdown);
+      humanChecklistSelect.addEventListener("change", async (event) => {
+        state.selectedChecklist = event.target.value;
+        state.selectedMarkdownChecklist = event.target.value;
+        checklistSelect.value = event.target.value;
+        mdChecklistSelect.value = event.target.value;
+        await loadSlugsForChecklist(state.selectedChecklist);
+      });
+      document.getElementById("portalExportJson").addEventListener("click", () => {
+        const checklist = state.selectedChecklist || state.selectedMarkdownChecklist;
+        if (!checklist) return setResponse("Select a checklist first.");
+        window.open(`${baseUrl()}/api/checklist/${encodeURIComponent(checklist)}`, "_blank");
+      });
+      document.getElementById("portalExportJsonl").addEventListener("click", () => {
+        window.open(`${baseUrl()}/api/export/jsonl`, "_blank");
+      });
+      document.getElementById("portalExportMarkdown").addEventListener("click", () => {
+        const checklist = state.selectedChecklist || state.selectedMarkdownChecklist;
+        if (!checklist) return setResponse("Select a checklist first.");
+        window.open(
+          `${baseUrl()}/api/export/markdown/${encodeURIComponent(checklist)}`,
+          "_blank"
+        );
+      });
 
       renderChallenge();
       refreshAll();
     </script>
   </body>
 </html>
+
+
