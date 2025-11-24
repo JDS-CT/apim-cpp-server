@@ -95,3 +95,19 @@ if (WIN32)
 endif()
 
 add_test(NAME mcp-bridge COMMAND mcp-bridge-test)
+set_tests_properties(mcp-bridge PROPERTIES LABELS "smoke")
+
+add_executable(integration-schema-test
+  tests/integration_schema_test.cpp
+  src/core/checklist_store.cpp
+  src/core/logging.cpp
+)
+target_include_directories(integration-schema-test PRIVATE ${APIM_INCLUDE_DIRS})
+target_compile_options(integration-schema-test PRIVATE ${APIM_WARNINGS})
+target_link_libraries(integration-schema-test PRIVATE apim-sqlite3 apim-xxhash)
+if (WIN32)
+  target_link_libraries(integration-schema-test PRIVATE ws2_32)
+endif()
+
+add_test(NAME integration-schema COMMAND integration-schema-test)
+set_tests_properties(integration-schema PROPERTIES LABELS "smoke")

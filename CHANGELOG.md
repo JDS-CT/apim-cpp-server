@@ -1,5 +1,12 @@
 # CHANGELOG
 
+- 2025-11-23T11:47:45-05:00 (p3) Split CAPTCHA landing (index.html) from portal/test UI (portal.html + checklist-portal placeholder); added Testing Hub copy-only commands and removed legacy Testing/Temporary.
+- 2025-11-23T16:51:41-05:00 (p3) Drafted pythonPortal migration plan (docs/design/python_portal_plan.md) to harvest UI layout while wiring to current API/MCP/tests; tracked in TODO.
+- 2025-11-23T17:00:00-05:00 (p2) Started pythonPortal migration implementation: added portal_shell.html with harvested layout placeholders; updated TODO for implementation phases.
+- 2025-11-23T17:30:00-05:00 (p2) Wired portal_shell.html to current API for checklist list/table rendering and diagnostics (health/commands); smoke/full test commands copy-only.
+- 2025-11-23T10:48:15-05:00 (p2) Added schema normalization integration test with smoke label and a unified test runner (scripts/run_tests.ps1).
+- 2025-11-23T09:49:41-05:00 (p1) Implemented normalized schema (FK dimensions for checklist/section/procedure/action/spec), updated storage/API to use address_id with joins, and dropped legacy slugs schema when detected.
+- 2025-11-23T09:49:41-05:00 (p2) Verified checklist selector remains supported via /api/checklists using the normalized schema.
 - 2025-11-23T07:15:06-05:00 (p1) Renamed checklist_id to address_id across storage, API routes/payloads, MCP tools, web/PowerShell clients, docs, and tests; added SQLite migration and legacy Markdown label compatibility.
 - 2025-11-23T07:42:12-05:00 (p1) Removed legacy Checklist ID compatibility; Markdown imports now require Address ID and legacy schema migration paths were dropped.
 - 2025-11-23T07:04:41-05:00 (p1) Drafted docs/design/address_id_plan.md to rename checklist_id to address_id across schema, API, MCP, clients, and docs; logged TODO for execution.

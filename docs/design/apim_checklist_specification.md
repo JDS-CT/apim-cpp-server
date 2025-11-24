@@ -38,7 +38,8 @@ This specification defines:
    - state fields  
    - instructions  
    - relationships  
-   - deterministic Address ID
+   - deterministic Address ID  
+   - timestamp (ISO 8601 UTC, last update)
 
 2. **Canonical representations:**
    - **Markdown** as the canonical human authoring format (client-side)
@@ -115,9 +116,10 @@ A **checklist slug** consists of:
 2. **State fields**  
 3. **Instructions**  
 4. **Relationships**  
-5. **Address ID**
+5. **Address ID**  
+6. **Timestamp (ISO 8601 UTC, last update)**
 
-Each slug represents one actionable procedure step in a checklist.
+Each slug represents one actionable procedure step in a checklist. The timestamp records the last mutation time; it is not a high-frequency telemetry channel (see Section 6.4).
 
 ### 3.1 Addressing Fields
 

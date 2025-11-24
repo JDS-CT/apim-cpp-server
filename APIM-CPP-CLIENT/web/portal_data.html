@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>APIM Data Portal</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: "Segoe UI", sans-serif;
+        background: #0f1423;
+        color: #e9edff;
+      }
+      header {
+        padding: 1rem 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: rgba(255, 255, 255, 0.04);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .portal-nav {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+      }
+      .portal-nav a {
+        text-decoration: none;
+        color: inherit;
+      }
+      .portal-nav .chip {
+        padding: 0.4rem 0.8rem;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        background: rgba(255, 255, 255, 0.05);
+        font-size: 0.9rem;
+      }
+      main {
+        padding: 1.25rem;
+      }
+      .panel {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        padding: 1rem;
+        min-height: 200px;
+      }
+      .placeholder {
+        color: #9fb1d5;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="portal-nav">
+        <a class="chip" href="portal_checklist.html">Checklist Portal</a>
+        <a class="chip" href="portal_testing.html">Testing / Diagnostics</a>
+        <span class="chip" style="border-color: rgba(255,255,255,0.4);">Data</span>
+      </div>
+    </header>
+    <main>
+      <section class="panel">
+        <h2>Data portal (placeholder)</h2>
+        <p class="placeholder">Future data imports/exports live here. Use /api/export/* and /api/import/markdown.</p>
+      </section>
+    </main>
+  </body>
+</html>

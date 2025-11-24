@@ -1,0 +1,1182 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>APIM Checklist Console</title>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@500;700&display=swap"
+    />
+    <style>
+      :root {
+        font-family: "Space Grotesk", "Manrope", "Segoe UI", sans-serif;
+        color: #f8fbff;
+        background: radial-gradient(circle at 10% 20%, #19233a, #0a0f1c 60%);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: radial-gradient(circle at 80% 10%, rgba(88, 135, 255, 0.2), transparent 25%),
+          linear-gradient(140deg, #0d1221, #0a0f1c 50%, #0c182a);
+        color: #e7edff;
+      }
+
+      a {
+        color: #8fc7ff;
+      }
+
+      header.hero {
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr;
+        gap: 1.5rem;
+        padding: 2.5rem 1.5rem 1rem;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .hero-card,
+      .panel {
+        background: rgba(13, 19, 35, 0.75);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(12px);
+      }
+
+      .hero-text h1 {
+        margin: 0.2rem 0 0.4rem 0;
+        font-size: 2.6rem;
+        letter-spacing: -0.02em;
+      }
+
+      .eyebrow {
+        color: #8fc7ff;
+        letter-spacing: 0.1em;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        margin: 0;
+      }
+
+      .hero-text p {
+        color: #b7c5e7;
+        max-width: 620px;
+        line-height: 1.5;
+        margin-top: 0;
+      }
+
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+      }
+
+      .chip {
+        padding: 0.4rem 0.8rem;
+        background: rgba(255, 255, 255, 0.06);
+        border-radius: 999px;
+        font-size: 0.85rem;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+      }
+
+      .hero-card {
+        padding: 1.2rem;
+      }
+
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 0.8rem;
+      }
+
+      .stat {
+        background: rgba(255, 255, 255, 0.04);
+        padding: 0.9rem;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.07);
+      }
+
+      .stat strong {
+        display: block;
+        font-size: 1.2rem;
+        margin-top: 0.2rem;
+      }
+
+      main {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 1.5rem 2.5rem;
+      }
+
+      .panel {
+        margin-bottom: 1.2rem;
+        padding: 1.4rem;
+      }
+
+      .panel h2 {
+        margin-top: 0;
+        letter-spacing: 0.01em;
+      }
+
+      .endpoint-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+        gap: 1rem;
+        align-items: end;
+      }
+
+      label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+      }
+
+      input,
+      textarea,
+      select {
+        width: 100%;
+        padding: 0.65rem 0.75rem;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.04);
+        color: #f8fbff;
+        font-family: inherit;
+      }
+
+      textarea {
+        resize: vertical;
+        min-height: 90px;
+      }
+
+      button {
+        font: inherit;
+        border: none;
+        border-radius: 10px;
+        padding: 0.7rem 1.2rem;
+        cursor: pointer;
+        color: #0a1020;
+        background: linear-gradient(135deg, #7cd3ff, #5fa8ff);
+        font-weight: 700;
+        letter-spacing: 0.01em;
+        transition: transform 0.1s ease, box-shadow 0.2s ease;
+      }
+
+      button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 10px 18px rgba(92, 180, 255, 0.3);
+      }
+
+      button.secondary {
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.28);
+        color: #d9e4ff;
+      }.card {
+        padding: 1rem;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.02);
+      }
+
+      .card h3 {
+        margin: 0 0 0.5rem 0;
+      }
+
+      .note {
+        color: #9cb5dd;
+        font-size: 0.95rem;
+        line-height: 1.5;
+      }
+
+      .code-block {
+        background: #0a0f1c;
+        border-radius: 10px;
+        padding: 0.85rem;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+        color: #dfe7ff;
+        font-size: 0.9rem;
+        overflow-x: auto;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 1rem;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        border-spacing: 0;
+      }
+
+      th,
+      td {
+        padding: 0.6rem;
+        text-align: left;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      th {
+        color: #a8b8de;
+        font-weight: 700;
+        font-size: 0.9rem;
+      }
+
+      .indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.25rem 0.65rem;
+        border-radius: 999px;
+        font-weight: 700;
+        font-size: 0.8rem;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+      }
+
+      .tone-success {
+        background: rgba(0, 205, 136, 0.15);
+        color: #81ffcd;
+        border-color: rgba(129, 255, 205, 0.4);
+      }
+
+      .tone-danger {
+        background: rgba(255, 112, 112, 0.14);
+        color: #ffb3b3;
+        border-color: rgba(255, 112, 112, 0.3);
+      }
+
+      .tone-warning {
+        background: rgba(255, 196, 86, 0.14);
+        color: #ffe2a6;
+        border-color: rgba(255, 196, 86, 0.3);
+      }
+
+      .tone-info {
+        background: rgba(140, 199, 255, 0.14);
+        color: #cce5ff;
+        border-color: rgba(140, 199, 255, 0.35);
+      }
+
+      .tone-neutral {
+        background: rgba(255, 255, 255, 0.06);
+        color: #e7edff;
+        border-color: rgba(255, 255, 255, 0.1);
+      }
+
+      .tone-base {
+        background: rgba(255, 255, 255, 0.03);
+        color: #cfd8f5;
+        border-color: rgba(255, 255, 255, 0.08);
+      }
+
+      .command-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 0.8rem;
+      }
+
+      .command-card {
+        padding: 0.8rem;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      pre#responseArea {
+        background: #050811;
+        padding: 1rem;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        color: #dbe6ff;
+        min-height: 200px;
+        white-space: pre-wrap;
+      }
+
+      /* Human portal preview */
+      .human-portal {
+        display: none;
+      }
+
+      .human-portal.active {
+        display: block;
+      }
+
+      .portal-bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.8rem;
+        align-items: center;
+        margin-bottom: 0.8rem;
+      }
+
+      .portal-rail {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        align-items: center;
+      }
+
+      .portal-actions {
+        margin-left: auto;
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+      }
+
+      .portal-chip {
+        padding: 0.4rem 0.8rem;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.04);
+        color: #dfe6ff;
+        font-size: 0.9rem;
+      }
+
+      .testing-panel {
+        display: none;
+      }
+
+      .testing-panel.active {
+        display: block;
+      }
+
+      .testing-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 1rem;
+      }
+
+      .testing-card {
+        padding: 1rem;
+        border: 1px dashed rgba(255, 255, 255, 0.16);
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.03);
+      }
+
+      .testing-card h3 {
+        margin-top: 0;
+        margin-bottom: 0.35rem;
+      }
+
+      .testing-card code {
+        display: block;
+        margin-top: 0.2rem;
+        font-size: 0.9rem;
+      }
+
+      .human-table {
+        width: 100%;
+        border-collapse: collapse;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .human-table th,
+      .human-table td {
+        padding: 0.5rem 0.7rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        border-right: 1px solid rgba(255, 255, 255, 0.04);
+        vertical-align: top;
+        font-size: 0.92rem;
+      }
+
+      .human-table th:last-child,
+      .human-table td:last-child {
+        border-right: none;
+      }
+
+      .human-table thead {
+        background: rgba(255, 255, 255, 0.04);
+      }
+
+      .compact-spec {
+        font-size: 0.85rem;
+        color: #c9d6f5;
+        line-height: 1.2;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 220px;
+      }
+
+      .mini-label {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #8aa2ce;
+      }
+
+      .detail-row {
+        background: rgba(255, 255, 255, 0.02);
+      }
+
+      .detail-box {
+        padding: 0.5rem 0.4rem;
+        color: #cfd8f5;
+        font-size: 0.92rem;
+      }
+
+      .inline {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        flex-wrap: wrap;
+      }
+
+      @media (max-width: 900px) {
+        header.hero {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="hero">
+      <div class="hero-text">
+        <p class="eyebrow">APIM runtime</p>
+        <h1>Checklist + CAPTCHA landing</h1>
+        <p>
+          Choose a path (human UI or AI terminal), inspect live checklist slugs backed by SQLite, and
+          exercise the HTTP API without switching tools. Agents and humans use the same controls;
+          the entry panel simply clarifies intent.
+        </p>
+        <div class="chips">
+          <span class="chip">SQLite runtime store</span>
+          <span class="chip">Minimal update contract</span>
+          <span class="chip">MCP + HTTP parity</span>
+        </div>
+      </div>
+      <div class="hero-card">
+        <div class="stat-grid">
+          <div class="stat">
+            <small>Runtime DB</small>
+            <strong>.apim/checklists.db</strong>
+            <div class="note">Seeded on first launch for demo traffic.</div>
+          </div>
+          <div class="stat">
+            <small>Uptime</small>
+            <strong id="uptimeStat">--</strong>
+            <div class="note" id="versionStat">Version --</div>
+          </div>
+          <div class="stat">
+            <small>Slugs Loaded</small>
+            <strong id="slugStat">--</strong>
+            <div class="note" id="checklistStat">--</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="panel">
+        <h2>Endpoint</h2>
+        <div class="endpoint-grid">
+          <div>
+            <label for="hostInput">Host</label>
+            <input id="hostInput" value="127.0.0.1" />
+          </div>
+          <div>
+            <label for="portInput">Port</label>
+            <input id="portInput" value="8080" type="number" min="1" max="65535" />
+          </div>
+          <div>
+            <button id="refreshButton">Refresh data</button>
+          </div>
+        </div>
+      </section><section class="panel">
+        <div class="inline" style="justify-content: space-between; align-items: flex-end">
+          <div>
+            <h2>Checklist board</h2>
+            <p class="note">
+              Slugs are loaded from SQLite and tagged with indicators derived from
+              <code>docs/design/indicator_plan.md</code>.
+            </p>
+          </div>
+          <div style="max-width: 260px; width: 100%">
+            <label for="checklistSelect">Checklist</label>
+            <select id="checklistSelect"></select>
+          </div>
+        </div>
+        <div style="overflow-x: auto">
+          <table>
+            <thead>
+              <tr>
+                <th>Indicator</th>
+                <th>Procedure</th>
+                <th>Action / Spec</th>
+                <th>Status</th>
+                <th>Result</th>
+                <th>Comment</th>
+                <th>ID</th>
+              </tr>
+            </thead>
+            <tbody id="slugTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Update state (minimal contract)</h2>
+        <div class="grid">
+          <div>
+            <label for="slugSelect">Address ID</label>
+            <select id="slugSelect"></select>
+          </div>
+          <div>
+            <label for="statusSelect">Status</label>
+            <select id="statusSelect">
+              <option>Pass</option>
+              <option>Fail</option>
+              <option>NA</option>
+              <option>Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid" style="margin-top: 1rem">
+          <div>
+            <label for="resultInput">Result</label>
+            <input id="resultInput" placeholder="e.g., 24.1V, link up, pending" />
+          </div>
+          <div>
+            <label for="commentInput">Comment</label>
+            <textarea id="commentInput" placeholder="Notes, observations, or flags"></textarea>
+          </div>
+        </div>
+        <div style="margin-top: 0.8rem" class="inline">
+          <button id="updateButton">Send update</button>
+          <button class="secondary" id="loadSlugButton">Load slug details</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="inline" style="justify-content: space-between; align-items: center">
+          <div>
+            <h2>Markdown round-trip</h2>
+            <p class="note">
+              Export canonical Markdown for the selected checklist or import updated Markdown to
+              replace runtime state.
+            </p>
+          </div>
+          <div style="max-width: 260px; width: 100%">
+            <label for="mdChecklistSelect">Checklist</label>
+            <select id="mdChecklistSelect"></select>
+          </div>
+        </div>
+        <div class="inline" style="margin: 0.6rem 0; gap: 0.8rem">
+          <button class="secondary" id="exportMarkdownButton">Load Markdown</button>
+          <button id="importMarkdownButton">Import Markdown</button>
+        </div>
+        <textarea id="markdownArea" style="min-height: 220px" placeholder="# Section&#10;&#10;## Procedure&#10;- **Action**: ..."></textarea>
+      </section>
+
+      <section class="panel">
+        <h2>API console</h2>
+        <div class="command-grid">
+          <div class="command-card">
+            <h4>Command catalog</h4>
+            <p class="note">Enumerate every API surface.</p>
+            <button data-command="commands" class="secondary">Send request</button>
+          </div>
+          <div class="command-card">
+            <h4>Health</h4>
+            <p class="note">Readiness + uptime + version.</p>
+            <button data-command="health" class="secondary">Send request</button>
+          </div>
+          <div class="command-card">
+            <h4>Checklists</h4>
+            <p class="note">List all checklist names.</p>
+            <button data-command="checklists" class="secondary">Send request</button>
+          </div>
+          <div class="command-card">
+            <h4>Get slug</h4>
+            <p class="note">Uses the selected ID.</p>
+            <button data-command="slug" class="secondary">Send request</button>
+          </div>
+          <div class="command-card">
+            <h4>Checklist slugs</h4>
+            <p class="note">Uses the selected checklist.</p>
+            <button data-command="checklist" class="secondary">Send request</button>
+          </div>
+          <div class="command-card">
+            <h4>Relationships</h4>
+            <p class="note">Graph edges for the selected ID.</p>
+            <button data-command="relationships" class="secondary">Send request</button>
+          </div>
+          <div class="command-card">
+            <h4>Export JSON</h4>
+            <p class="note">Full slug export.</p>
+            <button data-command="exportJson" class="secondary">Send request</button>
+          </div>
+          <div class="command-card">
+            <h4>Sample update</h4>
+            <p class="note">PATCH minimal contract for the selected ID.</p>
+            <button data-command="updateSample" class="secondary">Send request</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Response</h2>
+        <pre id="responseArea">Waiting for a command...</pre>
+      </section>
+
+      <section class="panel human-portal" id="humanPortal">
+        <div class="portal-bar">
+          <div>
+            <p class="mini-label">Portal</p>
+            <div class="portal-rail">
+              <span class="portal-chip">Checklist Portal</span>
+              <span class="portal-chip">Survey Portal</span>
+              <span class="portal-chip">Data Portal</span>
+            </div>
+          </div>
+          <div class="portal-actions">
+            <button class="secondary" id="openTesting">Testing</button>
+            <div style="min-width:200px;">
+              <label for="humanChecklistSelect">Checklist</label>
+              <select id="humanChecklistSelect"></select>
+            </div>
+          </div>
+        </div>
+        <div class="portal-bar">
+          <button class="secondary" id="portalExportJson">Export JSON</button>
+          <button class="secondary" id="portalExportJsonl">Export JSONL</button>
+          <button class="secondary" id="portalExportMarkdown">Export Markdown</button>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="human-table">
+            <thead>
+              <tr>
+                <th>Procedure</th>
+                <th>Spec</th>
+                <th>Status</th>
+                <th>Result</th>
+                <th>Comment</th>
+                <th>Ind</th>
+              </tr>
+            </thead>
+            <tbody id="humanTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel testing-panel" id="testingPanel">
+        <div class="portal-bar">
+          <div>
+            <h2 style="margin:0;">Testing Hub (dev)</h2>
+            <p class="note">Smoke-only from here; full suite runs via CLI/CI. Use a dedicated test DB.</p>
+          </div>
+          <div class="portal-actions">
+            <button class="secondary" id="closeTesting">Close</button>
+          </div>
+        </div>
+        <div class="testing-grid">
+          <div class="testing-card">
+            <h3>Smoke (UI)</h3>
+            <p>Copies the smoke command; run in PowerShell from repo root.</p>
+            <button class="secondary copy-cmd" data-cmd="scripts/run_tests.ps1 -Label smoke">Copy smoke command</button>
+            <code>scripts/run_tests.ps1 -Label smoke</code>
+            <p class="note">Runs CTest `smoke` label (MCP bridge + schema integration). Uses temp test DB.</p>
+          </div>
+          <div class="testing-card">
+            <h3>Full suite (CLI)</h3>
+            <p>Use for slow/extended checks.</p>
+            <button class="secondary copy-cmd" data-cmd="scripts/run_tests.ps1 -Label all">Copy full command</button>
+            <code>scripts/run_tests.ps1 -Label all</code>
+            <p class="note">Execute in terminal; UI stays smoke-only.</p>
+          </div>
+          <div class="testing-card">
+            <h3>Folders</h3>
+            <p>Copy paths to open in your terminal or editor.</p>
+            <button class="secondary copy-cmd" data-cmd="tests">Copy tests path</button>
+            <code>tests</code>
+            <button class="secondary copy-cmd" data-cmd="scripts/run_tests.ps1">Copy runner path</button>
+            <code>scripts/run_tests.ps1</code>
+            <p class="note">Logs stay in the terminal; UI only shows summaries.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const responseArea = document.getElementById("responseArea");
+      const checklistSelect = document.getElementById("checklistSelect");
+      const slugTableBody = document.getElementById("slugTableBody");
+      const slugSelect = document.getElementById("slugSelect");
+      const statusSelect = document.getElementById("statusSelect");
+      const resultInput = document.getElementById("resultInput");
+      const commentInput = document.getElementById("commentInput");
+      const uptimeStat = document.getElementById("uptimeStat");
+      const versionStat = document.getElementById("versionStat");
+      const slugStat = document.getElementById("slugStat");
+      const checklistStat = document.getElementById("checklistStat");
+      const mdChecklistSelect = document.getElementById("mdChecklistSelect");
+      const markdownArea = document.getElementById("markdownArea");
+      const humanChecklistSelect = document.getElementById("humanChecklistSelect");
+      const humanPortal = document.getElementById("humanPortal");
+      const humanTableBody = document.getElementById("humanTableBody");
+      const testingPanel = document.getElementById("testingPanel");
+
+      let state = {
+        selectedChecklist: "",
+        selectedMarkdownChecklist: "",
+        slugs: [],
+        mode: "human",
+      };
+
+      function baseUrl() {
+        const host = document.getElementById("hostInput").value || "127.0.0.1";
+        const port = document.getElementById("portInput").value || "8080";
+        return `http://${host}:${port}`;
+      }
+
+      function indicator(status, comment) {
+        const trimmed = (comment || "").trim();
+        switch (status) {
+          case "Pass":
+            return { label: "PASS", tone: "tone-success", tooltip: "Meets the required spec." };
+          case "Fail":
+            return trimmed
+              ? {
+                  label: "FLAG",
+                  tone: "tone-warning",
+                  tooltip: "Failure with context. Double-check the note.",
+                }
+              : {
+                  label: "FAIL",
+                  tone: "tone-danger",
+                  tooltip: "Add a comment or update the status.",
+                };
+          case "Other":
+            return trimmed
+              ? {
+                  label: "OTHER",
+                  tone: "tone-info",
+                  tooltip: "Non-standard state documented in the comment.",
+                }
+              : {
+                  label: "OTHER",
+                  tone: "tone-warning",
+                  tooltip: "Please explain this deviation in the comment.",
+                };
+          case "NA":
+            return { label: "N/A", tone: "tone-neutral", tooltip: "Not applicable for this run." };
+          default:
+            return { label: "--", tone: "tone-base", tooltip: "No valid status selected yet." };
+        }
+      }
+
+      function setResponse(text) {
+        responseArea.textContent = text;
+      }
+
+      function showTesting(active) {
+        testingPanel.classList.toggle("active", active);
+        if (active) {
+          testingPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }
+
+      document.getElementById("openTesting").addEventListener("click", () => showTesting(true));
+      document.getElementById("closeTesting").addEventListener("click", () => showTesting(false));
+
+      document.querySelectorAll(".copy-cmd").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const cmd = btn.getAttribute("data-cmd");
+          try {
+            await navigator.clipboard.writeText(cmd);
+            setResponse(`Copied: ${cmd}`);
+          } catch (err) {
+            setResponse(`Copy failed: ${err.message}`);
+          }
+        });
+      });
+      }
+
+      function formatJSON(text) {
+        try {
+          const json = JSON.parse(text);
+          return JSON.stringify(json, null, 2);
+        } catch (_) {
+          return text;
+        }
+      }
+
+      function renderSlugs(slugs) {
+        slugTableBody.innerHTML = "";
+        slugSelect.innerHTML = "";
+
+        slugs.forEach((slug) => {
+          const row = document.createElement("tr");
+          const mark = indicator(slug.status, slug.comment);
+
+          row.innerHTML = `
+            <td title="${mark.tooltip}"><span class="indicator ${mark.tone}">${mark.label}</span></td>
+            <td><strong>${slug.procedure}</strong><div class="note">${slug.section}</div></td>
+            <td><div>${slug.action}</div><div class="note">${slug.spec}</div></td>
+            <td>${slug.status}</td>
+            <td>${slug.result || ""}</td>
+            <td>${slug.comment || ""}</td>
+            <td class="note">${slug.address_id}</td>
+          `;
+          slugTableBody.appendChild(row);
+
+          const option = document.createElement("option");
+          option.value = slug.address_id;
+          option.textContent = `${slug.procedure} (${slug.address_id.slice(0, 6)}...)`;
+          slugSelect.appendChild(option);
+        });
+
+        if (slugs.length > 0 && !slugSelect.value) {
+          slugSelect.value = slugs[0].address_id;
+        }
+        slugStat.textContent = slugs.length.toString();
+      }
+
+      async function fetchJson(path, options = {}) {
+        const target = `${baseUrl()}${path}`;
+        const response = await fetch(target, options);
+        const text = await response.text();
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${text}`);
+        }
+        return JSON.parse(text);
+      }
+
+      async function loadChecklists() {
+        const data = await fetchJson("/api/checklists");
+        const lists = data.checklists || [];
+        checklistSelect.innerHTML = "";
+        mdChecklistSelect.innerHTML = "";
+        humanChecklistSelect.innerHTML = "";
+        lists.forEach((name) => {
+          const option = document.createElement("option");
+          option.value = name;
+          option.textContent = name;
+          checklistSelect.appendChild(option);
+
+          const mdOpt = document.createElement("option");
+          mdOpt.value = name;
+          mdOpt.textContent = name;
+          mdChecklistSelect.appendChild(mdOpt);
+
+          const humanOpt = document.createElement("option");
+          humanOpt.value = name;
+          humanOpt.textContent = name;
+          humanChecklistSelect.appendChild(humanOpt);
+        });
+        if (lists.length > 0) {
+          state.selectedChecklist = lists[0];
+          checklistSelect.value = lists[0];
+          state.selectedMarkdownChecklist = lists[0];
+          mdChecklistSelect.value = lists[0];
+          humanChecklistSelect.value = lists[0];
+        }
+        checklistStat.textContent = `${lists.length} checklist(s)`;
+        return state.selectedChecklist;
+      }
+
+      async function loadSlugsForChecklist(checklist) {
+        if (!checklist) {
+          slugTableBody.innerHTML = "";
+          slugSelect.innerHTML = "";
+          return;
+        }
+        const data = await fetchJson(`/api/checklist/${encodeURIComponent(checklist)}`);
+        state.slugs = data.slugs || [];
+        renderSlugs(state.slugs);
+        renderHumanPortal();
+      }
+
+      async function refreshHealth() {
+        const data = await fetchJson("/api/health");
+        uptimeStat.textContent = `${Math.round((data.uptime_ms || 0) / 1000)}s`;
+        versionStat.textContent = `Version ${data.version || "--"}`;
+      }
+
+      async function refreshAll() {
+        setResponse("Refreshing data...");
+        try {
+          await refreshHealth();
+          const checklist = await loadChecklists();
+          await loadSlugsForChecklist(checklist);
+          setResponse("Refreshed checklist + health data.");
+        } catch (error) {
+          setResponse(error.message);
+        }
+      }
+
+      async function exportMarkdown() {
+        const checklist = state.selectedMarkdownChecklist;
+        if (!checklist) {
+          setResponse("Select a checklist to export.");
+          return;
+        }
+        setResponse(`Exporting Markdown for ${checklist}...`);
+        try {
+          const response = await fetch(`${baseUrl()}/api/export/markdown/${encodeURIComponent(checklist)}`);
+          const text = await response.text();
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${text}`);
+          }
+          markdownArea.value = text;
+          setResponse(`Loaded Markdown for ${checklist}.`);
+        } catch (error) {
+          setResponse(error.message);
+        }
+      }
+
+      async function importMarkdown() {
+        const checklist = state.selectedMarkdownChecklist;
+        const content = markdownArea.value;
+        if (!checklist) {
+          setResponse("Select a checklist to import.");
+          return;
+        }
+        if (!content.trim()) {
+          setResponse("Provide Markdown content to import.");
+          return;
+        }
+        setResponse(`Importing Markdown for ${checklist}...`);
+        try {
+          const response = await fetch(
+            `${baseUrl()}/api/import/markdown?checklist=${encodeURIComponent(checklist)}`,
+            { method: "POST", headers: { "Content-Type": "text/markdown" }, body: content }
+          );
+          const text = await response.text();
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${text}`);
+          }
+          setResponse(`Imported Markdown for ${checklist}: ${formatJSON(text)}`);
+          await loadSlugsForChecklist(checklist);
+        } catch (error) {
+          setResponse(error.message);
+        }
+      }
+
+      function renderHumanPortal() {
+        if (!humanPortal || !humanTableBody) return;
+        humanTableBody.innerHTML = "";
+        const rows = state.slugs || [];
+        rows.forEach((slug, idx) => {
+          const tr = document.createElement("tr");
+
+          const procTd = document.createElement("td");
+          const strong = document.createElement("strong");
+          strong.textContent = slug.procedure;
+          const detailLink = document.createElement("a");
+          detailLink.href = "#";
+          detailLink.textContent = "[details]";
+          detailLink.style.marginLeft = "8px";
+          procTd.appendChild(strong);
+          procTd.appendChild(detailLink);
+          tr.appendChild(procTd);
+
+          const specTd = document.createElement("td");
+          specTd.className = "compact-spec";
+          specTd.textContent = slug.spec || "";
+          tr.appendChild(specTd);
+
+          const statusTd = document.createElement("td");
+          statusTd.textContent = slug.status || "";
+          tr.appendChild(statusTd);
+
+          const resultTd = document.createElement("td");
+          resultTd.textContent = slug.result || "";
+          tr.appendChild(resultTd);
+
+          const commentTd = document.createElement("td");
+          commentTd.textContent = slug.comment || "";
+          tr.appendChild(commentTd);
+
+          const indicatorTd = document.createElement("td");
+          const mark = indicator(slug.status, slug.comment);
+          indicatorTd.innerHTML = `<span class="indicator ${mark.tone}" title="${mark.tooltip}">${mark.label}</span>`;
+          tr.appendChild(indicatorTd);
+
+          const detailTr = document.createElement("tr");
+          detailTr.className = "detail-row";
+          detailTr.style.display = "none";
+          const detailTd = document.createElement("td");
+          detailTd.colSpan = 6;
+          detailTd.className = "detail-box";
+          detailTd.innerHTML = `<div class="mini-label">Instructions</div><div>${slug.instructions || "—"}</div><div class="mini-label" style="margin-top:6px;">Relationships</div><div>${
+            (slug.relationships || [])
+              .map((edge) => `${edge.predicate} ${edge.target}`)
+              .join("<br>") || "(none)"
+          }</div>`;
+          detailTr.appendChild(detailTd);
+
+          detailLink.addEventListener("click", (event) => {
+            event.preventDefault();
+            const open = detailTr.style.display !== "none";
+            detailTr.style.display = open ? "none" : "table-row";
+            detailLink.textContent = open ? "[details]" : "[hide]";
+          });
+
+          humanTableBody.appendChild(tr);
+          humanTableBody.appendChild(detailTr);
+        });
+      }
+
+      async function sendUpdate() {
+        const address_id = slugSelect.value;
+        if (!address_id) {
+          setResponse("Select an Address ID first.");
+          return;
+        }
+        const payload = {
+          address_id,
+          status: statusSelect.value,
+          result: resultInput.value.trim(),
+          comment: commentInput.value.trim(),
+        };
+        try {
+          const data = await fetchJson("/api/update", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          setResponse(JSON.stringify(data, null, 2));
+          await loadSlugsForChecklist(state.selectedChecklist);
+        } catch (error) {
+          setResponse(error.message);
+        }
+      }
+
+      async function loadSingleSlug() {
+        const address_id = slugSelect.value;
+        if (!address_id) {
+          setResponse("Select an Address ID first.");
+          return;
+        }
+        try {
+          const data = await fetchJson(`/api/slug/${encodeURIComponent(address_id)}`);
+          resultInput.value = data.result || "";
+          commentInput.value = data.comment || "";
+          statusSelect.value = data.status || "Pass";
+          setResponse(JSON.stringify(data, null, 2));
+        } catch (error) {
+          setResponse(error.message);
+        }
+      }
+
+      async function sendCommand(commandKey) {
+        const command = commands[commandKey];
+        if (!command) {
+          setResponse(`Unknown command: ${commandKey}`);
+          return;
+        }
+        const path = typeof command.buildPath === "function" ? command.buildPath() : command.path;
+        if (!path) {
+          setResponse("Missing required path inputs for this command.");
+          return;
+        }
+        const body =
+          typeof command.buildBody === "function" ? command.buildBody() : command.body ?? null;
+
+        const requestInit = { method: command.method, headers: {} };
+        if (body) {
+          requestInit.body = body;
+          requestInit.headers["Content-Type"] = "application/json";
+        }
+
+        setResponse(`Sending ${command.method} ${baseUrl()}${path}...`);
+
+        try {
+          const response = await fetch(`${baseUrl()}${path}`, requestInit);
+          const text = await response.text();
+          setResponse(`Status: ${response.status}\n${formatJSON(text)}`);
+        } catch (error) {
+          setResponse(`Request failed: ${error.message}`);
+        }
+      }
+
+      const commands = {
+        commands: { method: "GET", path: "/api/commands" },
+        health: { method: "GET", path: "/api/health" },
+        checklists: { method: "GET", path: "/api/checklists" },
+        slug: {
+          method: "GET",
+          buildPath: () =>
+            slugSelect.value ? `/api/slug/${encodeURIComponent(slugSelect.value)}` : "",
+        },
+        checklist: {
+          method: "GET",
+          buildPath: () =>
+            state.selectedChecklist
+              ? `/api/checklist/${encodeURIComponent(state.selectedChecklist)}`
+              : "",
+        },
+        relationships: {
+          method: "GET",
+          buildPath: () =>
+            slugSelect.value ? `/api/relationships/${encodeURIComponent(slugSelect.value)}` : "",
+        },
+        exportJson: { method: "GET", path: "/api/export/json" },
+        updateSample: {
+          method: "PATCH",
+          path: "/api/update",
+          buildBody: () => {
+            if (!slugSelect.value) return null;
+            return JSON.stringify({
+              address_id: slugSelect.value,
+              status: "Other",
+              comment: "Updated from web console",
+            });
+          },
+        },
+      };
+
+      document.querySelectorAll("button[data-command]").forEach((button) => {
+        button.addEventListener("click", () => sendCommand(button.dataset.command));
+      });
+
+      document.getElementById("refreshButton").addEventListener("click", refreshAll);
+      document.getElementById("updateButton").addEventListener("click", sendUpdate);
+      document.getElementById("loadSlugButton").addEventListener("click", loadSingleSlug);
+      checklistSelect.addEventListener("change", async (event) => {
+        state.selectedChecklist = event.target.value;
+        await loadSlugsForChecklist(state.selectedChecklist);
+      });
+      mdChecklistSelect.addEventListener("change", (event) => {
+        state.selectedMarkdownChecklist = event.target.value;
+      });
+      document.getElementById("exportMarkdownButton").addEventListener("click", exportMarkdown);
+      document.getElementById("importMarkdownButton").addEventListener("click", importMarkdown);
+      humanChecklistSelect.addEventListener("change", async (event) => {
+        state.selectedChecklist = event.target.value;
+        state.selectedMarkdownChecklist = event.target.value;
+        checklistSelect.value = event.target.value;
+        mdChecklistSelect.value = event.target.value;
+        await loadSlugsForChecklist(state.selectedChecklist);
+      });
+      document.getElementById("portalExportJson").addEventListener("click", () => {
+        const checklist = state.selectedChecklist || state.selectedMarkdownChecklist;
+        if (!checklist) return setResponse("Select a checklist first.");
+        window.open(`${baseUrl()}/api/checklist/${encodeURIComponent(checklist)}`, "_blank");
+      });
+      document.getElementById("portalExportJsonl").addEventListener("click", () => {
+        window.open(`${baseUrl()}/api/export/jsonl`, "_blank");
+      });
+      document.getElementById("portalExportMarkdown").addEventListener("click", () => {
+        const checklist = state.selectedChecklist || state.selectedMarkdownChecklist;
+        if (!checklist) return setResponse("Select a checklist first.");
+        window.open(
+          `${baseUrl()}/api/export/markdown/${encodeURIComponent(checklist)}`,
+          "_blank"
+        );
+      });
+
+      renderChallenge();
+      refreshAll();
+    </script>
+  </body>
+</html>
+
+
+
+

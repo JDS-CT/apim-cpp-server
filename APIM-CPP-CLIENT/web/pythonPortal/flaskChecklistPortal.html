@@ -1,0 +1,3264 @@
+<!-- jds: when I spin up flask and visit http://127.0.0.1:5000/apps/APIM_PM/?checklist=README.md we get the checklist portal, reading from the README.md file, or data it pulls related to this from the database. This is the primary purpose of this application, being able to fill in checklsits. Here we have an example checklist, it is the readme checklist found in this local folder with this html file in ./README.md this file is a slightly older version of the Markdwon schema we have for the current site, it should not be used verbatim, but I believe will be understood by Codex. -->
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>APIM</title>
+    
+    
+    
+    
+    <style>
+    :root {
+  color-scheme: dark;
+  --portal-bg: radial-gradient(circle at 18% 16%, rgba(96, 165, 250, 0.2), transparent 45%),
+                radial-gradient(circle at 84% 12%, rgba(129, 140, 248, 0.24), transparent 52%),
+                #0b1120;
+  --portal-surface: rgba(15, 23, 42, 0.82);
+  --portal-surface-soft: rgba(15, 23, 42, 0.7);
+  --portal-border: rgba(148, 163, 184, 0.28);
+  --portal-border-soft: rgba(148, 163, 184, 0.18);
+  --portal-border-strong: rgba(148, 163, 184, 0.36);
+  --portal-text: #e2e8f0;
+  --portal-text-muted: rgba(226, 232, 240, 0.75);
+  --portal-text-subtle: rgba(148, 163, 184, 0.68);
+  --portal-link: #60a5fa;
+  --portal-link-strong: #3b82f6;
+  --portal-shadow: rgba(15, 23, 42, 0.45);
+  --portal-glow: rgba(59, 130, 246, 0.28);
+  --portal-card-radius: 16px;
+  --portal-blur: 14px;
+  --portal-font: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body[data-theme="glass_portal"],
+body.portal-body {
+  margin: 0;
+  font-family: var(--portal-font);
+  background: var(--portal-bg);
+  background-attachment: fixed;
+  color: var(--portal-text);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.portal-body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(circle at 18% 16%, rgba(96, 165, 250, 0.2), transparent 45%),
+              radial-gradient(circle at 84% 12%, rgba(129, 140, 248, 0.24), transparent 52%);
+  opacity: 0.82;
+  pointer-events: none;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.portal-header {
+  display: grid;
+  grid-template-columns: minmax(280px, 400px) 1fr;
+  gap: 20px;
+  padding: 18px 28px 16px;
+  background: rgba(11, 15, 25, 0.78);
+  backdrop-filter: blur(var(--portal-blur));
+  border-bottom: 1px solid var(--portal-border);
+}
+
+.portal-picker {
+  display: grid;
+  gap: 6px;
+}
+
+.portal-picker label {
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--portal-text-subtle);
+}
+
+.portal-picker select {
+  appearance: none;
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--portal-border-strong);
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.92), rgba(30, 41, 59, 0.92));
+  background-color: rgba(15, 23, 42, 0.92);
+  color: var(--portal-text);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  color-scheme: dark;
+  transition: box-shadow 120ms ease, border-color 120ms ease;
+}
+
+.portal-picker select option {
+  background-color: rgb(15, 23, 42);
+  color: var(--portal-text);
+}
+
+.portal-picker select option:disabled,
+.portal-picker select option[data-disabled="true"] {
+  color: var(--portal-text-subtle);
+  background-color: rgba(15, 23, 42, 0.82);
+}
+
+.portal-picker select:focus-visible {
+  outline: 2px solid var(--portal-link);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(96, 165, 250, 0.25);
+}
+
+.portal-picker select:hover:not(:disabled) {
+  border-color: rgba(96, 165, 250, 0.45);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.18);
+}
+
+.portal-picker select:disabled {
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
+.portal-header.survey-header {
+  align-items: center;
+  gap: 24px;
+  padding: 18px 28px 16px;
+}
+
+.portal-header.survey-header[data-show-brand="false"] {
+  grid-template-columns: 1fr;
+}
+
+.survey-header__brand {
+  display: grid;
+  gap: 10px;
+}
+
+.survey-header__title {
+  display: grid;
+  gap: 4px;
+}
+
+.survey-header__title strong {
+  font-size: 20px;
+  line-height: 1.2;
+}
+
+.survey-breadcrumb {
+  grid-column: 1 / -1;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--portal-text-subtle);
+}
+
+.survey-breadcrumb ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: inline-flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.survey-breadcrumb li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.survey-breadcrumb li + li::before {
+  content: "/";
+  color: var(--portal-text-subtle);
+  opacity: 0.6;
+}
+
+.survey-breadcrumb a {
+  color: var(--portal-text-muted);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.survey-breadcrumb a:hover,
+.survey-breadcrumb a:focus-visible {
+  color: var(--portal-link);
+  outline: none;
+}
+
+.survey-breadcrumb li[aria-current="page"] {
+  color: var(--portal-text);
+  font-weight: 600;
+}
+
+.survey-header__subtitle {
+  font-size: 13px;
+  color: var(--portal-text-subtle);
+}
+
+.survey-header__controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 16px;
+}
+
+.survey-header__controls[data-full-width="true"] {
+  grid-column: 1 / -1;
+  justify-content: space-between;
+}
+
+.survey-header__controls[data-full-width="true"] .portal-picker {
+  margin-right: auto;
+}
+
+.survey-header__controls .portal-picker {
+  min-width: 220px;
+  max-width: 320px;
+}
+
+.survey-header__actions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.survey-header__actions.feature-rail {
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.feature-rail {
+  justify-self: end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.feature-rail .feature-label {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--portal-text-subtle);
+}
+
+.feature-rail-nav {
+  display: inline-flex;
+  padding: 6px;
+  border-radius: 999px;
+  border: 1px solid var(--portal-border-soft);
+  background: rgba(15, 23, 42, 0.65);
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.08);
+  gap: 6px;
+}
+
+.feature-rail-nav[data-group="view"] {
+  background: rgba(15, 23, 42, 0.72);
+}
+
+.feature-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--portal-text-muted);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 120ms ease, color 120ms ease, transform 120ms ease, box-shadow 120ms ease;
+  min-width: 0;
+}
+
+.feature-chip:hover,
+.feature-chip:focus-visible {
+  color: var(--portal-link);
+  background: rgba(37, 99, 235, 0.18);
+  outline: none;
+}
+
+.feature-chip[data-active="true"] {
+  color: var(--portal-link);
+  background: rgba(37, 99, 235, 0.26);
+  border-color: rgba(96, 165, 250, 0.35);
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.22);
+}
+
+@media (max-width: 900px) {
+  .portal-header {
+    grid-template-columns: 1fr;
+    align-items: flex-start;
+    gap: 18px;
+  }
+
+  .survey-header__controls {
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 12px;
+  }
+
+  .survey-header__controls .portal-picker {
+    width: 100%;
+  }
+
+  .survey-header__actions {
+    justify-content: flex-start;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .survey-header__actions .feature-rail-nav {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .survey-breadcrumb {
+    justify-content: flex-start;
+    line-height: 1.6;
+  }
+}
+
+.automation-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--portal-border);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.automation-on {
+  background: rgba(34, 197, 94, 0.18);
+  color: rgba(134, 239, 172, 0.92);
+  border-color: rgba(34, 197, 94, 0.32);
+}
+
+.automation-off {
+  background: rgba(248, 113, 113, 0.18);
+  color: rgba(252, 165, 165, 0.92);
+  border-color: rgba(248, 113, 113, 0.32);
+}
+
+.automation-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--portal-border);
+  background: rgba(15, 23, 42, 0.82);
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--portal-text);
+  box-shadow: 0 12px 26px rgba(2, 6, 23, 0.35);
+}
+
+.automation-indicator .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(96, 165, 250, 0.85);
+  box-shadow: 0 0 10px rgba(37, 99, 235, 0.4);
+}
+
+.automation-indicator.on .dot {
+  background: rgba(34, 197, 94, 0.92);
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
+}
+
+.automation-indicator.off .dot {
+  background: rgba(248, 113, 113, 0.9);
+  box-shadow: 0 0 10px rgba(248, 113, 113, 0.45);
+}
+
+.portal-main {
+  flex: 1 1 auto;
+  display: grid;
+  padding: 32px 28px 60px;
+  gap: 28px;
+}
+
+.portal-main .status-pill {
+  justify-self: start;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: rgba(34, 197, 94, 0.16);
+  color: rgba(134, 239, 172, 0.92);
+  border: 1px solid rgba(34, 197, 94, 0.32);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.placeholder-panel {
+  max-width: 720px;
+  padding: 32px;
+  border-radius: var(--portal-card-radius);
+  border: 1px solid var(--portal-border);
+  background: rgba(15, 23, 42, 0.78);
+  box-shadow: 0 28px 68px rgba(2, 6, 23, 0.42);
+  display: grid;
+  gap: 16px;
+}
+
+.placeholder-panel h1 {
+  margin: 0;
+  font-size: 28px;
+  letter-spacing: -0.01em;
+}
+
+.placeholder-panel p {
+  margin: 0;
+  color: var(--portal-text-muted);
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.portal-shell,
+.survey-shell {
+  display: grid;
+  gap: 18px;
+  border-radius: var(--portal-card-radius);
+  border: 1px solid var(--portal-border);
+  background: rgba(15, 23, 42, 0.82);
+  box-shadow: 0 24px 54px rgba(2, 6, 23, 0.46);
+  padding: 28px;
+}
+
+.portal-body.placeholder-mode .portal-shell,
+.portal-body.placeholder-mode .app-header,
+.portal-body.placeholder-mode #tex-output-status,
+.portal-body.placeholder-mode table,
+.portal-body.placeholder-mode .nav-hint,
+.portal-body.placeholder-mode #recent-files {
+  display: none !important;
+}
+
+.portal-body.placeholder-mode .placeholder-panel {
+  display: grid;
+}
+
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+}
+
+.app-title h1 {
+  margin: 0;
+  font-size: 26px;
+}
+
+.app-subtitle {
+  margin: 6px 0 0;
+  color: var(--portal-text-muted);
+  font-size: 15px;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.toolbar-group {
+  position: relative;
+}
+
+.toolbar-toggle,
+.toolbar-action {
+  border-radius: 12px;
+  border: 1px solid var(--portal-border);
+  background: rgba(30, 41, 59, 0.78);
+  color: var(--portal-text);
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
+}
+
+.toolbar-toggle:hover,
+.toolbar-action:hover {
+  background: rgba(30, 64, 175, 0.55);
+  box-shadow: 0 10px 24px rgba(30, 64, 175, 0.25);
+}
+
+.toolbar-toggle[disabled],
+.toolbar-action[disabled] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.toolbar-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  min-width: 220px;
+  background: rgba(15, 23, 42, 0.96);
+  border: 1px solid var(--portal-border);
+  border-radius: 18px;
+  box-shadow: 0 22px 48px rgba(2, 6, 23, 0.46);
+  padding: 12px;
+  z-index: 40;
+  gap: 8px;
+  max-width: min(320px, calc(100vw - 32px));
+}
+
+.toolbar-group[data-menu-align='center'] > .toolbar-menu,
+.toolbar-menu[data-menu-align='center'] {
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+}
+
+.toolbar-group[data-menu-align='end'] > .toolbar-menu,
+.toolbar-menu[data-menu-align='end'] {
+  left: auto;
+  right: 0;
+  transform: none;
+}
+
+.toolbar-menu[hidden] {
+  display: none;
+}
+
+.toolbar-status {
+  font-size: 13px;
+  color: var(--portal-text-subtle);
+}
+
+.tex-output-status {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 18px;
+  border-radius: 14px;
+  border: 1px solid var(--portal-border);
+  background: rgba(15, 23, 42, 0.72);
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.1);
+}
+
+.tex-output-status code {
+  background: rgba(2, 6, 23, 0.72);
+  border: 1px solid rgba(51, 65, 85, 0.85);
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  max-width: 520px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tex-output-status button {
+  border-radius: 10px;
+  border: 1px solid rgba(59, 130, 246, 0.48);
+  background: linear-gradient(180deg, rgba(37, 99, 235, 0.92), rgba(29, 78, 216, 0.92));
+  color: #fff;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.tex-output-status button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.nav-hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--portal-text-subtle);
+}
+
+.nav-hint code {
+  background: rgba(2, 6, 23, 0.72);
+  padding: 4px 6px;
+  border-radius: 6px;
+  border: 1px solid rgba(51, 65, 85, 0.85);
+  color: var(--portal-text);
+}
+
+.overview-shell {
+  display: grid;
+  gap: 28px;
+}
+
+.overview-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.overview-title {
+  display: grid;
+  gap: 16px;
+  max-width: 720px;
+}
+
+.overview-title h1 {
+  margin: 0;
+  font-size: 28px;
+  letter-spacing: -0.01em;
+}
+
+.overview-title p {
+  margin: 0;
+  color: var(--portal-text-muted);
+  line-height: 1.6;
+  font-size: 16px;
+}
+
+.status-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.private-assets {
+  display: grid;
+  gap: 24px;
+}
+
+.private-assets-copy p {
+  margin: 0;
+  color: var(--portal-text-muted);
+  line-height: 1.6;
+}
+
+.private-pack-card {
+  display: grid;
+  gap: 16px;
+}
+
+.pack-selector {
+  display: grid;
+  gap: 12px;
+}
+
+.pack-selector label {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--portal-text-subtle);
+}
+
+.pack-selector-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.pack-selector select {
+  min-width: 220px;
+  flex: 1 1 220px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--portal-border-strong);
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.92), rgba(30, 41, 59, 0.92));
+  background-color: rgba(15, 23, 42, 0.92);
+  color: var(--portal-text);
+  font-size: 15px;
+  font-weight: 600;
+  color-scheme: dark;
+}
+
+.pack-selector select option {
+  background-color: rgb(15, 23, 42);
+  color: var(--portal-text);
+}
+
+.pack-selector select:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.status-open.secondary {
+  background: rgba(30, 41, 59, 0.72);
+  border-color: rgba(148, 163, 184, 0.45);
+  color: var(--portal-text);
+}
+
+.status-open.secondary:hover,
+.status-open.secondary:focus-visible {
+  background: rgba(30, 41, 59, 0.88);
+  border-color: rgba(148, 163, 184, 0.6);
+}
+
+.pack-status {
+  margin: 0;
+  font-size: 14px;
+  color: var(--portal-text-muted);
+}
+
+.pack-status.success {
+  color: rgba(74, 222, 128, 0.9);
+}
+
+.pack-status.error {
+  color: rgba(248, 113, 113, 0.9);
+}
+
+.pack-status.pending {
+  color: var(--portal-link);
+}
+
+.pack-warnings {
+  margin: 0;
+  padding-left: 20px;
+  color: rgba(253, 224, 71, 0.92);
+  line-height: 1.5;
+}
+
+.pack-warnings[hidden] {
+  display: none;
+}
+
+.pack-warnings li {
+  margin: 0;
+}
+
+.private-asset-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.status-card {
+  border-radius: var(--portal-card-radius);
+  border: 1px solid var(--portal-border);
+  background: rgba(15, 23, 42, 0.86);
+  padding: 24px;
+  display: grid;
+  gap: 16px;
+  box-shadow: 0 22px 48px rgba(2, 6, 23, 0.38);
+}
+
+.status-card header {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.status-card h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.status-card p {
+  margin: 0;
+  color: var(--portal-text-muted);
+  line-height: 1.5;
+}
+
+.private-asset-purpose {
+  margin-top: 4px;
+}
+
+.private-asset-status {
+  margin: 0;
+  font-weight: 600;
+  color: var(--portal-text);
+}
+
+.private-asset-detail {
+  margin: 0;
+  color: var(--portal-text-muted);
+}
+
+.status-indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  background: rgba(96, 165, 250, 0.75);
+  box-shadow: 0 0 12px rgba(37, 99, 235, 0.4);
+  margin-top: 6px;
+}
+
+.status-card.status-ok .status-indicator {
+  background: rgba(34, 197, 94, 0.85);
+  box-shadow: 0 0 12px rgba(34, 197, 94, 0.4);
+}
+
+.status-card.status-missing .status-indicator {
+  background: rgba(248, 113, 113, 0.85);
+  box-shadow: 0 0 12px rgba(248, 113, 113, 0.45);
+}
+
+.status-card.status-pending .status-indicator {
+  background: rgba(250, 204, 21, 0.85);
+  box-shadow: 0 0 12px rgba(250, 204, 21, 0.4);
+}
+
+.status-path {
+  display: block;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(2, 6, 23, 0.72);
+  border: 1px solid rgba(71, 85, 105, 0.45);
+  color: var(--portal-text);
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status-detail {
+  font-size: 14px;
+  color: var(--portal-text-muted);
+}
+
+.status-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.status-open {
+  border-radius: 10px;
+  border: 1px solid rgba(59, 130, 246, 0.5);
+  background: linear-gradient(180deg, rgba(37, 99, 235, 0.92), rgba(29, 78, 216, 0.92));
+  color: #fff;
+  padding: 10px 18px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.status-open:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: rgba(30, 41, 59, 0.72);
+  border-color: rgba(71, 85, 105, 0.6);
+  color: var(--portal-text-muted);
+}
+
+.dev-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.dev-copy {
+  flex: 1 1 320px;
+  display: grid;
+  gap: 12px;
+}
+
+.dev-copy h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.dev-copy p {
+  margin: 0;
+  color: var(--portal-text-muted);
+  line-height: 1.6;
+}
+
+.dev-controls {
+  flex: 1 1 320px;
+  display: grid;
+  gap: 12px;
+  align-content: flex-start;
+}
+
+.dev-controls button {
+  border-radius: 999px;
+  border: 1px solid rgba(59, 130, 246, 0.48);
+  background: linear-gradient(180deg, rgba(37, 99, 235, 0.92), rgba(29, 78, 216, 0.92));
+  color: #fff;
+  padding: 10px 20px;
+  font-weight: 600;
+  cursor: pointer;
+  justify-self: flex-start;
+}
+
+.dev-controls button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dev-status {
+  margin: 0;
+  font-size: 14px;
+  color: var(--portal-text-muted);
+  min-height: 20px;
+}
+
+.dev-status.dev-error {
+  color: rgba(248, 113, 113, 0.95);
+}
+
+.dev-summary {
+  background: rgba(2, 6, 23, 0.78);
+  border: 1px solid rgba(71, 85, 105, 0.5);
+  border-radius: 12px;
+  padding: 16px;
+  max-height: 260px;
+  overflow: auto;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--portal-text);
+}
+
+.status-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 18px;
+  border-radius: 12px;
+  border: 1px solid var(--portal-border);
+  background: rgba(15, 23, 42, 0.92);
+  color: var(--portal-text);
+  box-shadow: 0 12px 32px rgba(2, 6, 23, 0.38);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(16px);
+  transition: opacity 150ms ease, transform 150ms ease;
+}
+
+.status-toast.show {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.status-toast.success {
+  border-color: rgba(34, 197, 94, 0.4);
+  box-shadow: 0 18px 44px rgba(34, 197, 94, 0.18);
+}
+
+.status-toast.info {
+  border-color: rgba(59, 130, 246, 0.4);
+  box-shadow: 0 18px 44px rgba(59, 130, 246, 0.18);
+}
+
+.status-toast.error {
+  border-color: rgba(248, 113, 113, 0.4);
+  box-shadow: 0 18px 44px rgba(248, 113, 113, 0.22);
+}
+
+.toast-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(96, 165, 250, 0.8);
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.45);
+}
+
+.status-toast.success .toast-indicator {
+  background: rgba(34, 197, 94, 0.9);
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
+}
+
+.status-toast.info .toast-indicator {
+  background: rgba(96, 165, 250, 0.85);
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.45);
+}
+
+.status-toast.error .toast-indicator {
+  background: rgba(248, 113, 113, 0.95);
+  box-shadow: 0 0 10px rgba(248, 113, 113, 0.55);
+}
+
+.toast-message {
+  flex: 1;
+  font-size: 14px;
+}
+
+.status-toast button {
+  border: none;
+  background: transparent;
+  color: var(--portal-text-muted);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.status-toast button:hover {
+  color: var(--portal-text);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 22px 54px rgba(2, 6, 23, 0.28);
+}
+
+table thead {
+  background: rgba(15, 23, 42, 0.9);
+}
+
+table th,
+table td {
+  border: 1px solid rgba(71, 85, 105, 0.42);
+  padding: 12px;
+  vertical-align: top;
+  font-size: 14px;
+}
+
+table th {
+  color: var(--portal-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 12px;
+}
+
+table tr:nth-child(even) td {
+  background: rgba(15, 23, 42, 0.78);
+}
+
+table tr:nth-child(odd) td {
+  background: rgba(15, 23, 42, 0.72);
+}
+
+input,
+select {
+  background: rgba(15, 23, 42, 0.78);
+  color: var(--portal-text);
+  border: 1px solid rgba(71, 85, 105, 0.65);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+input:focus,
+select:focus {
+  outline: 1px solid var(--portal-link);
+}
+
+.details-link {
+  color: var(--portal-link);
+  cursor: pointer;
+}
+
+.details-container {
+  background: rgba(15, 23, 42, 0.78);
+  border: 1px solid rgba(71, 85, 105, 0.38);
+  border-radius: 12px;
+  padding: 18px;
+}
+
+.indicator {
+  font-weight: 700;
+}
+
+.indicator.success {
+  color: #4ade80;
+}
+
+.indicator.fail {
+  color: #f87171;
+}
+
+@media (max-width: 960px) {
+  .portal-header {
+    grid-template-columns: 1fr;
+  }
+
+  .feature-rail {
+    justify-content: flex-start;
+  }
+
+  .overview-header {
+    flex-direction: column;
+  }
+
+  .dev-checks {
+    flex-direction: column;
+  }
+
+  .dev-controls {
+    width: 100%;
+  }
+
+  .status-toast {
+    left: 24px;
+    right: 24px;
+  }
+}
+
+@media (max-width: 720px) {
+  .portal-main {
+    padding: 24px 20px 48px;
+  }
+
+  .portal-shell,
+  .survey-shell {
+    padding: 20px;
+  }
+
+  .toolbar {
+    justify-content: flex-start;
+  }
+
+  .feature-rail-nav {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .status-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dev-controls button {
+    width: 100%;
+  }
+
+  .status-toast {
+    left: 16px;
+    right: 16px;
+  }
+}
+
+    </style>
+    
+    <style>
+        td.status-column {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 4px 12px;
+        }
+
+        td.status-column label {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin: 2px 6px 2px 0;
+            white-space: nowrap;
+        }
+
+        span.status-column__break {
+            flex-basis: 100%;
+            height: 0;
+            display: none;
+        }
+
+        @media (max-width: 1100px) {
+            span.status-column__break {
+                display: block;
+            }
+        }
+    </style>
+    <!-- Theme CSS can be found under apim_common/themes (e.g. portal_overview.css). -->
+</head>
+
+<body class="portal-body" data-theme="glass_portal" data-checklist-slug="readme"
+    data-workspace-prefix="/apps/APIM_PM/workspace/checklists">
+
+    <header class="portal-header">
+        <div class="portal-picker">
+            <label for="portal-selector">Portal</label>
+            <select id="portal-selector" >
+                
+                    <option value="/apps/APIM_PM/" selected>Checklist Portal</option>
+                
+                    <option value="/apps/APIM_newApp3/">APIM Portal Overview</option>
+                
+                    <option value="/apps/APIM_Survey/">APIM Environment Survey Portal</option>
+                
+                    <option value="/apps/Workspace/">Data Linking Portal</option>
+                
+            </select>
+        </div>
+        <div class="feature-rail">
+            <span class="feature-label">Toolkit</span>
+            <div class="feature-rail-nav" role="group" aria-label="Checklist toolkit">
+                
+                <a href="/apps/APIM_PM/?checklist=README.md" class="feature-chip" data-active="true">
+                    README
+                </a>
+                
+                <a href="/apps/APIM_PM/?checklist=aftersales_em_workstation.md" class="feature-chip" data-active="false">
+                    aftersales_em_workstation
+                </a>
+                
+                <a href="/apps/APIM_PM/?checklist=camping.md" class="feature-chip" data-active="false">
+                    camping
+                </a>
+                
+                <a href="/apps/APIM_PM/?checklist=Example.md" class="feature-chip" data-active="false">
+                    Example
+                </a>
+                
+                <a href="/apps/APIM_PM/?checklist=sample.md" class="feature-chip" data-active="false">
+                    sample
+                </a>
+                
+            </div>
+        </div>
+    </header>
+
+    
+
+    <main class="portal-main">
+        <div id="procedure-metadata-modal" class="shared-membership-modal" hidden data-state="idle">
+            <div class="shared-membership-dialog" role="dialog" aria-modal="true"
+                aria-labelledby="procedure-metadata-title" tabindex="-1">
+                <div class="shared-membership-header">
+                    <h2 id="procedure-metadata-title" class="shared-membership-title">Shared procedure</h2>
+                    <button type="button" class="shared-membership-close" data-close-metadata-modal
+                        aria-label="Close shared metadata">&times;</button>
+                </div>
+                <div class="shared-membership-body">
+                    <p id="procedure-metadata-summary" class="shared-membership-summary"></p>
+                    <dl class="shared-membership-meta">
+                        <div>
+                            <dt>Canonical Checklist</dt>
+                            <dd id="procedure-metadata-canonical">—</dd>
+                        </div>
+                        <div>
+                            <dt>Aliases</dt>
+                            <dd id="procedure-metadata-aliases" class="shared-membership-aliases">—</dd>
+                        </div>
+                        <div>
+                            <dt>Metadata Generated</dt>
+                            <dd id="procedure-metadata-generated">—</dd>
+                        </div>
+                    </dl>
+                    <table class="shared-membership-table" aria-describedby="procedure-metadata-summary">
+                        <thead>
+                            <tr>
+                                <th scope="col">Checklist</th>
+                                <th scope="col">Status</th>
+                                <th scope="col">Result</th>
+                                <th scope="col">Comment</th>
+                                <th scope="col">Updated</th>
+                            </tr>
+                        </thead>
+                        <tbody id="procedure-metadata-memberships">
+                        </tbody>
+                    </table>
+                    <p id="procedure-metadata-error" class="shared-membership-error" hidden></p>
+                </div>
+                <div class="shared-membership-footer">
+                    <button type="button" id="procedure-metadata-refresh" data-action="refreshMetadata">Refresh</button>
+                    <button type="button" data-close-metadata-modal>Close</button>
+                </div>
+            </div>
+        </div>
+        
+
+        
+
+        <div class="portal-shell pm-shell" id="pm-checklist">
+    <div class="app-header">
+        <div class="app-title">
+            <h1>Checklist Assistant</h1>
+            <p class="app-subtitle">PM checklist management, with some experimental automation features</p>
+        </div>
+        <div class="toolbar">
+            <div class="toolbar-group action-dropdown" data-menu-align="center">
+  <button type="button"
+          id="action-menu-toggle"
+          class="toolbar-toggle"
+          aria-haspopup="true"
+          aria-expanded="false">
+    Actions ▾
+  </button>
+  <div id="action-menu" class="toolbar-menu" data-menu-align="center" hidden>
+    
+                <button type="button" class="toolbar-action" id="action-save-state" data-action="saveState"
+                    data-endpoint="/apps/APIM_PM/workspace/checklists/api/state/save" data-method="POST"
+                    data-success-message="Save successful" data-error-prefix="Save failed"
+                    data-payload-hook="buildStateSavePayload" data-alert-handler="buildStateSaveAlert"
+                    title="Save the current PM state to disk.">
+                    Save State
+                </button>
+                <button type="button" class="toolbar-action" id="action-load-state" data-action="loadState"
+                    data-endpoint="/apps/APIM_PM/workspace/checklists/api/state/import" data-method="POST"
+                    data-success-message="State imported" data-error-prefix="Import failed"
+                    data-payload-hook="buildStateImportPayload"
+                    title="Load a saved PM state from a JSONL file.">
+                    Load State
+                </button>
+                <button type="button" class="toolbar-action" id="action-generate-tex" data-action="generateTex"
+                    data-endpoint="/api/generate_tex_file" data-method="POST"
+                    data-success-message="tex file created" data-error-prefix="TEX generation failed"
+                    data-success-callback="updateOutputsFromResponse" data-reset-pdf="true"
+                    data-payload-hook="buildTexPayload"
+                    title="Generate a TEX export from the current checklist.">
+                    Generate TEX
+                </button>
+                <button type="button" class="toolbar-action" id="action-export-pdf" data-action="exportPdf"
+                    data-endpoint="/api/generate_tex_file" data-method="POST"
+                    data-success-message="PDF export complete" data-error-prefix="PDF export failed"
+                    data-success-callback="updateOutputsFromResponse" data-payload-hook="buildTexPayload"
+                    data-compile-pdf="true"
+                    title="Compile the current TEX output into a PDF using the staged TeX toolchain.">
+                    Export PDF
+                </button>
+                <button type="button" class="toolbar-action" id="action-reset-runtime" data-action="resetRuntime"
+                    data-endpoint="/api/reset_runtime" data-method="POST"
+                    data-confirm="This will reset the database and regenerate the checklist from markdown. Unsaved changes will be lost. Continue?"
+                    data-success-message="Runtime reset complete." data-alert-handler="runtimeResetAlert"
+                    data-error-prefix="Runtime reset failed" data-success-callback="refreshProcedures"
+                    title="Reset the PM database from the markdown checklist.">
+                    Reset Form
+                </button>
+                <button type="button" class="toolbar-action" id="action-load-isa" data-action="loadIsaServer"
+                    data-endpoint="/api/import_isa_data_gui" data-method="POST"
+                    data-success-message="ISA Data imported (server-side)." data-error-prefix="ISA import failed"
+                    title="Load ISA data from the server.">
+                    Load ISA Data
+                </button>
+            
+  </div>
+</div>
+            <span id="action-status" class="toolbar-status" hidden aria-live="polite"></span>
+            <input type="file" id="toolbar-load-state-input" accept=".jsonl" hidden />
+        </div>
+    </div>
+    <p id="recent-files"></p>
+    <div id="pm-tex">
+        <div class="tex-output-status" id="tex-output-status">
+            <span class="tex-output-label">Last TEX output:</span>
+            <code id="tex-output-path" title="No TEX file generated yet.">No TEX file generated yet.</code>
+            <button id="open-tex-folder" disabled>Open TEX Folder</button>
+        </div>
+        <div class="tex-output-status pdf-output-status" id="pdf-output-status">
+            <span class="tex-output-label">Last PDF output:</span>
+            <code id="pdf-output-path" title="No PDF export generated yet.">No PDF export generated yet.</code>
+            <button id="open-pdf-folder" disabled>Open PDF Folder</button>
+            <span class="tex-output-compiler" id="pdf-compiler" hidden></span>
+        </div>
+    </div>
+
+    <section id="pm-procedures">
+        <div class="shared-filter-bar">
+            <input type="checkbox" id="shared-only-toggle" data-filter-role="shared-only" />
+            <label for="shared-only-toggle">Show shared procedures only</label>
+        </div>
+        <p id="shared-filter-empty" class="shared-filter-empty" hidden>
+            No shared procedures are available in this view.
+        </p>
+    
+    <h2>Example Checklist Table</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width:21%">Procedure</th>
+                <th style="width:13%">Action</th>
+                <th style="width:13%">Spec</th>
+                <th style="width:13%">Result</th>
+                <th style="width:20%">Status</th>
+                <th style="width:16%">Comment</th>
+                <th style="width:4%">Indicator</th>
+            </tr>
+        </thead>
+        <tbody>
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            <!-- Main row for the procedure info -->
+            <tr data-major="Example Checklist Table" data-minor="procedureNoun" data-procedure-label="procedureNoun" data-shared="false" data-checklist-slug="readme" data-procedure-id="proc-0162" data-procedure-slug="readme">
+                <!-- Minor Heading + Show Details -->
+                <td>
+                    <strong>procedureNoun</strong>
+                    <span class="details-link" data-major="Example Checklist Table" data-minor="procedureNoun">
+                        [Show Details]
+                    </span>
+                    <div class="details-container" id="details-Example Checklist Table-procedureNoun">
+                    </div>
+                    
+                </td>
+
+                <!-- Action -->
+                <td>
+                    <input type="text" data-filetype="procedures" data-major="Example Checklist Table"
+                        data-minor="procedureNoun" data-field="Action"
+                        data-procedure-id="proc-0162"
+                        data-procedure-slug="readme"
+                        data-checklist-slug="readme"
+                        value="Procedure Verb" />
+                </td>
+
+                <!-- Spec -->
+                <td>
+                    <input type="text" data-filetype="procedures" data-major="Example Checklist Table"
+                        data-minor="procedureNoun" data-field="Spec"
+                        data-procedure-id="proc-0162"
+                        data-procedure-slug="readme"
+                        data-checklist-slug="readme"
+                        value="Checklist loaded" />
+                </td>
+
+                <!-- Result -->
+                <td>
+                    <input type="text" data-filetype="procedures" data-major="Example Checklist Table"
+                        data-minor="procedureNoun" data-field="Result"
+                        data-procedure-id="proc-0162"
+                        data-procedure-slug="readme"
+                        data-checklist-slug="readme"
+                        value="Checklist loaded" />
+                </td>
+
+                <!-- Status (radio buttons) -->
+                <td class="status-column">
+                    <label data-status-value="Pass">
+                        <input type="radio" name="status_Example Checklist Table_procedureNoun"
+                            value="Pass"
+                            data-filetype="procedures"
+                            data-major="Example Checklist Table"
+                            data-minor="procedureNoun"
+                            data-field="Status"
+                            data-procedure-id="proc-0162"
+                            data-procedure-slug="readme"
+                            data-checklist-slug="readme"
+                             checked >
+                        Pass
+                    </label>
+                    <label data-status-value="Fail">
+                        <input type="radio" name="status_Example Checklist Table_procedureNoun"
+                            value="Fail"
+                            data-filetype="procedures"
+                            data-major="Example Checklist Table"
+                            data-minor="procedureNoun"
+                            data-field="Status"
+                            data-procedure-id="proc-0162"
+                            data-procedure-slug="readme"
+                            data-checklist-slug="readme"
+                            >
+                        Fail
+                    </label>
+                    <span class="status-column__break" aria-hidden="true"></span>
+                    <label data-status-value="NA">
+                        <input type="radio" name="status_Example Checklist Table_procedureNoun"
+                            value="NA"
+                            data-filetype="procedures"
+                            data-major="Example Checklist Table"
+                            data-minor="procedureNoun"
+                            data-field="Status"
+                            data-procedure-id="proc-0162"
+                            data-procedure-slug="readme"
+                            data-checklist-slug="readme"
+                            >
+                        NA
+                    </label>
+                    <label data-status-value="Other">
+                        <input type="radio" name="status_Example Checklist Table_procedureNoun"
+                            value="Other"
+                            data-filetype="procedures"
+                            data-major="Example Checklist Table"
+                            data-minor="procedureNoun"
+                            data-field="Status"
+                            data-procedure-id="proc-0162"
+                            data-procedure-slug="readme"
+                            data-checklist-slug="readme"
+                            >
+                        Other
+                    </label>
+                </td>
+
+
+                <!-- Comment -->
+                <td>
+                    <input type="text" data-filetype="procedures" data-major="Example Checklist Table"
+                        data-minor="procedureNoun" data-field="Comment"
+                        data-procedure-id="proc-0162"
+                        data-procedure-slug="readme"
+                        data-checklist-slug="readme"
+                        value="" />
+                </td>
+                <!-- Indicator -->
+                <td>
+                    <!-- Indicator -->
+                    <span class="indicator" id="indicator-Example Checklist Table-procedureNoun"></span>
+                </td>
+            </tr>
+            <!-- Hidden "details" row that spans all 6 columns -->
+            <tr id="details-row-Example Checklist Table-procedureNoun" style="display:none;">
+                <td colspan="6">
+                    <div class="details-container" id="details-Example Checklist Table-procedureNoun">
+                    </div>
+                </td>
+            </tr>
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            <!-- Main row for the procedure info -->
+            <tr data-major="Example Checklist Table" data-minor="procedureFollowup" data-procedure-label="procedureFollowup" data-shared="false" data-checklist-slug="readme" data-procedure-id="proc-0161" data-procedure-slug="readme">
+                <!-- Minor Heading + Show Details -->
+                <td>
+                    <strong>procedureFollowup</strong>
+                    <span class="details-link" data-major="Example Checklist Table" data-minor="procedureFollowup">
+                        [Show Details]
+                    </span>
+                    <div class="details-container" id="details-Example Checklist Table-procedureFollowup">
+                    </div>
+                    
+                </td>
+
+                <!-- Action -->
+                <td>
+                    <input type="text" data-filetype="procedures" data-major="Example Checklist Table"
+                        data-minor="procedureFollowup" data-field="Action"
+                        data-procedure-id="proc-0161"
+                        data-procedure-slug="readme"
+                        data-checklist-slug="readme"
+                        value="Confirm telemetry upload" />
+                </td>
+
+                <!-- Spec -->
+                <td>
+                    <input type="text" data-filetype="procedures" data-major="Example Checklist Table"
+                        data-minor="procedureFollowup" data-field="Spec"
+                        data-procedure-id="proc-0161"
+                        data-procedure-slug="readme"
+                        data-checklist-slug="readme"
+                        value="Checklist renders default content" />
+                </td>
+
+                <!-- Result -->
+                <td>
+                    <input type="text" data-filetype="procedures" data-major="Example Checklist Table"
+                        data-minor="procedureFollowup" data-field="Result"
+                        data-procedure-id="proc-0161"
+                        data-procedure-slug="readme"
+                        data-checklist-slug="readme"
+                        value="" />
+                </td>
+
+                <!-- Status (radio buttons) -->
+                <td class="status-column">
+                    <label data-status-value="Pass">
+                        <input type="radio" name="status_Example Checklist Table_procedureFollowup"
+                            value="Pass"
+                            data-filetype="procedures"
+                            data-major="Example Checklist Table"
+                            data-minor="procedureFollowup"
+                            data-field="Status"
+                            data-procedure-id="proc-0161"
+                            data-procedure-slug="readme"
+                            data-checklist-slug="readme"
+                            >
+                        Pass
+                    </label>
+                    <label data-status-value="Fail">
+                        <input type="radio" name="status_Example Checklist Table_procedureFollowup"
+                            value="Fail"
+                            data-filetype="procedures"
+                            data-major="Example Checklist Table"
+                            data-minor="procedureFollowup"
+                            data-field="Status"
+                            data-procedure-id="proc-0161"
+                            data-procedure-slug="readme"
+                            data-checklist-slug="readme"
+                             checked >
+                        Fail
+                    </label>
+                    <span class="status-column__break" aria-hidden="true"></span>
+                    <label data-status-value="NA">
+                        <input type="radio" name="status_Example Checklist Table_procedureFollowup"
+                            value="NA"
+                            data-filetype="procedures"
+                            data-major="Example Checklist Table"
+                            data-minor="procedureFollowup"
+                            data-field="Status"
+                            data-procedure-id="proc-0161"
+                            data-procedure-slug="readme"
+                            data-checklist-slug="readme"
+                            >
+                        NA
+                    </label>
+                    <label data-status-value="Other">
+                        <input type="radio" name="status_Example Checklist Table_procedureFollowup"
+                            value="Other"
+                            data-filetype="procedures"
+                            data-major="Example Checklist Table"
+                            data-minor="procedureFollowup"
+                            data-field="Status"
+                            data-procedure-id="proc-0161"
+                            data-procedure-slug="readme"
+                            data-checklist-slug="readme"
+                            >
+                        Other
+                    </label>
+                </td>
+
+
+                <!-- Comment -->
+                <td>
+                    <input type="text" data-filetype="procedures" data-major="Example Checklist Table"
+                        data-minor="procedureFollowup" data-field="Comment"
+                        data-procedure-id="proc-0161"
+                        data-procedure-slug="readme"
+                        data-checklist-slug="readme"
+                        value="df" />
+                </td>
+                <!-- Indicator -->
+                <td>
+                    <!-- Indicator -->
+                    <span class="indicator" id="indicator-Example Checklist Table-procedureFollowup"></span>
+                </td>
+            </tr>
+            <!-- Hidden "details" row that spans all 6 columns -->
+            <tr id="details-row-Example Checklist Table-procedureFollowup" style="display:none;">
+                <td colspan="6">
+                    <div class="details-container" id="details-Example Checklist Table-procedureFollowup">
+                    </div>
+                </td>
+            </tr>
+            
+        </tbody>
+    </table>
+    
+    </section>
+
+        </div>
+    </main>
+
+    <script>
+        const portalSelector = document.getElementById('portal-selector');
+        if (portalSelector) {
+            portalSelector.addEventListener('change', (event) => {
+                const target = event.target;
+                if (!(target instanceof HTMLSelectElement)) {
+                    return;
+                }
+                const option = target.selectedOptions && target.selectedOptions[0];
+                if (!option) {
+                    return;
+                }
+                const destination = option.value;
+                if (destination) {
+                    window.location.href = destination;
+                }
+            });
+        }
+
+        document.querySelectorAll('.feature-chip').forEach((chip) => {
+            if (chip.dataset.active === 'true') {
+                chip.setAttribute('aria-current', 'page');
+            }
+        });
+
+        const DEFAULT_CHECKLIST_SLUG = "readme";
+        const AUTO_REFRESH_MS = 3500;
+        const INPUT_DEBOUNCE_MS = 400;
+        const BLUR_FLUSH_DELAY_MS = 120;
+
+        const pendingUpdates = new Map();
+        const debounceTimers = new Map();
+        const editLocks = new Set();
+        let latestSnapshot = {};
+        let pollTimerId = null;
+        let latestTexPath = "";
+        let latestPdfPath = "";
+        let latestCompilerInfo = null;
+        const TEX_DEFAULT_MESSAGE = "No TEX file generated yet.";
+        const PDF_DEFAULT_MESSAGE = "No PDF export generated yet.";
+        const procedureCatalogMetadata = new Map();
+        let procedureMetadataGeneratedAt = null;
+        let procedureMetadataRequest = null;
+        let procedureMetadataActiveTrigger = null;
+        const metadataModal = document.getElementById('procedure-metadata-modal');
+        const metadataDialog = metadataModal ? metadataModal.querySelector('.shared-membership-dialog') : null;
+        const metadataTitleEl = document.getElementById('procedure-metadata-title');
+        const metadataSummaryEl = document.getElementById('procedure-metadata-summary');
+        const metadataCanonicalEl = document.getElementById('procedure-metadata-canonical');
+        const metadataAliasesEl = document.getElementById('procedure-metadata-aliases');
+        const metadataGeneratedEl = document.getElementById('procedure-metadata-generated');
+        const metadataMembershipBody = document.getElementById('procedure-metadata-memberships');
+        const metadataErrorEl = document.getElementById('procedure-metadata-error');
+        const metadataRefreshButton = document.getElementById('procedure-metadata-refresh');
+        const sharedFilterToggle = document.getElementById('shared-only-toggle');
+        const sharedFilterEmpty = document.getElementById('shared-filter-empty');
+        const procedureRowIndex = new Map();
+
+        const fieldKey = (fileType, majorKey, minorKey, field) => `${fileType}|${majorKey}|${minorKey}|${field}`;
+
+        const procedureMetadataStatus = {
+            state: 'idle',
+            errorMessage: '',
+            generatedAt: null,
+            lastFetchedAt: null,
+            telemetry: null,
+        };
+
+        function describeMetadataTelemetry(statusPayload) {
+            if (!statusPayload || typeof statusPayload !== 'object') {
+                return '';
+            }
+            const fragments = [];
+            const state = typeof statusPayload.state === 'string' ? statusPayload.state : '';
+            if (state) {
+                fragments.push(`storage state ${state}`);
+            }
+            const reason = typeof statusPayload.reason === 'string' ? statusPayload.reason.trim() : '';
+            if (reason) {
+                fragments.push(`reason: ${reason}`);
+            }
+            const updatedAt = typeof statusPayload.updated_at === 'string' ? statusPayload.updated_at : '';
+            if (updatedAt) {
+                fragments.push(`updated ${formatMetadataTimestamp(updatedAt)}`);
+            }
+            return fragments.join(' — ');
+        }
+
+        function setProcedureMetadataStatus(state, details = {}) {
+            procedureMetadataStatus.state = state;
+            if (Object.prototype.hasOwnProperty.call(details, 'generatedAt')) {
+                procedureMetadataStatus.generatedAt = details.generatedAt || procedureMetadataStatus.generatedAt;
+            } else if (state === 'ready' && procedureMetadataGeneratedAt) {
+                procedureMetadataStatus.generatedAt = procedureMetadataGeneratedAt;
+            } else if (state === 'idle') {
+                procedureMetadataStatus.generatedAt = null;
+            }
+
+            if (Object.prototype.hasOwnProperty.call(details, 'errorMessage')) {
+                procedureMetadataStatus.errorMessage = details.errorMessage || '';
+            } else if (state !== 'error') {
+                procedureMetadataStatus.errorMessage = '';
+            }
+
+            if (Object.prototype.hasOwnProperty.call(details, 'telemetry')) {
+                procedureMetadataStatus.telemetry = details.telemetry || null;
+            } else if (state !== 'error') {
+                procedureMetadataStatus.telemetry = null;
+            }
+
+            if (Object.prototype.hasOwnProperty.call(details, 'lastFetchedAt')) {
+                procedureMetadataStatus.lastFetchedAt = details.lastFetchedAt || null;
+            } else if (state === 'ready') {
+                procedureMetadataStatus.lastFetchedAt = new Date().toISOString();
+            } else if (state === 'idle') {
+                procedureMetadataStatus.lastFetchedAt = null;
+            }
+
+            updateSharedStatusElements();
+        }
+
+        function applyMetadataStatusToElement(statusEl) {
+            if (!statusEl) {
+                return;
+            }
+            const row = statusEl.closest('tr[data-shared]');
+            if (row && row.dataset.shared === 'false') {
+                statusEl.dataset.state = 'idle';
+                statusEl.setAttribute('hidden', '');
+                const textEl = statusEl.querySelector('[data-role="shared-status-text"]');
+                if (textEl) {
+                    textEl.textContent = '';
+                }
+                return;
+            }
+            const state = procedureMetadataStatus.state;
+            const textEl = statusEl.querySelector('[data-role="shared-status-text"]');
+            let message = '';
+            if (state === 'loading') {
+                message = 'Loading shared metadata…';
+            } else if (state === 'ready') {
+                const updatedAt = procedureMetadataStatus.generatedAt || procedureMetadataGeneratedAt;
+                if (updatedAt) {
+                    message = `Metadata updated ${formatMetadataTimestamp(updatedAt)}`;
+                } else {
+                    message = 'Metadata updated.';
+                }
+            } else if (state === 'error') {
+                message = procedureMetadataStatus.errorMessage || 'Metadata unavailable.';
+                const telemetryDetail = describeMetadataTelemetry(procedureMetadataStatus.telemetry);
+                if (telemetryDetail) {
+                    message = `${message} — ${telemetryDetail}`;
+                } else if (procedureMetadataStatus.lastFetchedAt) {
+                    message = `${message} — Attempted ${formatMetadataTimestamp(procedureMetadataStatus.lastFetchedAt)}`;
+                }
+            }
+
+            if (message) {
+                statusEl.dataset.state = state;
+                statusEl.removeAttribute('hidden');
+                if (textEl) {
+                    textEl.textContent = message;
+                }
+                statusEl.setAttribute('role', 'status');
+                statusEl.setAttribute('aria-live', state === 'error' ? 'assertive' : 'polite');
+            } else {
+                statusEl.dataset.state = 'idle';
+                statusEl.setAttribute('hidden', '');
+                if (textEl) {
+                    textEl.textContent = '';
+                }
+            }
+        }
+
+        function updateSharedStatusElements() {
+            const statusElements = document.querySelectorAll('[data-role="shared-status"]');
+            statusElements.forEach(statusEl => {
+                applyMetadataStatusToElement(statusEl);
+            });
+        }
+
+        function indexProcedureRows() {
+            procedureRowIndex.clear();
+            const rows = document.querySelectorAll('tbody tr[data-procedure-label]');
+            rows.forEach(row => {
+                const procedureId = row.dataset.procedureId;
+                if (procedureId) {
+                    procedureRowIndex.set(procedureId, row);
+                }
+                if (!row.dataset.shared) {
+                    row.dataset.shared = 'false';
+                }
+            });
+        }
+
+        function findProcedureRow(procedureId) {
+            if (!procedureId) {
+                return null;
+            }
+            return procedureRowIndex.get(procedureId) || null;
+        }
+
+        function normaliseList(value) {
+            if (!value) {
+                return [];
+            }
+            if (Array.isArray(value)) {
+                return value
+                    .map(item => (typeof item === 'string' ? item.trim() : ''))
+                    .filter(item => item);
+            }
+            if (typeof value === 'string') {
+                const trimmed = value.trim();
+                return trimmed ? [trimmed] : [];
+            }
+            return [];
+        }
+
+        function setRowSharedState(procedureId, metadata) {
+            const row = findProcedureRow(procedureId);
+            if (!row) {
+                return;
+            }
+            if (procedureId) {
+                row.dataset.procedureId = procedureId;
+            }
+            const canonicalSlug = metadata && typeof metadata === 'object'
+                ? (metadata.canonicalSlug || metadata.primaryChecklist || '')
+                : '';
+            const primarySlug = metadata && typeof metadata === 'object'
+                ? (metadata.primaryChecklist || '')
+                : '';
+            if (canonicalSlug) {
+                row.dataset.procedureSlug = canonicalSlug;
+            }
+            if (primarySlug) {
+                row.dataset.checklistSlug = primarySlug;
+            }
+            const effectiveSlug = primarySlug || row.dataset.checklistSlug || (document.body ? document.body.dataset.checklistSlug || '' : '');
+            const interactiveInputs = row.querySelectorAll('input[data-filetype="procedures"], select[data-filetype="procedures"]');
+            interactiveInputs.forEach(element => {
+                if (procedureId) {
+                    element.dataset.procedureId = procedureId;
+                }
+                if (canonicalSlug) {
+                    element.dataset.procedureSlug = canonicalSlug;
+                }
+                if (effectiveSlug) {
+                    element.dataset.checklistSlug = effectiveSlug;
+                }
+            });
+            const isShared = hasSharedMembership(metadata);
+            row.dataset.shared = isShared ? 'true' : 'false';
+            const badge = row.querySelector('[data-membership-trigger="shared"]');
+            const statusEl = row.querySelector('[data-role="shared-status"]');
+            if (!badge) {
+                if (statusEl) {
+                    statusEl.dataset.state = 'idle';
+                    statusEl.setAttribute('hidden', '');
+                    const textEl = statusEl.querySelector('[data-role="shared-status-text"]');
+                    if (textEl) {
+                        textEl.textContent = '';
+                    }
+                }
+                return;
+            }
+            if (!isShared) {
+                badge.setAttribute('hidden', '');
+                if (statusEl) {
+                    statusEl.dataset.state = 'idle';
+                    statusEl.setAttribute('hidden', '');
+                    const textEl = statusEl.querySelector('[data-role="shared-status-text"]');
+                    if (textEl) {
+                        textEl.textContent = '';
+                    }
+                }
+                return;
+            }
+            badge.removeAttribute('hidden');
+            updateSharedBadge(badge, metadata);
+            if (statusEl) {
+                applyMetadataStatusToElement(statusEl);
+            }
+        }
+
+        function hasSharedMembership(metadata) {
+            if (!metadata || typeof metadata !== 'object') {
+                return false;
+            }
+            if (metadata.hasAliases) {
+                return true;
+            }
+            const aliasCount = Number(metadata.aliasCount);
+            if (Number.isFinite(aliasCount) && aliasCount > 0) {
+                return true;
+            }
+            const checklists = normaliseList(metadata.checklists);
+            return checklists.length > 1;
+        }
+
+        function applySharedFilter() {
+            if (!sharedFilterToggle) {
+                return;
+            }
+            const filterActive = sharedFilterToggle.checked;
+            let visibleSharedRows = 0;
+            const rows = document.querySelectorAll('tbody tr[data-procedure-label]');
+            rows.forEach(row => {
+                const isShared = row.dataset.shared === 'true';
+                const major = row.dataset.major || '';
+                const minor = row.dataset.minor || '';
+                const detailsRowId = `details-row-${major}-${minor}`;
+                const detailsRow = document.getElementById(detailsRowId);
+                if (!filterActive || isShared) {
+                    row.classList.remove('shared-filter-hidden');
+                    if (detailsRow) {
+                        detailsRow.classList.remove('shared-filter-hidden');
+                    }
+                    if (filterActive && isShared) {
+                        visibleSharedRows += 1;
+                    }
+                    return;
+                }
+                row.classList.add('shared-filter-hidden');
+                if (detailsRow) {
+                    detailsRow.classList.add('shared-filter-hidden');
+                    detailsRow.style.display = 'none';
+                    const container = detailsRow.querySelector('.details-container');
+                    if (container) {
+                        container.style.display = 'none';
+                    }
+                }
+                const detailsLink = document.querySelector(
+                    `.details-link[data-major="${major}"][data-minor="${minor}"]`
+                );
+                if (detailsLink) {
+                    detailsLink.textContent = '[Show Details]';
+                }
+            });
+            if (sharedFilterEmpty) {
+                if (filterActive && visibleSharedRows === 0) {
+                    sharedFilterEmpty.removeAttribute('hidden');
+                } else {
+                    sharedFilterEmpty.setAttribute('hidden', '');
+                }
+            }
+        }
+
+        function registerSharedFilter() {
+            if (!sharedFilterToggle) {
+                return;
+            }
+            sharedFilterToggle.addEventListener('change', () => {
+                applySharedFilter();
+            });
+            applySharedFilter();
+        }
+
+        function formatMetadataTimestamp(value) {
+            if (!value) {
+                return '—';
+            }
+            try {
+                const date = new Date(value);
+                if (!Number.isNaN(date.getTime())) {
+                    return date.toLocaleString();
+                }
+            } catch (_err) {
+                // ignore parsing errors and fall through to fallback text
+            }
+            return typeof value === 'string' ? value : '—';
+        }
+
+        function updateSharedBadge(badge, metadata) {
+            if (!badge || !metadata) {
+                return;
+            }
+            const checklists = normaliseList(metadata.checklists);
+            let total = checklists.length;
+            if (!total) {
+                const aliasCount = Number(metadata.aliasCount);
+                if (Number.isFinite(aliasCount) && aliasCount > 0) {
+                    total = aliasCount + 1;
+                } else {
+                    total = 1;
+                }
+            }
+            const countEl = badge.querySelector('[data-role="shared-checklist-count"]');
+            if (countEl) {
+                countEl.textContent = total > 0 ? String(total) : '—';
+            }
+            const summaryParts = [`Shared across ${total} checklist${total === 1 ? '' : 's'}`];
+            if (checklists.length) {
+                summaryParts.push(`(${checklists.join(', ')})`);
+            }
+            const label = summaryParts.join(' ');
+            badge.setAttribute('aria-label', label);
+            badge.title = label;
+        }
+
+        function updateSharedBadgesFromSnapshot(metadataIndex) {
+            metadataIndex.forEach((metadata, procedureId) => {
+                setRowSharedState(procedureId, metadata);
+            });
+            applySharedFilter();
+            updateSharedStatusElements();
+        }
+
+        function updateSharedBadgesFromCatalog() {
+            procedureCatalogMetadata.forEach((metadata, procedureId) => {
+                setRowSharedState(procedureId, metadata);
+            });
+            applySharedFilter();
+            updateSharedStatusElements();
+        }
+
+        function closeProcedureMetadataModal() {
+            if (!metadataModal) {
+                return;
+            }
+            metadataModal.setAttribute('hidden', '');
+            metadataModal.dataset.state = 'idle';
+            metadataModal.dataset.procedureId = '';
+            metadataModal.dataset.procedureLabel = '';
+            if (metadataSummaryEl) {
+                metadataSummaryEl.textContent = '';
+            }
+            if (metadataCanonicalEl) {
+                metadataCanonicalEl.textContent = '—';
+            }
+            if (metadataAliasesEl) {
+                metadataAliasesEl.textContent = '—';
+            }
+            if (metadataGeneratedEl) {
+                metadataGeneratedEl.textContent = '—';
+            }
+            if (metadataMembershipBody) {
+                metadataMembershipBody.innerHTML = '';
+            }
+            if (metadataErrorEl) {
+                metadataErrorEl.textContent = '';
+                metadataErrorEl.setAttribute('hidden', '');
+            }
+            if (procedureMetadataActiveTrigger) {
+                procedureMetadataActiveTrigger.focus();
+            }
+            procedureMetadataActiveTrigger = null;
+        }
+
+        function handleMetadataKeydown(event) {
+            if (!metadataModal || metadataModal.hasAttribute('hidden')) {
+                return;
+            }
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                closeProcedureMetadataModal();
+            }
+        }
+
+        function showProcedureMetadataLoading(procedureId, label) {
+            if (!metadataModal) {
+                return;
+            }
+            metadataModal.dataset.state = 'loading';
+            metadataModal.dataset.procedureId = procedureId || '';
+            metadataModal.dataset.procedureLabel = label || '';
+            if (metadataTitleEl) {
+                metadataTitleEl.textContent = label || 'Shared procedure';
+            }
+            if (metadataSummaryEl) {
+                metadataSummaryEl.textContent = 'Loading shared metadata…';
+            }
+            if (metadataCanonicalEl) {
+                metadataCanonicalEl.textContent = '—';
+            }
+            if (metadataAliasesEl) {
+                metadataAliasesEl.textContent = '—';
+            }
+            if (metadataGeneratedEl) {
+                metadataGeneratedEl.textContent = procedureMetadataGeneratedAt || '—';
+            }
+            if (metadataMembershipBody) {
+                metadataMembershipBody.innerHTML = '';
+            }
+            if (metadataErrorEl) {
+                metadataErrorEl.textContent = '';
+                metadataErrorEl.setAttribute('hidden', '');
+            }
+            metadataModal.removeAttribute('hidden');
+            const focusTarget = metadataDialog || metadataModal;
+            if (focusTarget) {
+                focusTarget.focus();
+            }
+        }
+
+        function renderProcedureMetadataModal(procedureId, label, entry) {
+            if (!metadataModal) {
+                return;
+            }
+            metadataModal.dataset.procedureId = procedureId || '';
+            metadataModal.dataset.procedureLabel = label || '';
+            metadataModal.dataset.state = entry ? 'ready' : 'empty';
+            if (metadataTitleEl) {
+                metadataTitleEl.textContent = label || 'Shared procedure';
+            }
+            if (metadataGeneratedEl) {
+                const generated = procedureMetadataGeneratedAt || (entry && entry.updatedAt) || '—';
+                metadataGeneratedEl.textContent = generated || '—';
+            }
+            if (metadataSummaryEl) {
+                if (entry && typeof entry === 'object') {
+                    const checklists = normaliseList(entry.checklists);
+                    let total = checklists.length;
+                    if (!total) {
+                        const aliasCount = Number(entry.aliasCount);
+                        if (Number.isFinite(aliasCount) && aliasCount > 0) {
+                            total = aliasCount + 1;
+                        } else {
+                            total = 1;
+                        }
+                    }
+                    if (checklists.length) {
+                        metadataSummaryEl.textContent = `Shared across ${total} checklist${total === 1 ? '' : 's'} (${checklists.join(', ')})`;
+                    } else {
+                        metadataSummaryEl.textContent = 'Shared checklist metadata available.';
+                    }
+                } else {
+                    metadataSummaryEl.textContent = 'Shared metadata is not available for this procedure.';
+                }
+            }
+            if (metadataCanonicalEl) {
+                const canonical = entry && (entry.primaryChecklist || entry.canonicalSlug);
+                metadataCanonicalEl.textContent = canonical || '—';
+            }
+            if (metadataAliasesEl) {
+                const aliases = normaliseList((entry && entry.sharedAliases) || (entry && entry.aliases));
+                if (!aliases.length) {
+                    metadataAliasesEl.textContent = '—';
+                } else {
+                    metadataAliasesEl.innerHTML = '';
+                    aliases.forEach(alias => {
+                        const chip = document.createElement('span');
+                        chip.className = 'shared-membership-chip';
+                        chip.textContent = alias;
+                        metadataAliasesEl.append(chip);
+                    });
+                }
+            }
+            if (metadataMembershipBody) {
+                metadataMembershipBody.innerHTML = '';
+                if (entry && entry.memberships && typeof entry.memberships === 'object') {
+                    const membershipEntries = Object.entries(entry.memberships).sort((a, b) => a[0].localeCompare(b[0]));
+                    membershipEntries.forEach(([slug, details]) => {
+                        const row = document.createElement('tr');
+                        if (details && details.isPrimary) {
+                            row.dataset.primary = 'true';
+                        }
+                        const slugCell = document.createElement('th');
+                        slugCell.scope = 'row';
+                        slugCell.textContent = slug;
+                        row.append(slugCell);
+                        const statusCell = document.createElement('td');
+                        statusCell.textContent = details && details.status ? details.status : '—';
+                        row.append(statusCell);
+                        const resultCell = document.createElement('td');
+                        resultCell.textContent = details && details.result ? details.result : '—';
+                        row.append(resultCell);
+                        const commentCell = document.createElement('td');
+                        commentCell.textContent = details && details.comment ? details.comment : '—';
+                        row.append(commentCell);
+                        const updatedValue = details && details.updatedAt ? details.updatedAt : procedureMetadataGeneratedAt;
+                        const updatedCell = document.createElement('td');
+                        updatedCell.textContent = formatMetadataTimestamp(updatedValue);
+                        row.append(updatedCell);
+                        metadataMembershipBody.append(row);
+                    });
+                }
+                if (!metadataMembershipBody.children.length) {
+                    const emptyRow = document.createElement('tr');
+                    const emptyCell = document.createElement('td');
+                    emptyCell.colSpan = 5;
+                    emptyCell.textContent = 'No membership metadata is available for this procedure.';
+                    emptyRow.append(emptyCell);
+                    metadataMembershipBody.append(emptyRow);
+                }
+            }
+            if (metadataErrorEl) {
+                if (entry) {
+                    metadataErrorEl.textContent = '';
+                    metadataErrorEl.setAttribute('hidden', '');
+                } else {
+                    metadataErrorEl.textContent = 'Metadata is unavailable for this procedure.';
+                    metadataErrorEl.removeAttribute('hidden');
+                }
+            }
+            const focusTarget = metadataDialog || metadataModal;
+            if (focusTarget) {
+                focusTarget.focus();
+            }
+        }
+
+        async function loadProcedureCatalogMetadata(force = false) {
+            if (!force && procedureCatalogMetadata.size && !procedureMetadataRequest) {
+                return procedureCatalogMetadata;
+            }
+            if (procedureMetadataRequest) {
+                return procedureMetadataRequest;
+            }
+
+            setProcedureMetadataStatus('loading', { lastFetchedAt: new Date().toISOString() });
+
+            const requestPromise = (async () => {
+                try {
+                    const response = await fetch('/api/procedures/metadata');
+                    let payload = null;
+                    try {
+                        payload = await response.json();
+                    } catch (_jsonError) {
+                        payload = null;
+                    }
+                    if (!response.ok) {
+                        const message = payload && typeof payload.error === 'string' && payload.error
+                            ? payload.error
+                            : `Failed to load metadata (HTTP ${response.status})`;
+                        const error = new Error(message);
+                        error.name = 'MetadataRequestError';
+                        error.status = response.status;
+                        if (payload && payload.status && typeof payload.status === 'object') {
+                            error.statusPayload = payload.status;
+                        }
+                        throw error;
+                    }
+
+                    const data = payload && typeof payload === 'object' ? payload : {};
+                    procedureCatalogMetadata.clear();
+                    procedureMetadataGeneratedAt = null;
+                    if (typeof data.generatedAt === 'string' && data.generatedAt) {
+                        procedureMetadataGeneratedAt = data.generatedAt;
+                    }
+                    if (data.procedures && typeof data.procedures === 'object') {
+                        Object.entries(data.procedures).forEach(([procedureId, entry]) => {
+                            if (entry && typeof entry === 'object') {
+                                procedureCatalogMetadata.set(procedureId, entry);
+                            }
+                        });
+                    }
+
+                    setProcedureMetadataStatus('ready', {
+                        generatedAt: procedureMetadataGeneratedAt,
+                        lastFetchedAt: new Date().toISOString(),
+                    });
+                    updateSharedBadgesFromCatalog();
+                    if (metadataModal && !metadataModal.hasAttribute('hidden')) {
+                        const procedureId = metadataModal.dataset.procedureId || '';
+                        const label = metadataModal.dataset.procedureLabel || '';
+                        renderProcedureMetadataModal(
+                            procedureId,
+                            label,
+                            procedureCatalogMetadata.get(procedureId) || null,
+                        );
+                    }
+                    return procedureCatalogMetadata;
+                } catch (error) {
+                    const nowIso = new Date().toISOString();
+                    let message = 'Unable to load metadata. Try again later.';
+                    if (error && typeof error.message === 'string' && error.message) {
+                        message = error.message;
+                    }
+                    let telemetry = null;
+                    if (error && Object.prototype.hasOwnProperty.call(error, 'statusPayload')) {
+                        telemetry = error.statusPayload;
+                    }
+                    if (
+                        error
+                        && Object.prototype.hasOwnProperty.call(error, 'status')
+                        && typeof error.status === 'number'
+                        && !message.includes(`HTTP ${error.status}`)
+                    ) {
+                        message = `${message} (HTTP ${error.status})`;
+                    }
+                    setProcedureMetadataStatus('error', {
+                        errorMessage: message,
+                        telemetry,
+                        lastFetchedAt: nowIso,
+                    });
+                    if (metadataErrorEl && metadataModal && !metadataModal.hasAttribute('hidden')) {
+                        metadataErrorEl.textContent = message;
+                        metadataErrorEl.removeAttribute('hidden');
+                    }
+                    console.error('Failed to load procedure metadata', error);
+                    throw error;
+                } finally {
+                    procedureMetadataRequest = null;
+                }
+            })();
+
+            procedureMetadataRequest = requestPromise;
+            return requestPromise;
+        }
+
+        function attachMetadataCloseHandlers() {
+            if (!metadataModal) {
+                return;
+            }
+            metadataModal.addEventListener('click', event => {
+                if (event.target === metadataModal) {
+                    closeProcedureMetadataModal();
+                }
+            });
+            const closeButtons = metadataModal.querySelectorAll('[data-close-metadata-modal]');
+            closeButtons.forEach(button => {
+                button.addEventListener('click', event => {
+                    event.preventDefault();
+                    closeProcedureMetadataModal();
+                });
+            });
+            if (metadataRefreshButton) {
+                metadataRefreshButton.addEventListener('click', async () => {
+                    metadataRefreshButton.disabled = true;
+                    try {
+                        await loadProcedureCatalogMetadata(true);
+                    } catch (error) {
+                        console.error('Unable to refresh procedure metadata', error);
+                    } finally {
+                        metadataRefreshButton.disabled = false;
+                    }
+                });
+            }
+        }
+
+        function registerSharedMembershipBadges() {
+            const badges = document.querySelectorAll('[data-membership-trigger="shared"]');
+            badges.forEach(badge => {
+                badge.addEventListener('click', async event => {
+                    event.preventDefault();
+                    const procedureId = badge.dataset.procedureId;
+                    if (!procedureId) {
+                        return;
+                    }
+                    const row = badge.closest('tr');
+                    let label = 'Shared procedure';
+                    if (row && row.dataset && row.dataset.procedureLabel) {
+                        label = row.dataset.procedureLabel;
+                    } else {
+                        const cell = badge.closest('td');
+                        if (cell) {
+                            const heading = cell.querySelector('strong');
+                            if (heading && heading.textContent) {
+                                label = heading.textContent;
+                            }
+                        }
+                    }
+                    procedureMetadataActiveTrigger = badge;
+                    showProcedureMetadataLoading(procedureId, label);
+                    try {
+                        const catalog = await loadProcedureCatalogMetadata();
+                        const entry = catalog.get(procedureId) || null;
+                        renderProcedureMetadataModal(procedureId, label, entry);
+                    } catch (_error) {
+                        renderProcedureMetadataModal(procedureId, label, null);
+                    }
+                });
+            });
+        }
+
+        function updateTexOutputPath(newPath) {
+            latestTexPath = newPath || "";
+            const texOutputPathEl = document.getElementById('tex-output-path');
+            const openTexFolderButton = document.getElementById('open-tex-folder');
+            const displayValue = latestTexPath || TEX_DEFAULT_MESSAGE;
+
+            if (texOutputPathEl) {
+                texOutputPathEl.textContent = displayValue;
+                texOutputPathEl.setAttribute('title', displayValue);
+            }
+
+            if (openTexFolderButton) {
+                if (latestTexPath) {
+                    openTexFolderButton.dataset.path = latestTexPath;
+                    openTexFolderButton.disabled = false;
+                } else {
+                    delete openTexFolderButton.dataset.path;
+                    openTexFolderButton.disabled = true;
+                }
+            }
+        }
+
+        function updatePdfOutputPath(newPath) {
+            latestPdfPath = newPath || "";
+            const pdfOutputPathEl = document.getElementById('pdf-output-path');
+            const openPdfFolderButton = document.getElementById('open-pdf-folder');
+            const displayValue = latestPdfPath || PDF_DEFAULT_MESSAGE;
+
+            if (pdfOutputPathEl) {
+                pdfOutputPathEl.textContent = displayValue;
+                pdfOutputPathEl.setAttribute('title', displayValue);
+            }
+
+            if (openPdfFolderButton) {
+                if (latestPdfPath) {
+                    openPdfFolderButton.dataset.path = latestPdfPath;
+                    openPdfFolderButton.disabled = false;
+                } else {
+                    delete openPdfFolderButton.dataset.path;
+                    openPdfFolderButton.disabled = true;
+                }
+            }
+        }
+
+        function updatePdfCompilerInfo(info) {
+            latestCompilerInfo = info || null;
+            const compilerEl = document.getElementById('pdf-compiler');
+            if (!compilerEl) {
+                return;
+            }
+
+            if (latestCompilerInfo && typeof latestCompilerInfo === 'object') {
+                const name = latestCompilerInfo.name;
+                const path = latestCompilerInfo.path;
+                const command = Array.isArray(latestCompilerInfo.command)
+                    ? latestCompilerInfo.command.join(' ')
+                    : '';
+                const segments = [];
+                if (name) {
+                    segments.push(`Compiler: ${name}`);
+                }
+                if (command) {
+                    segments.push(`Command: ${command}`);
+                }
+                if (path) {
+                    segments.push(`Path: ${path}`);
+                }
+
+                compilerEl.textContent = segments.join(' • ');
+                compilerEl.removeAttribute('hidden');
+            } else {
+                compilerEl.textContent = '';
+                compilerEl.setAttribute('hidden', '');
+            }
+        }
+
+        function updateOutputsFromResponse(data = {}, config = {}) {
+            const payload = data || {};
+
+            if (Object.prototype.hasOwnProperty.call(payload, 'outputPath')) {
+                updateTexOutputPath(payload.outputPath || '');
+            }
+
+            if (Object.prototype.hasOwnProperty.call(payload, 'pdfPath')) {
+                updatePdfOutputPath(payload.pdfPath || '');
+            } else if (config && config.resetPdfOnSuccess) {
+                updatePdfOutputPath('');
+            }
+
+            if (Object.prototype.hasOwnProperty.call(payload, 'compiler')) {
+                updatePdfCompilerInfo(payload.compiler || null);
+            } else if (config && (config.resetPdfOnSuccess || !payload.pdfPath)) {
+                updatePdfCompilerInfo(null);
+            }
+        }
+
+        function buildTexPayload(config = {}) {
+            const payload = {};
+            const slug =
+                (document.body && (document.body.dataset.checklistSlug || '').trim()) || DEFAULT_CHECKLIST_SLUG;
+            payload.checklistSlug = slug;
+
+            const button = config && config.button;
+            if (button && button.dataset) {
+                if (button.dataset.compilePdf === 'true') {
+                    payload.compilePdf = true;
+                }
+                if (button.dataset.compiler) {
+                    payload.compiler = button.dataset.compiler;
+                }
+                if (button.dataset.tinytexRoot) {
+                    payload.tinytexRoot = button.dataset.tinytexRoot;
+                }
+            }
+
+            if (config && config.compilePdf) {
+                payload.compilePdf = true;
+            }
+
+            return payload;
+        }
+
+        function clearDebounce(key) {
+            if (debounceTimers.has(key)) {
+                clearTimeout(debounceTimers.get(key));
+                debounceTimers.delete(key);
+            }
+        }
+
+        function queueUpdate(payload, delay = INPUT_DEBOUNCE_MS) {
+            const key = fieldKey(payload.fileType, payload.majorKey, payload.minorKey, payload.field);
+            const existing = pendingUpdates.get(key);
+            if (existing) {
+                existing.payload = payload;
+                if (existing.status !== 'saving') {
+                    existing.status = 'queued';
+                }
+            } else {
+                pendingUpdates.set(key, { payload, status: 'queued' });
+            }
+
+            if (delay === 0) {
+                clearDebounce(key);
+                flushUpdate(key);
+                return;
+            }
+
+            clearDebounce(key);
+            const timer = setTimeout(() => {
+                flushUpdate(key);
+            }, delay);
+            debounceTimers.set(key, timer);
+        }
+
+        async function flushUpdate(key) {
+            const entry = pendingUpdates.get(key);
+            if (!entry || entry.status === 'saving') {
+                return;
+            }
+
+            entry.status = 'saving';
+            clearDebounce(key);
+
+            try {
+                await sendUpdate(entry.payload);
+                storeSnapshotValue(entry.payload, entry.payload.value);
+                pendingUpdates.delete(key);
+                evaluateIndicator(entry.payload.majorKey, entry.payload.minorKey);
+            } catch (error) {
+                console.error('Update failed:', error);
+                entry.status = 'queued';
+                queueUpdate(entry.payload, INPUT_DEBOUNCE_MS * 2);
+            }
+        }
+
+        async function sendUpdate(payload) {
+            const resp = await fetch('/api/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            });
+            const data = await resp.json();
+            if (!resp.ok) {
+                throw new Error(data.error || 'Update failed');
+            }
+            return data;
+        }
+
+        function storeSnapshotValue(payload, value) {
+            if (!latestSnapshot[payload.majorKey]) {
+                latestSnapshot[payload.majorKey] = {};
+            }
+            if (!latestSnapshot[payload.majorKey][payload.minorKey]) {
+                latestSnapshot[payload.majorKey][payload.minorKey] = {};
+            }
+            latestSnapshot[payload.majorKey][payload.minorKey][payload.field] = value;
+        }
+
+        function shouldSkipIncomingUpdate(key, element) {
+            if (pendingUpdates.has(key)) {
+                return true;
+            }
+            if (editLocks.has(key)) {
+                return true;
+            }
+            if (element && document.activeElement === element) {
+                return true;
+            }
+            return false;
+        }
+
+        function applyProceduresSnapshot(data) {
+            latestSnapshot = data || {};
+            const snapshotMetadata = new Map();
+
+            Object.entries(latestSnapshot).forEach(([majorKey, minorEntries]) => {
+                Object.entries(minorEntries).forEach(([minorKey, fields]) => {
+                    Object.entries(fields).forEach(([field, rawValue]) => {
+                        if (field === '__metadata' && rawValue && typeof rawValue === 'object') {
+                            const procedureId = rawValue.procedureId || rawValue.procedureID;
+                            if (procedureId) {
+                                snapshotMetadata.set(String(procedureId), rawValue);
+                            }
+                            return;
+                        }
+                        const key = fieldKey('procedures', majorKey, minorKey, field);
+
+                        if (field === 'Status') {
+                            const radios = document.querySelectorAll(
+                                `input[type="radio"][data-filetype="procedures"][data-major="${majorKey}"][data-minor="${minorKey}"][data-field="Status"]`
+                            );
+                            if (!radios.length) {
+                                return;
+                            }
+                            if (shouldSkipIncomingUpdate(key)) {
+                                return;
+                            }
+                            radios.forEach(radio => {
+                                radio.checked = radio.value === rawValue;
+                            });
+                        } else {
+                            const input = document.querySelector(
+                                `input[data-filetype="procedures"][data-major="${majorKey}"][data-minor="${minorKey}"][data-field="${field}"]`
+                            );
+                            if (!input) {
+                                return;
+                            }
+                            if (shouldSkipIncomingUpdate(key, input)) {
+                                return;
+                            }
+                            const nextValue = (rawValue ?? '').toString();
+                            if (input.value !== nextValue) {
+                                input.value = nextValue;
+                            }
+                        }
+                    });
+
+                    evaluateIndicator(majorKey, minorKey);
+                });
+            });
+            if (snapshotMetadata.size) {
+                updateSharedBadgesFromSnapshot(snapshotMetadata);
+            }
+        }
+
+        function scheduleNextPoll() {
+            if (pollTimerId) {
+                clearTimeout(pollTimerId);
+            }
+            pollTimerId = setTimeout(pollProcedures, AUTO_REFRESH_MS);
+        }
+
+        async function pollProcedures() {
+            try {
+                const response = await fetch('/api/proc_jsonl');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                const data = await response.json();
+                applyProceduresSnapshot(data);
+            } catch (error) {
+                console.error('Error refreshing data:', error);
+            } finally {
+                scheduleNextPoll();
+            }
+        }
+
+        function registerButtons() {
+            updateTexOutputPath(latestTexPath);
+            updatePdfOutputPath(latestPdfPath);
+            updatePdfCompilerInfo(latestCompilerInfo);
+
+            const openTexFolderButton = document.getElementById('open-tex-folder');
+            if (openTexFolderButton) {
+                openTexFolderButton.addEventListener('click', async () => {
+                    const targetPath = openTexFolderButton.dataset.path || latestTexPath;
+                    if (!targetPath) {
+                        alert('No TEX output available yet. Generate a TEX file first.');
+                        return;
+                    }
+
+                    try {
+                        const response = await fetch(`/api/open_tex_folder?_=${Date.now()}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ path: targetPath })
+                        });
+                        const data = await response.json();
+                        if (!response.ok) {
+                            throw new Error(data.error || `HTTP error! Status: ${response.status}`);
+                        }
+                        alert(data.message || 'Opened TEX folder.');
+                    } catch (err) {
+                        console.error('Open TEX folder error:', err);
+                        alert('Unable to open TEX folder: ' + err.message);
+                    }
+                });
+            }
+
+            const openPdfFolderButton = document.getElementById('open-pdf-folder');
+            if (openPdfFolderButton) {
+                openPdfFolderButton.addEventListener('click', async () => {
+                    const targetPath = openPdfFolderButton.dataset.path || latestPdfPath;
+                    if (!targetPath) {
+                        alert('No PDF output available yet. Export a PDF first.');
+                        return;
+                    }
+
+                    try {
+                        const response = await fetch(`/api/open_tex_folder?_=${Date.now()}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ path: targetPath })
+                        });
+                        const data = await response.json();
+                        if (!response.ok) {
+                            throw new Error(data.error || `HTTP error! Status: ${response.status}`);
+                        }
+                        alert(data.message || 'Opened PDF folder.');
+                    } catch (err) {
+                        console.error('Open PDF folder error:', err);
+                        alert('Unable to open PDF folder: ' + err.message);
+                    }
+                });
+            }
+
+            setupToolbar({
+                runtimeResetAlert: buildRuntimeResetAlert,
+                refreshProcedures: () => {
+                    pollProcedures();
+                },
+                updateOutputsFromResponse,
+                buildTexPayload,
+                buildStateImportPayload,
+                buildStateSavePayload,
+                buildStateSaveAlert,
+            });
+        }
+
+        function buildRuntimeResetAlert(data, config) {
+            const sections = [];
+            const header = (data && data.message) || config.successMessage || `${config.label} complete.`;
+            sections.push(header);
+
+            const removedList = data && Array.isArray(data.removed) ? data.removed : [];
+            if (removedList.length) {
+                sections.push(`Removed:\n- ${removedList.join('\n- ')}`);
+            }
+
+            const generatedList = data && Array.isArray(data.generated) ? data.generated : [];
+            if (generatedList.length) {
+                sections.push(`Generated:\n- ${generatedList.join('\n- ')}`);
+            }
+
+            const errorList = data && Array.isArray(data.errors) ? data.errors : [];
+            if (errorList.length) {
+                sections.push(`Warnings:\n- ${errorList.join('\n- ')}`);
+            }
+
+            return sections.join('\n\n');
+        }
+
+        function buildStateSavePayload() {
+            const slug =
+                (document.body && (document.body.dataset.checklistSlug || '').trim()) || DEFAULT_CHECKLIST_SLUG;
+            return { slug };
+        }
+
+        function buildStateImportPayload() {
+            return new Promise((resolve, reject) => {
+                const fileInput = document.getElementById('toolbar-load-state-input');
+                if (!fileInput) {
+                    reject(new Error('State import control unavailable.'));
+                    return;
+                }
+
+                fileInput.value = '';
+                const slug =
+                    (document.body && (document.body.dataset.checklistSlug || '').trim()) || DEFAULT_CHECKLIST_SLUG;
+
+                const handleSelection = () => {
+                    fileInput.removeEventListener('change', handleSelection);
+                    const file = fileInput.files && fileInput.files[0];
+                    if (!file) {
+                        resolve(null);
+                        return;
+                    }
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        if (typeof reader.result !== 'string') {
+                            reject(new Error('Unable to read selected file.'));
+                            return;
+                        }
+                        resolve({ slug, jsonl: reader.result });
+                    };
+                    reader.onerror = () =>
+                        reject(reader.error || new Error('Unable to read selected file.'));
+                    reader.readAsText(file);
+                };
+
+                fileInput.addEventListener('change', handleSelection, { once: true });
+                fileInput.click();
+            });
+        }
+
+        function buildStateSaveAlert(data) {
+            const base = (data && data.message) || 'Save complete.';
+            if (data && data.savedReport) {
+                const path = data.savedReport.path || data.savedReport.filename || 'saved report';
+                return `${base}\nSaved report: ${path}`;
+            }
+            return base;
+        }
+
+        function setupToolbar(toolbarHooks = {}) {
+            const menuToggle = document.getElementById('action-menu-toggle');
+            const menu = document.getElementById('action-menu');
+            const statusEl = document.getElementById('action-status');
+
+            if (!menuToggle || !menu || !statusEl) {
+                return;
+            }
+
+            const actionButtons = Array.from(menu.querySelectorAll('button[data-action]'));
+            const actionConfig = {};
+
+            actionButtons.forEach(button => {
+                const actionKey = button.dataset.action;
+                if (!actionKey) {
+                    return;
+                }
+                actionConfig[actionKey] = {
+                    button,
+                    action: actionKey,
+                    label: button.textContent.trim() || actionKey,
+                    endpoint: button.dataset.endpoint || '',
+                    method: (button.dataset.method || 'POST').toUpperCase(),
+                    confirm: button.dataset.confirm,
+                    successMessage: button.dataset.successMessage,
+                    errorPrefix: button.dataset.errorPrefix,
+                    alertHandler: button.dataset.alertHandler,
+                    successCallback: button.dataset.successCallback,
+                    payload: button.dataset.payload || '',
+                    payloadHook: button.dataset.payloadHook || '',
+                    resetPdfOnSuccess: button.dataset.resetPdf === 'true',
+                };
+            });
+
+            let isLoading = false;
+
+            function setMenuVisibility(visible) {
+                if (visible) {
+                    if (isLoading) {
+                        return;
+                    }
+                    menu.removeAttribute('hidden');
+                    menuToggle.setAttribute('aria-expanded', 'true');
+                } else {
+                    menu.setAttribute('hidden', '');
+                    menuToggle.setAttribute('aria-expanded', 'false');
+                }
+            }
+
+            function closeMenu() {
+                setMenuVisibility(false);
+            }
+
+            function setToolbarLoading(label) {
+                isLoading = true;
+                statusEl.textContent = `${label} in progress…`;
+                statusEl.removeAttribute('hidden');
+                menuToggle.disabled = true;
+                actionButtons.forEach(btn => {
+                    btn.disabled = true;
+                });
+            }
+
+            function clearToolbarLoading() {
+                isLoading = false;
+                statusEl.textContent = '';
+                statusEl.setAttribute('hidden', '');
+                menuToggle.disabled = false;
+                actionButtons.forEach(btn => {
+                    btn.disabled = false;
+                });
+            }
+
+            function buildAlertMessage(config, data) {
+                if (config.alertHandler && typeof toolbarHooks[config.alertHandler] === 'function') {
+                    return toolbarHooks[config.alertHandler](data, config);
+                }
+                if (config.successMessage) {
+                    return (data && data.message) || config.successMessage;
+                }
+                if (data && data.message) {
+                    return data.message;
+                }
+                return `${config.label} completed.`;
+            }
+
+            async function handleAction(actionKey) {
+                const config = actionConfig[actionKey];
+                if (!config) {
+                    return;
+                }
+
+                if (config.confirm && !confirm(config.confirm)) {
+                    return;
+                }
+
+                closeMenu();
+                setToolbarLoading(config.label);
+
+                if (!config.endpoint) {
+                    console.error(`Missing endpoint for action ${actionKey}`);
+                    clearToolbarLoading();
+                    return;
+                }
+
+                const url = config.endpoint.includes('?')
+                    ? `${config.endpoint}&_=${Date.now()}`
+                    : `${config.endpoint}?_=${Date.now()}`;
+
+                const methodAllowsBody = config.method !== 'GET' && config.method !== 'HEAD';
+                let requestPayload = null;
+
+                if (config.payloadHook && typeof toolbarHooks[config.payloadHook] === 'function') {
+                    try {
+                        requestPayload = await toolbarHooks[config.payloadHook](config, {
+                            latestTexPath,
+                            latestPdfPath,
+                            latestCompilerInfo,
+                        });
+                    } catch (payloadErr) {
+                        console.error(`Failed to build payload for ${config.action}:`, payloadErr);
+                        alert(`Unable to prepare ${config.label} request: ${payloadErr.message}`);
+                        clearToolbarLoading();
+                        return;
+                    }
+                } else if (config.payload) {
+                    try {
+                        requestPayload = JSON.parse(config.payload);
+                    } catch (payloadErr) {
+                        console.error(`Invalid payload JSON for ${config.action}:`, payloadErr);
+                        alert(`Unable to prepare ${config.label} request: Invalid payload configuration.`);
+                        clearToolbarLoading();
+                        return;
+                    }
+                }
+
+                if (requestPayload === null) {
+                    clearToolbarLoading();
+                    return;
+                }
+
+                const fetchOptions = { method: config.method };
+                if (requestPayload && methodAllowsBody) {
+                    fetchOptions.headers = { 'Content-Type': 'application/json' };
+                    fetchOptions.body = JSON.stringify(requestPayload);
+                } else if (requestPayload && !methodAllowsBody) {
+                    console.warn(
+                        `Payload for ${config.action} ignored because ${config.method} does not support a body.`,
+                        requestPayload,
+                    );
+                }
+
+                try {
+                    const response = await fetch(url, fetchOptions);
+                    let data = {};
+                    try {
+                        data = await response.json();
+                    } catch (parseErr) {
+                        data = {};
+                    }
+
+                    if (!response.ok) {
+                        const message = (data && data.error) || `${config.label} failed (status ${response.status})`;
+                        throw new Error(message);
+                    }
+
+                    const alertMessage = buildAlertMessage(config, data);
+                    if (alertMessage) {
+                        alert(alertMessage);
+                    }
+
+                    if (config.successCallback && typeof toolbarHooks[config.successCallback] === 'function') {
+                        toolbarHooks[config.successCallback](data, config);
+                    }
+                } catch (err) {
+                    console.error(`${config.label} error:`, err);
+                    const prefix = config.errorPrefix || `${config.label} failed`;
+                    alert(`${prefix}: ${err.message}`);
+                } finally {
+                    clearToolbarLoading();
+                }
+            }
+
+            menuToggle.addEventListener('click', event => {
+                event.stopPropagation();
+                const expanded = menuToggle.getAttribute('aria-expanded') === 'true';
+                setMenuVisibility(!expanded);
+            });
+
+            actionButtons.forEach(button => {
+                button.addEventListener('click', event => {
+                    event.preventDefault();
+                    handleAction(button.dataset.action);
+                });
+            });
+
+            document.addEventListener('click', event => {
+                if (!menu.contains(event.target) && event.target !== menuToggle) {
+                    closeMenu();
+                }
+            });
+
+            document.addEventListener('keydown', event => {
+                if (event.key === 'Escape') {
+                    closeMenu();
+                    menuToggle.focus();
+                }
+            });
+
+            setMenuVisibility(false);
+        }
+
+        function configureInteractiveInputs() {
+            const allInputs = document.querySelectorAll('input[data-filetype], select[data-filetype]');
+
+            allInputs.forEach(el => {
+                const fileType = el.dataset.filetype;
+                const majorKey = el.dataset.major;
+                const minorKey = el.dataset.minor;
+                const field = el.dataset.field;
+                const key = fieldKey(fileType, majorKey, minorKey, field);
+                const isTextInput = el.tagName.toLowerCase() === 'input' && el.type !== 'radio';
+                const eventType = isTextInput ? 'input' : 'change';
+
+                el.addEventListener('focus', () => {
+                    editLocks.add(key);
+                });
+
+                el.addEventListener('blur', () => {
+                    editLocks.delete(key);
+                    if (pendingUpdates.has(key)) {
+                        queueUpdate(pendingUpdates.get(key).payload, BLUR_FLUSH_DELAY_MS);
+                    } else {
+                        evaluateIndicator(majorKey, minorKey);
+                    }
+                });
+
+                el.addEventListener(eventType, () => {
+                    const rawValue = el.value;
+                    const value = typeof rawValue === 'string' ? rawValue.trim() : rawValue;
+                    const row = el.closest('tr[data-major][data-minor]');
+                    const bodySlug = document.body ? (document.body.dataset.checklistSlug || '') : '';
+                    const rowProcedureId = row ? (row.dataset.procedureId || '') : '';
+                    const procedureId = (el.dataset.procedureId || rowProcedureId || '').trim();
+                    const rowProcedureSlug = row ? (row.dataset.procedureSlug || '') : '';
+                    const procedureSlug = (el.dataset.procedureSlug || rowProcedureSlug || '').trim();
+                    const rowChecklistSlug = row ? (row.dataset.checklistSlug || '') : '';
+                    const checklistSlug = (el.dataset.checklistSlug || rowChecklistSlug || bodySlug || '').trim();
+                    const propagatePref = (
+                        el.dataset.propagateToAliases ||
+                        el.dataset.propagateAliases ||
+                        (row ? row.dataset.propagateToAliases || row.dataset.propagateAliases || '' : '')
+                    ).trim();
+
+                    const payload = { fileType, majorKey, minorKey, field, value };
+                    if (checklistSlug) {
+                        payload.checklistSlug = checklistSlug;
+                    }
+                    if (procedureId) {
+                        payload.procedureId = procedureId;
+                    }
+                    if (procedureSlug) {
+                        payload.procedureSlug = procedureSlug;
+                    }
+                    if (propagatePref) {
+                        payload.propagateToAliases = propagatePref;
+                    }
+
+                    const existingServerValue = (((latestSnapshot[majorKey] || {})[minorKey] || {})[field] ?? '');
+                    if (isTextInput && value === existingServerValue && !pendingUpdates.has(key)) {
+                        evaluateIndicator(majorKey, minorKey);
+                        return;
+                    }
+
+                    queueUpdate(payload, isTextInput ? INPUT_DEBOUNCE_MS : 0);
+                    evaluateIndicator(majorKey, minorKey);
+                });
+            });
+
+            // Evaluate all indicators on load so existing data renders correctly.
+            const procRows = document.querySelectorAll('table tbody tr');
+            procRows.forEach(tr => {
+                const firstInput = tr.querySelector('input[data-filetype="procedures"], select[data-filetype="procedures"]');
+                if (!firstInput) {
+                    return;
+                }
+                evaluateIndicator(firstInput.dataset.major, firstInput.dataset.minor);
+            });
+
+            const detailsLinks = document.querySelectorAll('.details-link');
+            detailsLinks.forEach(link => {
+                link.addEventListener('click', async () => {
+                    const major = link.dataset.major;
+                    const minor = link.dataset.minor;
+                    const rowId = `details-row-${major}-${minor}`;
+                    const rowEl = document.getElementById(rowId);
+                    if (!rowEl) {
+                        return;
+                    }
+
+                    if (rowEl.style.display === '' || rowEl.style.display === 'none') {
+                        try {
+                            const resp = await fetch(`/api/details_html?major=${encodeURIComponent(major)}&minor=${encodeURIComponent(minor)}`);
+                            const data = await resp.json();
+                            const container = rowEl.querySelector('.details-container');
+                            if (container) {
+                                container.innerHTML = data.details_html;
+                                container.style.display = 'block';
+                            }
+                            rowEl.style.display = 'table-row';
+                            link.textContent = '[Hide Details]';
+                        } catch (err) {
+                            console.error('Error loading details:', err);
+                        }
+                    } else {
+                        const container = rowEl.querySelector('.details-container');
+                        if (container) {
+                            container.style.display = 'none';
+                        }
+                        rowEl.style.display = 'none';
+                        link.textContent = '[Show Details]';
+                    }
+                });
+            });
+        }
+
+        function initializeUi() {
+            indexProcedureRows();
+            attachMetadataCloseHandlers();
+            registerSharedMembershipBadges();
+            registerSharedFilter();
+            registerButtons();
+            configureInteractiveInputs();
+            pollProcedures();
+        }
+
+        document.addEventListener('DOMContentLoaded', initializeUi);
+        document.addEventListener('keydown', handleMetadataKeydown);
+
+        function evaluateIndicator(majorKey, minorKey) {
+            const statusEl = document.querySelector(`input[type="radio"][data-filetype="procedures"][data-major="${majorKey}"][data-minor="${minorKey}"][data-field="Status"]:checked`);
+            const commentEl = document.querySelector(`input[data-filetype="procedures"][data-major="${majorKey}"][data-minor="${minorKey}"][data-field="Comment"]`);
+            if (!statusEl || !commentEl) return;
+
+            const statusValue = statusEl.value.trim();
+            const commentValue = commentEl.value.trim();
+            const indicator = document.getElementById(`indicator-${majorKey}-${minorKey}`);
+            if (!indicator) return;
+
+            let tooltipText = ""; // Default tooltip text
+
+            // Determine the symbol, class, and tooltip based on status and comment
+            if (statusValue === "Pass") {
+                indicator.textContent = "✅"; // Green checkmark
+                indicator.className = "indicator success";
+                tooltipText = "Meets the required spec.";
+            } else if (statusValue === "Fail" && !commentValue) {
+                indicator.textContent = "❌"; // Red X
+                indicator.className = "indicator fail";
+                tooltipText = "Please update the status or add a comment.";
+            } else if (statusValue === "Fail" && commentValue) {
+                indicator.textContent = "⚠️"; // Yellow warning triangle
+                indicator.className = "indicator warning";
+                tooltipText = "Status flagged: double-check that the comment describes findings.";
+            } else if (statusValue === "Other" && !commentValue) {
+                indicator.textContent = "⚠️"; // Yellow warning triangle
+                indicator.className = "indicator warning";
+                tooltipText = "Status flagged: if 'Other' is selected, please add a comment.";
+            } else if (statusValue === "Other" && commentValue) {
+                indicator.textContent = "🟡"; // Yellow dot
+                indicator.className = "indicator info";
+                tooltipText = "Non-standard state: the deviation is to be described in the comment.";
+            } else if (statusValue === "NA") {
+                indicator.textContent = "⬛"; // Gray square
+                indicator.className = "indicator neutral";
+                tooltipText = "Not Applicable: this will be removed from the final report.";
+            } else {
+                indicator.textContent = ""; // Default to empty if no valid status
+                indicator.className = "indicator";
+                tooltipText = "No valid status selected.";
+            }
+
+            // Set the tooltip text
+            indicator.setAttribute("title", tooltipText);
+        }
+
+
+    </script>
+</body>
+
+</html>

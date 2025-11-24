@@ -1,0 +1,3404 @@
+<!-- jds: when I spin up flask and visit http://127.0.0.1:5000/apps/APIM_newApp3/ we get the overview portal this is a reasonable foundation for a test portal, it shows everything that had been implemented on the old server, but in pile of files, and not all the features work etc... but I like the theme layout etc... (all these use the dark glass like you are using and the navigation is nice) makes me feel like why am i re-writing anything. I think I mostly provide this becuase I want you to see another portal that it needed to link to where it used a separate file to do so, because we are not getting good effects at the moment and want to use a working template to build from. -->
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>APIM Portal Overview</title>
+    
+    <style>
+:root {
+  color-scheme: dark;
+  --portal-bg: radial-gradient(circle at 18% 16%, rgba(96, 165, 250, 0.2), transparent 45%),
+                radial-gradient(circle at 84% 12%, rgba(129, 140, 248, 0.24), transparent 52%),
+                #0b1120;
+  --portal-surface: rgba(15, 23, 42, 0.82);
+  --portal-surface-soft: rgba(15, 23, 42, 0.7);
+  --portal-border: rgba(148, 163, 184, 0.28);
+  --portal-border-soft: rgba(148, 163, 184, 0.18);
+  --portal-border-strong: rgba(148, 163, 184, 0.36);
+  --portal-text: #e2e8f0;
+  --portal-text-muted: rgba(226, 232, 240, 0.75);
+  --portal-text-subtle: rgba(148, 163, 184, 0.68);
+  --portal-link: #60a5fa;
+  --portal-link-strong: #3b82f6;
+  --portal-shadow: rgba(15, 23, 42, 0.45);
+  --portal-glow: rgba(59, 130, 246, 0.28);
+  --portal-card-radius: 16px;
+  --portal-blur: 14px;
+  --portal-font: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body[data-theme="glass_portal"],
+body.portal-body {
+  margin: 0;
+  font-family: var(--portal-font);
+  background: var(--portal-bg);
+  background-attachment: fixed;
+  color: var(--portal-text);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.portal-body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(circle at 18% 16%, rgba(96, 165, 250, 0.2), transparent 45%),
+              radial-gradient(circle at 84% 12%, rgba(129, 140, 248, 0.24), transparent 52%);
+  opacity: 0.82;
+  pointer-events: none;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.portal-header {
+  display: grid;
+  grid-template-columns: minmax(280px, 400px) 1fr;
+  gap: 20px;
+  padding: 18px 28px 16px;
+  background: rgba(11, 15, 25, 0.78);
+  backdrop-filter: blur(var(--portal-blur));
+  border-bottom: 1px solid var(--portal-border);
+}
+
+.portal-picker {
+  display: grid;
+  gap: 6px;
+}
+
+.portal-picker label {
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--portal-text-subtle);
+}
+
+.portal-picker select {
+  appearance: none;
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--portal-border-strong);
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.92), rgba(30, 41, 59, 0.92));
+  background-color: rgba(15, 23, 42, 0.92);
+  color: var(--portal-text);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  color-scheme: dark;
+  transition: box-shadow 120ms ease, border-color 120ms ease;
+}
+
+.portal-picker select option {
+  background-color: rgb(15, 23, 42);
+  color: var(--portal-text);
+}
+
+.portal-picker select option:disabled,
+.portal-picker select option[data-disabled="true"] {
+  color: var(--portal-text-subtle);
+  background-color: rgba(15, 23, 42, 0.82);
+}
+
+.portal-picker select:focus-visible {
+  outline: 2px solid var(--portal-link);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(96, 165, 250, 0.25);
+}
+
+.portal-picker select:hover:not(:disabled) {
+  border-color: rgba(96, 165, 250, 0.45);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.18);
+}
+
+.portal-picker select:disabled {
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
+.portal-header.survey-header {
+  align-items: center;
+  gap: 24px;
+  padding: 18px 28px 16px;
+}
+
+.portal-header.survey-header[data-show-brand="false"] {
+  grid-template-columns: 1fr;
+}
+
+.survey-header__brand {
+  display: grid;
+  gap: 10px;
+}
+
+.survey-header__title {
+  display: grid;
+  gap: 4px;
+}
+
+.survey-header__title strong {
+  font-size: 20px;
+  line-height: 1.2;
+}
+
+.survey-breadcrumb {
+  grid-column: 1 / -1;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--portal-text-subtle);
+}
+
+.survey-breadcrumb ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: inline-flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.survey-breadcrumb li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.survey-breadcrumb li + li::before {
+  content: "/";
+  color: var(--portal-text-subtle);
+  opacity: 0.6;
+}
+
+.survey-breadcrumb a {
+  color: var(--portal-text-muted);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.survey-breadcrumb a:hover,
+.survey-breadcrumb a:focus-visible {
+  color: var(--portal-link);
+  outline: none;
+}
+
+.survey-breadcrumb li[aria-current="page"] {
+  color: var(--portal-text);
+  font-weight: 600;
+}
+
+.survey-header__subtitle {
+  font-size: 13px;
+  color: var(--portal-text-subtle);
+}
+
+.survey-header__controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 16px;
+}
+
+.survey-header__controls[data-full-width="true"] {
+  grid-column: 1 / -1;
+  justify-content: space-between;
+}
+
+.survey-header__controls[data-full-width="true"] .portal-picker {
+  margin-right: auto;
+}
+
+.survey-header__controls .portal-picker {
+  min-width: 220px;
+  max-width: 320px;
+}
+
+.survey-header__actions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.survey-header__actions.feature-rail {
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.feature-rail {
+  justify-self: end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.feature-rail .feature-label {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--portal-text-subtle);
+}
+
+.feature-rail-nav {
+  display: inline-flex;
+  padding: 6px;
+  border-radius: 999px;
+  border: 1px solid var(--portal-border-soft);
+  background: rgba(15, 23, 42, 0.65);
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.08);
+  gap: 6px;
+}
+
+.feature-rail-nav[data-group="view"] {
+  background: rgba(15, 23, 42, 0.72);
+}
+
+.feature-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--portal-text-muted);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 120ms ease, color 120ms ease, transform 120ms ease, box-shadow 120ms ease;
+  min-width: 0;
+}
+
+.feature-chip:hover,
+.feature-chip:focus-visible {
+  color: var(--portal-link);
+  background: rgba(37, 99, 235, 0.18);
+  outline: none;
+}
+
+.feature-chip[data-active="true"] {
+  color: var(--portal-link);
+  background: rgba(37, 99, 235, 0.26);
+  border-color: rgba(96, 165, 250, 0.35);
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.22);
+}
+
+@media (max-width: 900px) {
+  .portal-header {
+    grid-template-columns: 1fr;
+    align-items: flex-start;
+    gap: 18px;
+  }
+
+  .survey-header__controls {
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 12px;
+  }
+
+  .survey-header__controls .portal-picker {
+    width: 100%;
+  }
+
+  .survey-header__actions {
+    justify-content: flex-start;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .survey-header__actions .feature-rail-nav {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .survey-breadcrumb {
+    justify-content: flex-start;
+    line-height: 1.6;
+  }
+}
+
+.automation-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--portal-border);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.automation-on {
+  background: rgba(34, 197, 94, 0.18);
+  color: rgba(134, 239, 172, 0.92);
+  border-color: rgba(34, 197, 94, 0.32);
+}
+
+.automation-off {
+  background: rgba(248, 113, 113, 0.18);
+  color: rgba(252, 165, 165, 0.92);
+  border-color: rgba(248, 113, 113, 0.32);
+}
+
+.automation-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--portal-border);
+  background: rgba(15, 23, 42, 0.82);
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--portal-text);
+  box-shadow: 0 12px 26px rgba(2, 6, 23, 0.35);
+}
+
+.automation-indicator .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(96, 165, 250, 0.85);
+  box-shadow: 0 0 10px rgba(37, 99, 235, 0.4);
+}
+
+.automation-indicator.on .dot {
+  background: rgba(34, 197, 94, 0.92);
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
+}
+
+.automation-indicator.off .dot {
+  background: rgba(248, 113, 113, 0.9);
+  box-shadow: 0 0 10px rgba(248, 113, 113, 0.45);
+}
+
+.portal-main {
+  flex: 1 1 auto;
+  display: grid;
+  padding: 32px 28px 60px;
+  gap: 28px;
+}
+
+.portal-main .status-pill {
+  justify-self: start;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: rgba(34, 197, 94, 0.16);
+  color: rgba(134, 239, 172, 0.92);
+  border: 1px solid rgba(34, 197, 94, 0.32);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.placeholder-panel {
+  max-width: 720px;
+  padding: 32px;
+  border-radius: var(--portal-card-radius);
+  border: 1px solid var(--portal-border);
+  background: rgba(15, 23, 42, 0.78);
+  box-shadow: 0 28px 68px rgba(2, 6, 23, 0.42);
+  display: grid;
+  gap: 16px;
+}
+
+.placeholder-panel h1 {
+  margin: 0;
+  font-size: 28px;
+  letter-spacing: -0.01em;
+}
+
+.placeholder-panel p {
+  margin: 0;
+  color: var(--portal-text-muted);
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.portal-shell,
+.survey-shell {
+  display: grid;
+  gap: 18px;
+  border-radius: var(--portal-card-radius);
+  border: 1px solid var(--portal-border);
+  background: rgba(15, 23, 42, 0.82);
+  box-shadow: 0 24px 54px rgba(2, 6, 23, 0.46);
+  padding: 28px;
+}
+
+.portal-body.placeholder-mode .portal-shell,
+.portal-body.placeholder-mode .app-header,
+.portal-body.placeholder-mode #tex-output-status,
+.portal-body.placeholder-mode table,
+.portal-body.placeholder-mode .nav-hint,
+.portal-body.placeholder-mode #recent-files {
+  display: none !important;
+}
+
+.portal-body.placeholder-mode .placeholder-panel {
+  display: grid;
+}
+
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+}
+
+.app-title h1 {
+  margin: 0;
+  font-size: 26px;
+}
+
+.app-subtitle {
+  margin: 6px 0 0;
+  color: var(--portal-text-muted);
+  font-size: 15px;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.toolbar-group {
+  position: relative;
+}
+
+.toolbar-toggle,
+.toolbar-action {
+  border-radius: 12px;
+  border: 1px solid var(--portal-border);
+  background: rgba(30, 41, 59, 0.78);
+  color: var(--portal-text);
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
+}
+
+.toolbar-toggle:hover,
+.toolbar-action:hover {
+  background: rgba(30, 64, 175, 0.55);
+  box-shadow: 0 10px 24px rgba(30, 64, 175, 0.25);
+}
+
+.toolbar-toggle[disabled],
+.toolbar-action[disabled] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.toolbar-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  min-width: 220px;
+  background: rgba(15, 23, 42, 0.96);
+  border: 1px solid var(--portal-border);
+  border-radius: 18px;
+  box-shadow: 0 22px 48px rgba(2, 6, 23, 0.46);
+  padding: 12px;
+  z-index: 40;
+  gap: 8px;
+  max-width: min(320px, calc(100vw - 32px));
+}
+
+.toolbar-group[data-menu-align='center'] > .toolbar-menu,
+.toolbar-menu[data-menu-align='center'] {
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+}
+
+.toolbar-group[data-menu-align='end'] > .toolbar-menu,
+.toolbar-menu[data-menu-align='end'] {
+  left: auto;
+  right: 0;
+  transform: none;
+}
+
+.toolbar-menu[hidden] {
+  display: none;
+}
+
+.toolbar-status {
+  font-size: 13px;
+  color: var(--portal-text-subtle);
+}
+
+.tex-output-status {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 18px;
+  border-radius: 14px;
+  border: 1px solid var(--portal-border);
+  background: rgba(15, 23, 42, 0.72);
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.1);
+}
+
+.tex-output-status code {
+  background: rgba(2, 6, 23, 0.72);
+  border: 1px solid rgba(51, 65, 85, 0.85);
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  max-width: 520px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tex-output-status button {
+  border-radius: 10px;
+  border: 1px solid rgba(59, 130, 246, 0.48);
+  background: linear-gradient(180deg, rgba(37, 99, 235, 0.92), rgba(29, 78, 216, 0.92));
+  color: #fff;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.tex-output-status button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.nav-hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--portal-text-subtle);
+}
+
+.nav-hint code {
+  background: rgba(2, 6, 23, 0.72);
+  padding: 4px 6px;
+  border-radius: 6px;
+  border: 1px solid rgba(51, 65, 85, 0.85);
+  color: var(--portal-text);
+}
+
+.overview-shell {
+  display: grid;
+  gap: 28px;
+}
+
+.overview-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.overview-title {
+  display: grid;
+  gap: 16px;
+  max-width: 720px;
+}
+
+.overview-title h1 {
+  margin: 0;
+  font-size: 28px;
+  letter-spacing: -0.01em;
+}
+
+.overview-title p {
+  margin: 0;
+  color: var(--portal-text-muted);
+  line-height: 1.6;
+  font-size: 16px;
+}
+
+.status-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.private-assets {
+  display: grid;
+  gap: 24px;
+}
+
+.private-assets-copy p {
+  margin: 0;
+  color: var(--portal-text-muted);
+  line-height: 1.6;
+}
+
+.private-pack-card {
+  display: grid;
+  gap: 16px;
+}
+
+.pack-selector {
+  display: grid;
+  gap: 12px;
+}
+
+.pack-selector label {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--portal-text-subtle);
+}
+
+.pack-selector-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.pack-selector select {
+  min-width: 220px;
+  flex: 1 1 220px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--portal-border-strong);
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.92), rgba(30, 41, 59, 0.92));
+  background-color: rgba(15, 23, 42, 0.92);
+  color: var(--portal-text);
+  font-size: 15px;
+  font-weight: 600;
+  color-scheme: dark;
+}
+
+.pack-selector select option {
+  background-color: rgb(15, 23, 42);
+  color: var(--portal-text);
+}
+
+.pack-selector select:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.status-open.secondary {
+  background: rgba(30, 41, 59, 0.72);
+  border-color: rgba(148, 163, 184, 0.45);
+  color: var(--portal-text);
+}
+
+.status-open.secondary:hover,
+.status-open.secondary:focus-visible {
+  background: rgba(30, 41, 59, 0.88);
+  border-color: rgba(148, 163, 184, 0.6);
+}
+
+.pack-status {
+  margin: 0;
+  font-size: 14px;
+  color: var(--portal-text-muted);
+}
+
+.pack-status.success {
+  color: rgba(74, 222, 128, 0.9);
+}
+
+.pack-status.error {
+  color: rgba(248, 113, 113, 0.9);
+}
+
+.pack-status.pending {
+  color: var(--portal-link);
+}
+
+.pack-warnings {
+  margin: 0;
+  padding-left: 20px;
+  color: rgba(253, 224, 71, 0.92);
+  line-height: 1.5;
+}
+
+.pack-warnings[hidden] {
+  display: none;
+}
+
+.pack-warnings li {
+  margin: 0;
+}
+
+.private-asset-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.status-card {
+  border-radius: var(--portal-card-radius);
+  border: 1px solid var(--portal-border);
+  background: rgba(15, 23, 42, 0.86);
+  padding: 24px;
+  display: grid;
+  gap: 16px;
+  box-shadow: 0 22px 48px rgba(2, 6, 23, 0.38);
+}
+
+.status-card header {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.status-card h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.status-card p {
+  margin: 0;
+  color: var(--portal-text-muted);
+  line-height: 1.5;
+}
+
+.private-asset-purpose {
+  margin-top: 4px;
+}
+
+.private-asset-status {
+  margin: 0;
+  font-weight: 600;
+  color: var(--portal-text);
+}
+
+.private-asset-detail {
+  margin: 0;
+  color: var(--portal-text-muted);
+}
+
+.status-indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  background: rgba(96, 165, 250, 0.75);
+  box-shadow: 0 0 12px rgba(37, 99, 235, 0.4);
+  margin-top: 6px;
+}
+
+.status-card.status-ok .status-indicator {
+  background: rgba(34, 197, 94, 0.85);
+  box-shadow: 0 0 12px rgba(34, 197, 94, 0.4);
+}
+
+.status-card.status-missing .status-indicator {
+  background: rgba(248, 113, 113, 0.85);
+  box-shadow: 0 0 12px rgba(248, 113, 113, 0.45);
+}
+
+.status-card.status-pending .status-indicator {
+  background: rgba(250, 204, 21, 0.85);
+  box-shadow: 0 0 12px rgba(250, 204, 21, 0.4);
+}
+
+.status-path {
+  display: block;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(2, 6, 23, 0.72);
+  border: 1px solid rgba(71, 85, 105, 0.45);
+  color: var(--portal-text);
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status-detail {
+  font-size: 14px;
+  color: var(--portal-text-muted);
+}
+
+.status-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.status-open {
+  border-radius: 10px;
+  border: 1px solid rgba(59, 130, 246, 0.5);
+  background: linear-gradient(180deg, rgba(37, 99, 235, 0.92), rgba(29, 78, 216, 0.92));
+  color: #fff;
+  padding: 10px 18px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.status-open:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: rgba(30, 41, 59, 0.72);
+  border-color: rgba(71, 85, 105, 0.6);
+  color: var(--portal-text-muted);
+}
+
+.dev-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.dev-copy {
+  flex: 1 1 320px;
+  display: grid;
+  gap: 12px;
+}
+
+.dev-copy h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.dev-copy p {
+  margin: 0;
+  color: var(--portal-text-muted);
+  line-height: 1.6;
+}
+
+.dev-controls {
+  flex: 1 1 320px;
+  display: grid;
+  gap: 12px;
+  align-content: flex-start;
+}
+
+.dev-controls button {
+  border-radius: 999px;
+  border: 1px solid rgba(59, 130, 246, 0.48);
+  background: linear-gradient(180deg, rgba(37, 99, 235, 0.92), rgba(29, 78, 216, 0.92));
+  color: #fff;
+  padding: 10px 20px;
+  font-weight: 600;
+  cursor: pointer;
+  justify-self: flex-start;
+}
+
+.dev-controls button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dev-status {
+  margin: 0;
+  font-size: 14px;
+  color: var(--portal-text-muted);
+  min-height: 20px;
+}
+
+.dev-status.dev-error {
+  color: rgba(248, 113, 113, 0.95);
+}
+
+.dev-summary {
+  background: rgba(2, 6, 23, 0.78);
+  border: 1px solid rgba(71, 85, 105, 0.5);
+  border-radius: 12px;
+  padding: 16px;
+  max-height: 260px;
+  overflow: auto;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--portal-text);
+}
+
+.status-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 18px;
+  border-radius: 12px;
+  border: 1px solid var(--portal-border);
+  background: rgba(15, 23, 42, 0.92);
+  color: var(--portal-text);
+  box-shadow: 0 12px 32px rgba(2, 6, 23, 0.38);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(16px);
+  transition: opacity 150ms ease, transform 150ms ease;
+}
+
+.status-toast.show {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.status-toast.success {
+  border-color: rgba(34, 197, 94, 0.4);
+  box-shadow: 0 18px 44px rgba(34, 197, 94, 0.18);
+}
+
+.status-toast.info {
+  border-color: rgba(59, 130, 246, 0.4);
+  box-shadow: 0 18px 44px rgba(59, 130, 246, 0.18);
+}
+
+.status-toast.error {
+  border-color: rgba(248, 113, 113, 0.4);
+  box-shadow: 0 18px 44px rgba(248, 113, 113, 0.22);
+}
+
+.toast-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(96, 165, 250, 0.8);
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.45);
+}
+
+.status-toast.success .toast-indicator {
+  background: rgba(34, 197, 94, 0.9);
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
+}
+
+.status-toast.info .toast-indicator {
+  background: rgba(96, 165, 250, 0.85);
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.45);
+}
+
+.status-toast.error .toast-indicator {
+  background: rgba(248, 113, 113, 0.95);
+  box-shadow: 0 0 10px rgba(248, 113, 113, 0.55);
+}
+
+.toast-message {
+  flex: 1;
+  font-size: 14px;
+}
+
+.status-toast button {
+  border: none;
+  background: transparent;
+  color: var(--portal-text-muted);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.status-toast button:hover {
+  color: var(--portal-text);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 22px 54px rgba(2, 6, 23, 0.28);
+}
+
+table thead {
+  background: rgba(15, 23, 42, 0.9);
+}
+
+table th,
+table td {
+  border: 1px solid rgba(71, 85, 105, 0.42);
+  padding: 12px;
+  vertical-align: top;
+  font-size: 14px;
+}
+
+table th {
+  color: var(--portal-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 12px;
+}
+
+table tr:nth-child(even) td {
+  background: rgba(15, 23, 42, 0.78);
+}
+
+table tr:nth-child(odd) td {
+  background: rgba(15, 23, 42, 0.72);
+}
+
+input,
+select {
+  background: rgba(15, 23, 42, 0.78);
+  color: var(--portal-text);
+  border: 1px solid rgba(71, 85, 105, 0.65);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+input:focus,
+select:focus {
+  outline: 1px solid var(--portal-link);
+}
+
+.details-link {
+  color: var(--portal-link);
+  cursor: pointer;
+}
+
+.details-container {
+  background: rgba(15, 23, 42, 0.78);
+  border: 1px solid rgba(71, 85, 105, 0.38);
+  border-radius: 12px;
+  padding: 18px;
+}
+
+.indicator {
+  font-weight: 700;
+}
+
+.indicator.success {
+  color: #4ade80;
+}
+
+.indicator.fail {
+  color: #f87171;
+}
+
+@media (max-width: 960px) {
+  .portal-header {
+    grid-template-columns: 1fr;
+  }
+
+  .feature-rail {
+    justify-content: flex-start;
+  }
+
+  .overview-header {
+    flex-direction: column;
+  }
+
+  .dev-checks {
+    flex-direction: column;
+  }
+
+  .dev-controls {
+    width: 100%;
+  }
+
+  .status-toast {
+    left: 24px;
+    right: 24px;
+  }
+}
+
+@media (max-width: 720px) {
+  .portal-main {
+    padding: 24px 20px 48px;
+  }
+
+  .portal-shell,
+  .survey-shell {
+    padding: 20px;
+  }
+
+  .toolbar {
+    justify-content: flex-start;
+  }
+
+  .feature-rail-nav {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .status-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dev-controls button {
+    width: 100%;
+  }
+
+  .status-toast {
+    left: 16px;
+    right: 16px;
+  }
+}
+
+    </style>
+    
+  </head>
+  <body class="portal-body" data-theme="glass_portal">
+    <header class="portal-header">
+      <div class="portal-picker">
+        <label for="portal-selector">Portal</label>
+        <select id="portal-selector" >
+          
+            <option value="/apps/APIM_PM/">Checklist Portal</option>
+          
+            <option value="/apps/APIM_newApp3/" selected>APIM Portal Overview</option>
+          
+            <option value="/apps/APIM_Survey/">APIM Environment Survey Portal</option>
+          
+            <option value="/apps/Workspace/">Data Linking Portal</option>
+          
+        </select>
+      </div>
+      <div class="feature-rail">
+        <span class="feature-label">Overview</span>
+        <div class="feature-rail-nav" role="group" aria-label="Portal overview destinations">
+          
+            <a href="#portal-health" class="feature-chip" data-active="true">
+              Portal health
+            </a>
+          
+            <a href="#dev-checks" class="feature-chip" data-active="false">
+              Dev checks
+            </a>
+          
+            <a href="#runtime-log" class="feature-chip" data-active="false">
+              Runtime log
+            </a>
+          
+            <a href="#private-assets" class="feature-chip" data-active="false">
+              Private assets
+            </a>
+          
+        </div>
+        <div class="automation-indicator on" aria-live="polite">
+          <span class="dot" aria-hidden="true"></span>
+          Automation enabled
+        </div>
+      </div>
+    </header>
+
+    <main class="portal-main">
+      
+
+      <section class="portal-shell overview-shell" id="portal-health" aria-labelledby="overview-heading">
+        <div class="overview-header">
+          <div class="overview-title">
+            <h1 id="overview-heading">APIM Portal Overview</h1>
+            <p>
+              Quick visibility into the files and artefacts that power the APIM portals.
+              Use the portal selector or feature rail above to jump straight into the PM or Survey experiences,
+              and open frequently used folders in a single click. You can also review the
+              <a href="/health">platform health check</a> without leaving the overview.
+            </p>
+          </div>
+        </div>
+
+        
+        <section class="ui-demo-panel" aria-labelledby="ui-demo-panel-title">
+          <div class="ui-demo-panel__header">
+            <h2 id="ui-demo-panel-title" class="ui-demo-panel__title">UI demo</h2>
+            <div class="ui-demo-panel__actions">
+              <span id="ui-demo-status" class="ui-demo-status" data-role="status" data-state="idle">Idle</span>
+              <button type="button" id="run-ui-demo" class="status-open">Run UI demo</button>
+              <button type="button" id="clear-ui-demo-log" class="status-open secondary">Clear log</button>
+            </div>
+          </div>
+          <p class="ui-demo-panel__description">
+            Launches a Preventive Maintenance checklist walkthrough in a new window and records each step here for review.
+          </p>
+          <div id="ui-demo-log" class="ui-demo-log" aria-live="polite" aria-label="UI demo log">
+            <div class="ui-demo-log__empty" data-role="empty-state">
+              UI demo log ready. Press Run UI demo to begin.
+            </div>
+            <ol class="ui-demo-log__entries" data-role="entries"></ol>
+          </div>
+        </section>
+        <script id="ui-demo-config" type="application/json">{"action_toggle_id": "action-menu-toggle", "dataset": [], "dataset_row_count": 0, "log_limit": 120, "pm_url": "/apps/APIM_Checklist/", "rows_timeout_ms": 8000, "save_action_id": "action-save-state", "save_wait_ms": 1500, "scenarios": [{"comment": "The quick brown fox jumps over the lazy dog.", "status": "Pass"}, {"comment": "Sphinx of black quartz, judge my vow.", "status": "Fail"}, {"comment": "Pack my box with five dozen liquor jugs.", "status": "NA"}, {"comment": "How vexingly quick daft zebras jump!", "status": "Other"}], "summary_pause_ms": 1500, "wait_ms": 250, "window_name": "apim-ui-demo"}</script>
+        
+
+        <section class="status-grid" aria-label="Portal artefact status">
+          <article
+            class="status-card status-ok storage-status-card"
+            id="storage-status-card"
+            data-state="connected"
+          >
+            <header>
+              <span class="status-indicator" aria-hidden="true"></span>
+              <div>
+                <h2>Runtime database</h2>
+                <p>Monitor and toggle the sqlite storage used by PM and Survey portals.</p>
+              </div>
+            </header>
+            <p class="status-detail" id="storage-status-detail">Runtime sqlite storage is connected. Checklist and Survey portals can write checklist data.</p>
+            <p
+              class="status-meta"
+              id="storage-status-meta"
+              
+            >
+              Last updated 2025-11-23T19:21:50Z
+            </p>
+            <div class="status-actions">
+              <button
+                type="button"
+                class="status-open"
+                id="storage-toggle"
+                data-action="disconnect"
+                
+              >
+                Disconnect
+              </button>
+            </div>
+          </article>
+          
+          <article class="status-card status-ok">
+            <header>
+              <span class="status-indicator" aria-hidden="true"></span>
+              <div>
+                <h2>Markdown Checklists</h2>
+                <p>Shared checklist markdown directory</p>
+              </div>
+            </header>
+            <code class="status-path" title="D:\remoteRepos\APIM\docs\checklists">D:\remoteRepos\APIM\docs\checklists</code>
+            <p class="status-detail">5 file(s). Latest: Example.md â€¢ 2025-11-18 22:44</p>
+            <div class="status-actions">
+              <button class="status-open" data-open-key="markdown_checklists" >Open location</button>
+            </div>
+          </article>
+          
+          <article class="status-card status-ok">
+            <header>
+              <span class="status-indicator" aria-hidden="true"></span>
+              <div>
+                <h2>Checklist JSONL</h2>
+                <p>Serialized checklist state</p>
+              </div>
+            </header>
+            <code class="status-path" title="D:\remoteRepos\APIM\docs\checklists\.generated\readme_input_checklist.jsonl">D:\remoteRepos\APIM\docs\checklists\.generated\readme_input_checklist.jsonl</code>
+            <p class="status-detail">Updated 2025-11-16 20:45 â€¢ 503 B</p>
+            <div class="status-actions">
+              <button class="status-open" data-open-key="checklist_jsonl" >Open location</button>
+            </div>
+          </article>
+          
+          <article class="status-card status-ok">
+            <header>
+              <span class="status-indicator" aria-hidden="true"></span>
+              <div>
+                <h2>Survey Checklist JSONL</h2>
+                <p>Serialized survey checklist state</p>
+              </div>
+            </header>
+            <code class="status-path" title="D:\remoteRepos\APIM\docs\checklists\.generated\survey_input_checklist.jsonl">D:\remoteRepos\APIM\docs\checklists\.generated\survey_input_checklist.jsonl</code>
+            <p class="status-detail">Updated 2025-11-16 20:45 â€¢ 503 B</p>
+            <div class="status-actions">
+              <button class="status-open" data-open-key="survey_checklist" >Open location</button>
+            </div>
+          </article>
+          
+          <article class="status-card status-pending">
+            <header>
+              <span class="status-indicator" aria-hidden="true"></span>
+              <div>
+                <h2>Checklist TEX Reports</h2>
+                <p>Timestamped checklist TEX reports under docs/checklists/tex/reports/&lt;slug&gt;</p>
+              </div>
+            </header>
+            <code class="status-path" title="D:\remoteRepos\APIM\docs\checklists\tex\reports\readme">D:\remoteRepos\APIM\docs\checklists\tex\reports\readme</code>
+            <p class="status-detail">No files present yet.</p>
+            <div class="status-actions">
+              <button class="status-open" data-open-key="checklist_tex_output" >Open location</button>
+            </div>
+          </article>
+          
+          <article class="status-card status-pending">
+            <header>
+              <span class="status-indicator" aria-hidden="true"></span>
+              <div>
+                <h2>Survey TEX Reports</h2>
+                <p>Timestamped Survey TEX reports under docs/checklists/tex/reports/survey</p>
+              </div>
+            </header>
+            <code class="status-path" title="D:\remoteRepos\APIM\docs\checklists\tex\reports\survey">D:\remoteRepos\APIM\docs\checklists\tex\reports\survey</code>
+            <p class="status-detail">No files present yet.</p>
+            <div class="status-actions">
+              <button class="status-open" data-open-key="survey_tex_output" >Open location</button>
+            </div>
+          </article>
+          
+          <article class="status-card status-ok">
+            <header>
+              <span class="status-indicator" aria-hidden="true"></span>
+              <div>
+                <h2>Checklist Saved JSONL Reports</h2>
+                <p>Exports saved from the checklist portal</p>
+              </div>
+            </header>
+            <code class="status-path" title="D:\remoteRepos\APIM\docs\checklists\.generated\savedReports">D:\remoteRepos\APIM\docs\checklists\.generated\savedReports</code>
+            <p class="status-detail">1 file(s). Latest: camping_20251117T035825.jsonl â€¢ 2025-11-16 22:58</p>
+            <div class="status-actions">
+              <button class="status-open" data-open-key="checklist_saved_reports" >Open location</button>
+            </div>
+          </article>
+          
+          <article class="status-card status-pending">
+            <header>
+              <span class="status-indicator" aria-hidden="true"></span>
+              <div>
+                <h2>Survey Saved JSONL Reports</h2>
+                <p>Exports saved from the survey portal</p>
+              </div>
+            </header>
+            <code class="status-path" title="D:\remoteRepos\APIM\APIM_Survey\docs\jsonl\savedReports">D:\remoteRepos\APIM\APIM_Survey\docs\jsonl\savedReports</code>
+            <p class="status-detail">No files present yet.</p>
+            <div class="status-actions">
+              <button class="status-open" data-open-key="survey_saved_reports" >Open location</button>
+            </div>
+          </article>
+          
+          <article class="status-card status-ok">
+            <header>
+              <span class="status-indicator" aria-hidden="true"></span>
+              <div>
+                <h2>Dev Check Logs</h2>
+                <p>Log files generated by the overview dev check runner</p>
+              </div>
+            </header>
+            <code class="status-path" title="D:\remoteRepos\APIM\logs\dev_checks">D:\remoteRepos\APIM\logs\dev_checks</code>
+            <p class="status-detail">7 file(s). Latest: pm_contract_pipeline_20250930T140643Z.log â€¢ 2025-11-17 06:46</p>
+            <div class="status-actions">
+              <button class="status-open" data-open-key="dev_check_logs" >Open location</button>
+            </div>
+          </article>
+          
+          <article class="status-card status-ok">
+            <header>
+              <span class="status-indicator" aria-hidden="true"></span>
+              <div>
+                <h2>Private asset staging</h2>
+                <p>Directory for staged private asset zip bundles</p>
+              </div>
+            </header>
+            <code class="status-path" title="D:\remoteRepos\APIM\APIM_Mod\custom_assets">D:\remoteRepos\APIM\APIM_Mod\custom_assets</code>
+            <p class="status-detail">1 file(s). Latest: README.md â€¢ 2025-11-17 06:25</p>
+            <div class="status-actions">
+              <button class="status-open" data-open-key="private_asset_staging" >Open location</button>
+            </div>
+          </article>
+          
+          <article class="status-card status-info">
+            <header>
+              <span class="status-indicator" aria-hidden="true"></span>
+              <div>
+                <h2>CLI testing hooks</h2>
+                <p>Quick commands for pinging the running portal and validating TEX exports.</p>
+              </div>
+            </header>
+            <ul class="status-detail">
+              <li>
+                <code>python tools/ping_portal.py --slug pm --timeout 30</code>
+                &mdash; confirms the root route is healthy and triggers a PM TEX export without opening a browser.
+              </li>
+              <li>
+                <code>python tools/test_tex_exports.py --timeout 30</code>
+                &mdash; writes markers into PM + other checklists, regenerates TEX, and asserts PM stays isolated.
+                Pass <code>--slugs readme sample</code> to skip survey during appendix template work.
+              </li>
+            </ul>
+            <p class="status-meta">
+              If the script reports missing JSON snapshots, stop the server and run
+              <code>python APIM.py --reset-runtime</code> while the portal is stopped to refresh the PM/Survey
+              snapshots. The harness now auto-regenerates custom slug snapshots (README, sample, etc.) on demand.
+            </p>
+          </article>
+        </section>
+      </section>
+
+      <section class="portal-shell overview-shell" id="dev-checks">
+        <div class="dev-checks" aria-labelledby="dev-checks-heading">
+          <div class="dev-copy">
+            <h2 id="dev-checks-heading">Developer validation runner</h2>
+            <p>
+              Trigger the automated test and lint suite directly from the overview portal.
+              Results are written into <code>logs/dev_checks</code> so they can be shared
+              alongside manual notes.
+            </p>
+          </div>
+          <div class="dev-controls">
+            <button type="button" id="run-dev-checks">Run validation suite</button>
+            <p id="dev-check-status" class="dev-status" aria-live="polite"></p>
+            <div id="runtime-log">
+              <pre id="dev-check-results" class="dev-summary" hidden></pre>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="portal-shell overview-shell" id="private-assets">
+          <div class="private-assets" aria-labelledby="private-assets-heading">
+            <div class="private-assets-copy">
+              <h2 id="private-assets-heading">Private assets staging</h2>
+              <p>
+                Confirm that client-provided markdown, LaTeX, branding, and GLB packs are staged before
+                launching PM or Survey sessions. Review the staging checklist in
+                <code>docs/analysis/private_asset_staging.md</code> for the full workflow.
+              </p>
+            </div>
+            <article class="status-card private-pack-card">
+              <header>
+                <span class="status-indicator" aria-hidden="true"></span>
+                <div>
+                  <h3>Asset pack importer</h3>
+                  <p class="private-asset-purpose">
+                    Load zipped bundles from <code>APIM_Mod/custom_assets</code>, review validation warnings,
+                    and restore the generic placeholder pack when you need to reset the runtime files.
+                  </p>
+                </div>
+              </header>
+              <div class="pack-selector">
+                <label for="private-pack-selector">Available packs</label>
+                <div class="pack-selector-actions">
+                  <select id="private-pack-selector" name="private-pack-selector" autocomplete="off"></select>
+                  <button type="button" class="status-open" id="load-private-pack">Load pack</button>
+                  <button type="button" class="status-open secondary" id="reload-default-pack">
+                    Reload default
+                  </button>
+                  <button
+                    type="button"
+                    class="status-open secondary"
+                    id="open-private-pack-folder"
+                    data-open-key="private_asset_staging"
+                    title="Open the staging directory in Finder (macOS) or File Explorer (Windows)."
+                    hidden
+                  >
+                    Open staging folder
+                  </button>
+                </div>
+                <div class="pack-builder-controls">
+                  <label class="pack-toggle" for="include-glb-assets">
+                    <input
+                      type="checkbox"
+                      id="include-glb-assets"
+                      name="include-glb-assets"
+                      checked
+                    />
+                    Include GLB (3D) assets
+                  </label>
+                  <div class="pack-name-field">
+                    <label for="pack-name-input">New pack folder</label>
+                    <input
+                      type="text"
+                      id="pack-name-input"
+                      name="pack-name-input"
+                      autocomplete="off"
+                      placeholder="apim_project_assets"
+                    />
+                  </div>
+                  <button type="button" class="status-open secondary" id="stage-private-pack">
+                    Make asset pack folder
+                  </button>
+                  <button type="button" class="status-open secondary" id="build-private-pack">
+                    Create asset pack
+                  </button>
+                </div>
+                <p id="private-pack-status" class="pack-status pending" aria-live="polite"></p>
+                <p class="save-state-reminder">
+                  Before reloading, open PM or Survey and choose <strong>Actions → Save State</strong>
+                  to preserve in-progress work.
+                </p>
+                <ul id="private-pack-results" class="pack-results" aria-live="polite" hidden></ul>
+                <ul id="private-pack-warnings" class="pack-warnings" aria-live="polite" hidden></ul>
+              </div>
+            </article>
+            <section class="private-assets-guidance">
+              <details>
+                <summary>Show staging instructions</summary>
+                <div class="guidance-body">
+                  
+                  <h1>Private asset pack staging</h1>
+<p>This directory consolidates the staged asset packs referenced by the <strong>Private assets</strong> overview tab.
+Each pack mirrors the runtime directories that must be populated before running PM or Survey exports.
+The importer planned in <a href="../../docs/private_asset_pack_plan.md"><code>docs/private_asset_pack_plan.md</code></a> will
+load packs from this folder directly once zip automation is implemented.</p>
+<h2>Provided bundles</h2>
+<table>
+<thead>
+<tr>
+<th>Directory</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>apim_generic_assets/</code></td>
+<td>Safe placeholder pack with redacted markdown, LaTeX, branding, and prototype assets. Use this to verify importer flows without touching client materials.</td>
+</tr>
+<tr>
+<td><code>apim_cvmewt_assets/</code></td>
+<td>Redacted reference that documents the Cvmewt-specific filenames and folder structure expected by production deployments. Replace the placeholders with the actual private copies locally.</td>
+</tr>
+</tbody>
+</table>
+<p>The <code>.txt</code> markers inside each pack indicate where binary assets (GLB, PNG) belong. When preparing a
+private build, replace the placeholder text with the real files and remove the <code>.txt</code> suffixes before
+zipping the directory for import. Each pack is organized so its contents can be zipped at the
+repository root and copied into the runtime directories shown below.</p>
+<blockquote>
+<p><strong>Tip:</strong> The portal overview now exposes a <strong>Make asset pack folder</strong> button that stages the latest
+runtime markdown, LaTeX, branding, JSONL saves, and optional GLB assets into a correctly named
+<code>apim_&lt;slug&gt;_assets</code> directory. Disable the GLB toggle to create the lightweight <code>_lite</code> variant
+without performing manual file copies.</p>
+</blockquote>
+<pre><code>APIM_Branding/
+  logos/
+    cvmewt-logo.png
+docs/checklists/
+  pm.md
+  survey.md
+  tex/templates/
+    pm.tex
+    survey.tex
+APIM_Survey/
+  static/room_design_proto/assets/
+    manifest.json
+    glb/
+    previews/
+    textures/
+</code></pre>
+<h2>How to use these packs manually</h2>
+<ol>
+<li>Copy the desired directory from this folder to a safe local workspace.</li>
+<li>Replace any placeholder files with the private copies supplied by stakeholders, dropping <code>.txt</code>
+   suffixes from binary assets as you go.</li>
+<li>Zip the directory at the repository root (e.g., <code>zip -r apim_generic_assets.zip apim_generic_assets/</code>)
+   or point upcoming automation to the prepared directory.</li>
+<li>Launch the runtime and confirm the <strong>Private assets</strong> tab reports green checks for each directory
+   before running exports.</li>
+</ol>
+<h2>Git hygiene</h2>
+<p>Do not commit extracted private files or modified packs. Follow the safeguards in
+<a href="../../docs/analysis/private_asset_staging.md#public-fork-safeguards"><code>docs/analysis/private_asset_staging.md</code></a>
+to keep markdown, LaTeX, branding, and GLB assets out of version control. Add any organization-specific
+ignore rules to <code>.git/info/exclude</code> or a local wrapper script so <code>git status</code> stays clean after loading
+a private pack.</p>
+                  
+                </div>
+                <p class="guidance-source">
+                  Source: <code>D:\remoteRepos\APIM\APIM_Mod\custom_assets\README.md</code>
+                </p>
+              </details>
+            </section>
+            <div class="private-asset-grid">
+              
+              <article class="status-card private-asset status-ok">
+                <header>
+                  <span class="status-indicator" aria-hidden="true"></span>
+                <div>
+                  <h3>Markdown checklists</h3>
+                  <p class="private-asset-purpose">Feeds the Checklist Portal and workspace so launches match the client-approved procedures.</p>
+                </div>
+              </header>
+              <p class="private-asset-status">Ready</p>
+              <p class="private-asset-detail">Expected: canonical checklists (pm.md, survey.md, etc.) staged for runtime seeding.</p>
+              <code class="status-path" title="D:\remoteRepos\APIM\docs\checklists">D:\remoteRepos\APIM\docs\checklists</code>
+              <div class="status-actions">
+                <button class="status-open" data-open-key="private_markdown_checklists" >
+                  Open Markdown Checklists folder
+                </button>
+              </div>
+            </article>
+            
+              <article class="status-card private-asset status-ok">
+                <header>
+                  <span class="status-indicator" aria-hidden="true"></span>
+                <div>
+                  <h3>Checklist LaTeX template</h3>
+                  <p class="private-asset-purpose">Controls checklist PDF exports so headers and legal language reflect the engagement.</p>
+                </div>
+              </header>
+              <p class="private-asset-status">Ready</p>
+              <p class="private-asset-detail">Expected: Report_Template.tex with branded headers and legal copy.</p>
+              <code class="status-path" title="D:\remoteRepos\APIM\docs\checklists\tex\templates\readme.tex">D:\remoteRepos\APIM\docs\checklists\tex\templates\readme.tex</code>
+              <div class="status-actions">
+                <button class="status-open" data-open-key="private_checklist_report_template" >
+                  Open LaTeX template folder
+                </button>
+              </div>
+            </article>
+            
+              <article class="status-card private-asset status-ok">
+                <header>
+                  <span class="status-indicator" aria-hidden="true"></span>
+                <div>
+                  <h3>Zeiss branding</h3>
+                  <p class="private-asset-purpose">Populates logos and marks inside generated checklist and survey exports.</p>
+                </div>
+              </header>
+              <p class="private-asset-status">Ready</p>
+              <p class="private-asset-detail">Expected: zeiss-logo-rgb.png and any engagement-specific branding assets.</p>
+              <code class="status-path" title="D:\remoteRepos\APIM\APIM_Branding\logos\cvmewt-logo.png">D:\remoteRepos\APIM\APIM_Branding\logos\cvmewt-logo.png</code>
+              <div class="status-actions">
+                <button class="status-open" data-open-key="private_branding" >
+                  Open branding folder
+                </button>
+              </div>
+            </article>
+            
+              <article class="status-card private-asset status-ok">
+                <header>
+                  <span class="status-indicator" aria-hidden="true"></span>
+                <div>
+                  <h3>GLB pack drop zone</h3>
+                  <p class="private-asset-purpose">Supplies Survey 3D prototype assets without checking private files into Git.</p>
+                </div>
+              </header>
+              <p class="private-asset-status">Ready</p>
+              <p class="private-asset-detail">Expected: assets.json plus GLB binaries, textures, and thumbnails per pack.</p>
+              <code class="status-path" title="D:\remoteRepos\APIM\APIM_Survey\static\room_design_proto\interactive_3d_room\assets">D:\remoteRepos\APIM\APIM_Survey\static\room_design_proto\interactive_3d_room\assets</code>
+              <div class="status-actions">
+                <button class="status-open" data-open-key="private_survey_glb_assets" >
+                  Open GLB asset folder
+                </button>
+              </div>
+            </article>
+            
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div class="status-toast" id="status-toast" role="status" aria-live="polite">
+      <span class="toast-indicator" aria-hidden="true"></span>
+      <div class="toast-message"></div>
+      <button type="button" id="toast-dismiss" aria-label="Dismiss">Dismiss</button>
+    </div>
+
+    
+    <script>
+﻿(function (window) {
+  const STORAGE_KEY = "apim_ui_demo_log";
+  const DEFAULT_WAIT_MS = 700;
+  const DEFAULT_TIMEOUT_MS = 2000;
+  const DEFAULT_ROW_TIMEOUT_MS = 5000;
+  const WINDOW_POLL_INTERVAL_MS = 125;
+  const POINTER_ID = "apim-ui-demo-pointer";
+
+  function parseConfig(configElement) {
+    if (!configElement) {
+      return null;
+    }
+
+    try {
+      const payload = configElement.textContent || configElement.innerText || "";
+      return payload ? JSON.parse(payload) : null;
+    } catch (error) {
+      console.error("UI demo config parse error", error);
+      return null;
+    }
+  }
+
+  function loadLog() {
+    try {
+      const saved = window.sessionStorage.getItem(STORAGE_KEY);
+      if (!saved) {
+        return [];
+      }
+      const parsed = JSON.parse(saved);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+      console.warn("Unable to parse UI demo log from storage", error);
+      return [];
+    }
+  }
+
+  function persistLog(entries) {
+    try {
+      window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+    } catch (error) {
+      console.warn("Unable to persist UI demo log", error);
+    }
+  }
+
+  function escapeAttr(win, value) {
+    if (typeof value !== "string") {
+      return "";
+    }
+    if (win.CSS && typeof win.CSS.escape === "function") {
+      return win.CSS.escape(value);
+    }
+    return value.replace(/"/g, '\\"');
+  }
+
+  function renderLog(entriesList, emptyState, entries) {
+    if (!entriesList) {
+      return;
+    }
+
+    entriesList.innerHTML = "";
+    if (!entries.length) {
+      if (emptyState) {
+        emptyState.hidden = false;
+      }
+      return;
+    }
+
+    if (emptyState) {
+      emptyState.hidden = true;
+    }
+
+    entries.forEach((entry) => {
+      const item = document.createElement("li");
+      item.className = "ui-demo-log__entry";
+      item.dataset.tone = entry.tone;
+      item.textContent = `[${entry.time}] ${entry.message}`;
+      entriesList.appendChild(item);
+    });
+  }
+
+  function appendLog(state, message, tone = "info") {
+    const entry = {
+      message,
+      tone,
+      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
+    };
+    state.log.unshift(entry);
+    const limit = state.config.log_limit || 20;
+    if (state.log.length > limit) {
+      state.log.length = limit;
+    }
+    persistLog(state.log);
+    renderLog(state.entriesList, state.emptyState, state.log);
+  }
+
+  function updateStatus(state, label, tone = "idle") {
+    if (!state.statusIndicator) {
+      return;
+    }
+    state.statusIndicator.dataset.state = tone;
+    state.statusIndicator.textContent = label;
+  }
+
+  function wait(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  function waitForDocument(win, timeoutMs) {
+    return new Promise((resolve, reject) => {
+      const timeout = timeoutMs || DEFAULT_TIMEOUT_MS;
+      const start = Date.now();
+
+      function poll() {
+        if (!win || win.closed) {
+          reject(new Error("PM portal closed before the demo could start."));
+          return;
+        }
+
+        try {
+          if (win.document && win.document.readyState === "complete") {
+            resolve(win.document);
+            return;
+          }
+        } catch (error) {
+          reject(new Error("Unable to access PM portal window."));
+          return;
+        }
+
+        if (Date.now() - start > timeout) {
+          reject(new Error("Timed out waiting for the PM portal to load."));
+          return;
+        }
+
+        setTimeout(poll, WINDOW_POLL_INTERVAL_MS);
+      }
+
+      poll();
+    });
+  }
+
+  function waitForChecklistRows(doc, requiredCount, timeoutMs) {
+    const timeout = timeoutMs || DEFAULT_ROW_TIMEOUT_MS;
+    if (!doc) {
+      return Promise.reject(new Error("Checklist document unavailable."));
+    }
+    return new Promise((resolve, reject) => {
+      const start = Date.now();
+
+      function poll() {
+        const rows = collectChecklistRows(doc);
+        if (rows.length >= requiredCount) {
+          resolve(rows);
+          return;
+        }
+
+        if (Date.now() - start > timeout) {
+          reject(new Error("Not enough checklist entries to run the demo script."));
+          return;
+        }
+
+        setTimeout(poll, WINDOW_POLL_INTERVAL_MS);
+      }
+
+      poll();
+    });
+  }
+
+  function collectChecklistRows(doc) {
+    const radios = Array.from(doc.querySelectorAll('input[type="radio"][data-field="Status"]'));
+    const seen = new Set();
+    const rows = [];
+
+    radios.forEach((input) => {
+      const { major, minor } = input.dataset;
+      if (!major || !minor) {
+        return;
+      }
+      const key = `${major}::${minor}`;
+      if (seen.has(key)) {
+        return;
+      }
+      seen.add(key);
+      rows.push({ major, minor });
+    });
+
+    return rows;
+  }
+
+  function ensurePointer(win) {
+    try {
+      const doc = win.document;
+      let pointer = doc.getElementById(POINTER_ID);
+      if (!pointer) {
+        pointer = doc.createElement("div");
+        pointer.id = POINTER_ID;
+        pointer.style.position = "fixed";
+        pointer.style.width = "16px";
+        pointer.style.height = "16px";
+        pointer.style.borderRadius = "50%";
+        pointer.style.background = "rgba(143, 230, 255, 0.95)";
+        pointer.style.boxShadow = "0 0 0 6px rgba(143, 230, 255, 0.25)";
+        pointer.style.pointerEvents = "none";
+        pointer.style.transition = "transform 250ms ease";
+        pointer.style.transform = "translate(-9999px, -9999px)";
+        pointer.style.zIndex = "2147483647";
+        doc.body.appendChild(pointer);
+      }
+      return pointer;
+    } catch (error) {
+      console.warn("Unable to create pointer overlay", error);
+      return null;
+    }
+  }
+
+  function movePointer(win, pointer, element) {
+    if (!pointer || !element) {
+      return;
+    }
+    const rect = element.getBoundingClientRect();
+    const targetX = rect.left + rect.width / 2 + win.scrollX;
+    const targetY = rect.top + rect.height / 2 + win.scrollY;
+    pointer.style.transform = `translate(${Math.round(targetX)}px, ${Math.round(targetY)}px)`;
+  }
+
+  function ripple(win, element) {
+    if (!element) {
+      return;
+    }
+    try {
+      const doc = win.document;
+      const rippleEl = doc.createElement("div");
+      rippleEl.style.position = "absolute";
+      rippleEl.style.width = "24px";
+      rippleEl.style.height = "24px";
+      rippleEl.style.borderRadius = "50%";
+      rippleEl.style.border = "2px solid rgba(143, 230, 255, 0.6)";
+      rippleEl.style.pointerEvents = "none";
+      rippleEl.style.opacity = "0.9";
+      rippleEl.style.transition = "transform 400ms ease, opacity 400ms ease";
+      rippleEl.style.transform = "scale(0.5)";
+
+      const hostRect = element.getBoundingClientRect();
+      rippleEl.style.left = `${hostRect.left + hostRect.width / 2 - 12 + win.scrollX}px`;
+      rippleEl.style.top = `${hostRect.top + hostRect.height / 2 - 12 + win.scrollY}px`;
+      doc.body.appendChild(rippleEl);
+
+      requestAnimationFrame(() => {
+        rippleEl.style.transform = "scale(1.6)";
+        rippleEl.style.opacity = "0";
+      });
+
+      setTimeout(() => {
+        rippleEl.remove();
+      }, 450);
+    } catch (error) {
+      console.warn("Unable to render ripple effect", error);
+    }
+  }
+
+  async function updateTextField(win, pointer, selector, value, waitMs) {
+    if (!value || !selector) {
+      return { found: false, changed: false };
+    }
+    const doc = win.document;
+    const input = doc.querySelector(selector);
+    if (!input) {
+      return { found: false, changed: false };
+    }
+
+    input.scrollIntoView({ behavior: "smooth", block: "center" });
+    movePointer(win, pointer, input);
+    input.focus();
+
+    const previous = input.value;
+    if (previous !== value) {
+      input.value = value;
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+      ripple(win, input);
+    }
+
+    await wait(Math.max(150, Math.floor(waitMs * 0.8)));
+    return { found: true, changed: previous !== value };
+  }
+
+  async function updateStatusField(win, pointer, selector, waitMs) {
+    if (!selector) {
+      return { found: false, changed: false };
+    }
+    const doc = win.document;
+    const radio = doc.querySelector(selector);
+    if (!radio) {
+      return { found: false, changed: false };
+    }
+
+    radio.scrollIntoView({ behavior: "smooth", block: "center" });
+    movePointer(win, pointer, radio);
+    const wasChecked = radio.checked;
+    if (!wasChecked) {
+      radio.checked = true;
+      radio.dispatchEvent(new Event("input", { bubbles: true }));
+      radio.dispatchEvent(new Event("change", { bubbles: true }));
+      ripple(win, radio);
+    }
+
+    await wait(Math.max(150, Math.floor(waitMs * 0.6)));
+    return { found: true, changed: !wasChecked };
+  }
+
+  async function applyDatasetEntry(win, pointer, entry, waitMs) {
+    const { group, property, value, status, comment } = entry || {};
+    if (!group || !property) {
+      return { changed: false, located: false };
+    }
+
+    const escapedGroup = escapeAttr(win, group);
+    const escapedProperty = escapeAttr(win, property);
+    const baseSelector = `input[data-filetype="procedures"][data-major="${escapedGroup}"][data-minor="${escapedProperty}"]`;
+
+    let located = false;
+    let changed = false;
+
+    const resultValue = value === undefined || value === null ? "" : String(value);
+    const resultSelector = `${baseSelector}[data-field="Result"]`;
+    const resultUpdate = await updateTextField(win, pointer, resultSelector, resultValue, waitMs);
+    if (resultUpdate.found) {
+      located = true;
+      changed = changed || resultUpdate.changed;
+    }
+
+    if (status) {
+      const escapedStatus = escapeAttr(win, status);
+      const statusSelector = `input[type="radio"][data-filetype="procedures"][data-major="${escapedGroup}"][data-minor="${escapedProperty}"][data-field="Status"][value="${escapedStatus}"]`;
+      const statusUpdate = await updateStatusField(win, pointer, statusSelector, waitMs);
+      if (statusUpdate.found) {
+        located = true;
+        changed = changed || statusUpdate.changed;
+      }
+    }
+
+    const commentValue = comment === undefined || comment === null ? "" : String(comment);
+    if (commentValue) {
+      const commentSelector = `${baseSelector}[data-field="Comment"]`;
+      const commentUpdate = await updateTextField(win, pointer, commentSelector, commentValue, waitMs);
+      if (commentUpdate.found) {
+        located = true;
+        changed = changed || commentUpdate.changed;
+      }
+    }
+
+    return { changed, located };
+  }
+
+  async function applyDatasetEntries(win, pointer, dataset, waitMs, state) {
+    if (!Array.isArray(dataset) || !dataset.length) {
+      return;
+    }
+
+    let applied = 0;
+    const missingEntries = new Set();
+
+    for (let index = 0; index < dataset.length; index += 1) {
+      const entry = dataset[index];
+      if (!entry) {
+        continue;
+      }
+
+      const outcome = await applyDatasetEntry(win, pointer, entry, waitMs, state);
+      const label = `${entry.group} / ${entry.property}`;
+
+      if (outcome.changed) {
+        applied += 1;
+        appendLog(state, `Updated ${label}.`, "info");
+      } else if (!outcome.located && (entry.value || entry.status || entry.comment)) {
+        missingEntries.add(label);
+      }
+    }
+
+    if (missingEntries.size) {
+      appendLog(
+        state,
+        `Skipped ${missingEntries.size} entries; matching inputs were not present in the PM portal.`,
+        "error",
+      );
+    }
+
+    appendLog(state, `Checklist dataset applied (${applied} updates).`, "success");
+  }
+
+  async function triggerSaveState(win, pointer, waitMs, state, config) {
+    const doc = win.document;
+    const toggleId = config.action_toggle_id || "action-menu-toggle";
+    const saveId = config.save_action_id || "action-save-state";
+    const toggle = doc.getElementById(toggleId);
+    const saveButton = doc.getElementById(saveId);
+
+    if (!toggle || !saveButton) {
+      appendLog(state, "Save State controls not found; skipping the final action.", "error");
+      return;
+    }
+
+    appendLog(state, "Opening action menu to save the PM checklist.", "info");
+    updateStatus(state, "Saving state...", "running");
+    toggle.scrollIntoView({ behavior: "smooth", block: "center" });
+    movePointer(win, pointer, toggle);
+    toggle.click();
+    await wait(Math.max(200, Math.floor(waitMs)));
+
+    movePointer(win, pointer, saveButton);
+    saveButton.click();
+    await wait(config.save_wait_ms || 1500);
+    appendLog(state, "Triggered Save State action.", "success");
+  }
+
+  async function applyScenario(win, pointer, row, scenario, waitMs, state) {
+    const doc = win.document;
+    const statusSelector = `input[type="radio"][data-field="Status"][data-major="${row.major}"][data-minor="${row.minor}"][value="${scenario.status}"]`;
+    const commentSelector = `input[data-field="Comment"][data-major="${row.major}"][data-minor="${row.minor}"]`;
+    const statusInput = doc.querySelector(statusSelector);
+    if (!statusInput) {
+      throw new Error(`Unable to locate the ${scenario.status} status for ${row.major} / ${row.minor}.`);
+    }
+
+    statusInput.scrollIntoView({ behavior: "smooth", block: "center" });
+    movePointer(win, pointer, statusInput);
+    await wait(waitMs);
+
+    statusInput.checked = true;
+    statusInput.dispatchEvent(new Event("change", { bubbles: true }));
+    statusInput.dispatchEvent(new Event("input", { bubbles: true }));
+    ripple(win, statusInput);
+
+    await wait(waitMs);
+
+    const commentInput = doc.querySelector(commentSelector);
+    if (!commentInput) {
+      throw new Error(`Unable to locate the comment field for ${row.major} / ${row.minor}.`);
+    }
+
+    commentInput.focus();
+    commentInput.value = scenario.comment;
+    commentInput.dispatchEvent(new Event("input", { bubbles: true }));
+    commentInput.dispatchEvent(new Event("change", { bubbles: true }));
+    movePointer(win, pointer, commentInput);
+
+    await wait(waitMs);
+
+    const commentNote = scenario.comment && scenario.comment.trim().length
+      ? " with comment updates."
+      : ".";
+    appendLog(
+      state,
+      `Scenario "${scenario.status}" finalized for ${row.major} / ${row.minor}${commentNote}`,
+      "success",
+    );
+  }
+
+  async function runScenarioSequence(win, pointer, rows, scenarios, waitMs, state) {
+    const total = Math.min(rows.length, scenarios.length);
+    for (let index = 0; index < total; index += 1) {
+      const scenario = scenarios[index];
+      const row = rows[index];
+      appendLog(
+        state,
+        `Scenario ${index + 1} of ${total}: ${row.major} / ${row.minor} -> ${scenario.status}`,
+        "info",
+      );
+      await applyScenario(win, pointer, row, scenario, waitMs, state);
+    }
+  }
+
+  async function runDemo(state) {
+    const { config, toast } = state;
+    const waitMs = config.wait_ms || DEFAULT_WAIT_MS;
+    const dataset = Array.isArray(config.dataset) ? config.dataset : [];
+    const scenarios = Array.isArray(config.scenarios) ? config.scenarios : [];
+
+    appendLog(state, "Opening PM portal window...", "info");
+    let pmWindow;
+    try {
+      pmWindow = window.open(config.pm_url, config.window_name || "apim-ui-demo");
+    } catch (error) {
+      appendLog(state, "Unable to open PM portal window.", "error");
+      toast("Unable to open PM portal window.", "error");
+      updateStatus(state, "Error opening portal", "error");
+      throw error;
+    }
+
+    if (!pmWindow) {
+      const message = "Pop-up blocked. Allow pop-ups for this site to run the UI demo.";
+      appendLog(state, message, "error");
+      toast(message, "error");
+      updateStatus(state, "Pop-up blocked", "error");
+      throw new Error(message);
+    }
+
+    pmWindow.focus();
+
+    appendLog(state, "Waiting for PM portal to finish loading...", "info");
+    updateStatus(state, "Waiting for portal...", "opening");
+    const doc = await waitForDocument(pmWindow, config.open_timeout_ms);
+
+    const requiredRows = (() => {
+      if (dataset.length) {
+        const expected = config.dataset_row_count || dataset.length;
+        return Math.max(1, Math.min(expected, 24));
+      }
+      if (scenarios.length) {
+        return Math.max(1, scenarios.length);
+      }
+      return 4;
+    })();
+
+    appendLog(state, "PM portal ready. Waiting for checklist data...", "info");
+    updateStatus(state, "Preparing checklist...", "opening");
+    const rows = await waitForChecklistRows(doc, requiredRows, config.rows_timeout_ms);
+
+    const pointer = ensurePointer(pmWindow);
+
+    if (dataset.length) {
+      appendLog(
+        state,
+        `Checklist ready. Applying ${dataset.length} dataset entries from the saved report...`,
+        "info",
+      );
+      updateStatus(state, "Applying dataset...", "running");
+      await applyDatasetEntries(pmWindow, pointer, dataset, waitMs, state);
+      await triggerSaveState(pmWindow, pointer, waitMs, state, config);
+      updateStatus(state, "Demo complete", "success");
+      appendLog(state, "UI demo complete. Review the PM window to inspect the updates.", "success");
+    } else if (scenarios.length) {
+      appendLog(state, "Checklist ready. Applying scenarios...", "info");
+      updateStatus(state, "Applying scenarios...", "running");
+      await runScenarioSequence(pmWindow, pointer, rows, scenarios, waitMs, state);
+      updateStatus(state, "Demo complete", "success");
+      appendLog(state, "UI demo complete. Review the PM window to inspect the updates.", "success");
+    } else {
+      appendLog(state, "No demo dataset or scenarios configured.", "error");
+      updateStatus(state, "Idle", "idle");
+    }
+
+    if (config.summary_pause_ms) {
+      await wait(config.summary_pause_ms);
+    }
+
+    pmWindow.focus();
+  }
+
+  function initialState(options, config) {
+    const entriesList = document.querySelector(
+      `#${options.logContainerId} [data-role="entries"]`,
+    );
+    const emptyState = document.querySelector(
+      `#${options.logContainerId} [data-role="empty-state"]`,
+    );
+    const statusIndicator = options.statusElementId
+      ? document.getElementById(options.statusElementId)
+      : null;
+
+    const state = {
+      running: false,
+      config,
+      log: loadLog(),
+      entriesList,
+      emptyState,
+      statusIndicator,
+      runButton: document.getElementById(options.buttonId),
+      clearButton: options.clearButtonId
+        ? document.getElementById(options.clearButtonId)
+        : null,
+      toast: typeof options.toast === "function" ? options.toast : () => {},
+    };
+
+    renderLog(entriesList, emptyState, state.log);
+    updateStatus(state, "Idle", "idle");
+    return state;
+  }
+
+  function restoreButton(runButton, label) {
+    if (!runButton) {
+      return;
+    }
+    runButton.disabled = false;
+    runButton.textContent = label;
+  }
+
+  function setupClearButton(state) {
+    if (!state.clearButton) {
+      return;
+    }
+    state.clearButton.addEventListener("click", () => {
+      state.log = [];
+      persistLog(state.log);
+      renderLog(state.entriesList, state.emptyState, state.log);
+      state.toast("UI demo log cleared.", "success");
+      updateStatus(state, "Idle", "idle");
+    });
+  }
+
+  function init(options) {
+    const configElement = document.getElementById(options.configElementId);
+    const config = parseConfig(configElement);
+    if (!config) {
+      return;
+    }
+
+    const runButton = document.getElementById(options.buttonId);
+    const logContainer = document.getElementById(options.logContainerId);
+    if (!runButton || !logContainer) {
+      return;
+    }
+
+    const state = initialState(options, config);
+    setupClearButton(state);
+
+    const originalLabel = runButton.textContent || "Run UI demo";
+
+    runButton.addEventListener("click", async () => {
+      if (state.running) {
+        state.toast("The UI demo is already running.", "info");
+        return;
+      }
+
+      state.running = true;
+      runButton.disabled = true;
+      runButton.textContent = "Running UI demo...";
+      updateStatus(state, "Starting demo...", "opening");
+      try {
+        await runDemo(state);
+        state.toast("UI demo completed.", "success");
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "UI demo failed.";
+        appendLog(state, message, "error");
+        state.toast(message, "error");
+        updateStatus(state, "Demo failed", "error");
+      } finally {
+        state.running = false;
+        restoreButton(runButton, originalLabel);
+        if (state.statusIndicator && state.statusIndicator.dataset.state !== "success") {
+          updateStatus(state, "Idle", "idle");
+        }
+      }
+    });
+  }
+
+  window.APIMOverviewDemo = {
+    init,
+  };
+})(window);
+
+    </script>
+    
+    <script>
+      const portalSelector = document.getElementById('portal-selector');
+      if (portalSelector) {
+        portalSelector.addEventListener('change', (event) => {
+          const target = event.target;
+          if (!(target instanceof HTMLSelectElement)) {
+            return;
+          }
+          const option = target.selectedOptions && target.selectedOptions[0];
+          if (!option) {
+            return;
+          }
+          const destination = option.value;
+          if (destination) {
+            window.location.href = destination;
+          }
+        });
+      }
+
+      document.querySelectorAll('.feature-chip').forEach((chip) => {
+        if (chip.dataset.active === 'true') {
+          chip.setAttribute('aria-current', 'page');
+        }
+      });
+
+      const buttons = document.querySelectorAll('[data-open-key]');
+      const toast = document.getElementById('status-toast');
+      const toastMessage = toast ? toast.querySelector('.toast-message') : null;
+      const toastIndicator = toast ? toast.querySelector('.toast-indicator') : null;
+      const dismissButton = document.getElementById('toast-dismiss');
+      const devButton = document.getElementById('run-dev-checks');
+      const devStatus = document.getElementById('dev-check-status');
+      const devResults = document.getElementById('dev-check-results');
+      const privatePackSelector = document.getElementById('private-pack-selector');
+      const loadPrivatePackButton = document.getElementById('load-private-pack');
+      const buildPrivatePackButton = document.getElementById('build-private-pack');
+      const stagePrivatePackButton = document.getElementById('stage-private-pack');
+      const reloadDefaultPackButton = document.getElementById('reload-default-pack');
+      const openPrivatePackFolderButton = document.getElementById('open-private-pack-folder');
+      const privatePackStatus = document.getElementById('private-pack-status');
+      const privatePackResults = document.getElementById('private-pack-results');
+      const privatePackWarnings = document.getElementById('private-pack-warnings');
+      const storageStatusCard = document.getElementById('storage-status-card');
+      const storageStatusDetail = document.getElementById('storage-status-detail');
+      const storageStatusMeta = document.getElementById('storage-status-meta');
+      const includeGlbToggle = document.getElementById('include-glb-assets');
+      const packNameInput = document.getElementById('pack-name-input');
+      const storageToggleButton = document.getElementById('storage-toggle');
+      let defaultPackName = '';
+      let hideTimer;
+      const saveStateDefaultMessage =
+        'Select a pack to import. Save current checklists via “Actions → Save State” before reloading.';
+      const saveStateCancelMessage =
+        'Pack reload cancelled. Save current checklists via “Actions → Save State” before retrying.';
+      let storageStatus = {"connected": true, "enabled": true, "reason": null, "state": "connected", "transitioning": false, "updated_at": "2025-11-23T19:21:50Z"};
+      let currentStorageDisplay = {"button_action": "disconnect", "button_label": "Disconnect", "detail": "Runtime sqlite storage is connected. Checklist and Survey portals can write checklist data.", "meta": "Last updated 2025-11-23T19:21:50Z", "state": "connected", "status_class": "ok", "toggle_cooldown_expires_at": null, "toggle_cooldown_ms": 0, "toggle_disabled": false};
+      let storageToggleCooldownTimer;
+      let storageToggleBlockedUntil = 0;
+
+      const TOAST_TONES = ['success', 'error', 'info'];
+
+      function resolveToastTone(tone) {
+        if (typeof tone !== 'string') {
+          return 'info';
+        }
+        return TOAST_TONES.includes(tone) ? tone : 'info';
+      }
+
+      function showToast(message, tone = 'info') {
+        if (!toast || !toastMessage) {
+          if (typeof window !== 'undefined' && window.console) {
+            console.warn('Toast container unavailable. Message:', message);
+          }
+          return;
+        }
+
+        const resolvedTone = resolveToastTone(tone);
+        toast.classList.remove('success', 'error', 'info');
+        toast.classList.add('show', resolvedTone);
+        toast.setAttribute('data-tone', resolvedTone);
+        toastMessage.textContent = message;
+
+        if (toastIndicator) {
+          toastIndicator.setAttribute('aria-hidden', resolvedTone === 'info' ? 'true' : 'false');
+        }
+
+        if (hideTimer) {
+          clearTimeout(hideTimer);
+          hideTimer = null;
+        }
+
+        if (resolvedTone !== 'error') {
+          hideTimer = window.setTimeout(() => {
+            hideToast();
+          }, 5000);
+        }
+      }
+
+      function hideToast() {
+        if (!toast) {
+          return;
+        }
+
+        toast.classList.remove('show', 'success', 'error', 'info');
+        toast.removeAttribute('data-tone');
+
+        if (toastIndicator) {
+          toastIndicator.setAttribute('aria-hidden', 'true');
+        }
+
+        if (toastMessage) {
+          toastMessage.textContent = '';
+        }
+
+        if (hideTimer) {
+          clearTimeout(hideTimer);
+          hideTimer = null;
+        }
+      }
+
+      function currentPackNameValue() {
+        if (!packNameInput) {
+          return '';
+        }
+        return packNameInput.value.trim();
+      }
+
+      function packNameLooksValid(name) {
+        return /^apim_[a-z0-9]+(?:_[a-z0-9]+)*_assets(?:_lite)?$/u.test(name);
+      }
+
+      function updateStageButtonState() {
+        if (!stagePrivatePackButton) {
+          return;
+        }
+        const value = currentPackNameValue();
+        stagePrivatePackButton.disabled = value.length === 0;
+      }
+
+      function storageUnavailable() {
+        if (!storageStatus) {
+          return true;
+        }
+        if (storageStatus.enabled === false) {
+          return true;
+        }
+        return !storageStatus.connected || storageStatus.transitioning;
+      }
+
+      function scheduleStorageToggleCooldown(milliseconds) {
+        if (!storageToggleButton) {
+          return;
+        }
+
+        clearTimeout(storageToggleCooldownTimer);
+        const numeric = Number(milliseconds);
+        const msValue = Number.isFinite(numeric) ? Math.max(0, Math.ceil(numeric)) : 0;
+
+        if (msValue <= 0) {
+          storageToggleBlockedUntil = 0;
+          storageToggleButton.disabled = Boolean(
+            currentStorageDisplay && currentStorageDisplay.toggle_disabled
+          );
+          return;
+        }
+
+        const now = Date.now();
+        const target = now + msValue;
+        storageToggleBlockedUntil = Math.max(storageToggleBlockedUntil, target);
+        storageToggleButton.disabled = true;
+
+        const delay = Math.max(0, Math.ceil(storageToggleBlockedUntil - now));
+        storageToggleCooldownTimer = window.setTimeout(() => {
+          storageToggleCooldownTimer = null;
+          const remaining = storageToggleBlockedUntil - Date.now();
+          if (remaining <= 0) {
+            storageToggleBlockedUntil = 0;
+            if (storageToggleButton) {
+              storageToggleButton.disabled = Boolean(
+                currentStorageDisplay && currentStorageDisplay.toggle_disabled
+              );
+            }
+          } else {
+            scheduleStorageToggleCooldown(remaining);
+          }
+        }, delay);
+      }
+
+      function updateImporterAvailability(blocked, previouslyBlocked) {
+        const isBlocked = blocked ?? storageUnavailable();
+        const wasBlocked = previouslyBlocked ?? isBlocked;
+
+        if (privatePackSelector) {
+          privatePackSelector.disabled = isBlocked ? true : privatePackSelector.disabled;
+        }
+
+        if (loadPrivatePackButton) {
+          const packDisabled = loadPrivatePackButton.dataset.packDisabled === 'true';
+          loadPrivatePackButton.disabled = isBlocked || packDisabled;
+        }
+
+        if (reloadDefaultPackButton) {
+          const packDisabled = reloadDefaultPackButton.dataset.packDisabled === 'true';
+          reloadDefaultPackButton.disabled = isBlocked || packDisabled;
+        }
+
+        if (isBlocked) {
+          setPackStatus(
+            'Database disconnected. Reconnect from the Runtime database card before importing.',
+            'error',
+          );
+          renderPackWarnings([], null);
+        } else if (wasBlocked) {
+          refreshPrivatePacks();
+        }
+
+        updatePackActionStates();
+      }
+
+      function selectedPackMeta() {
+        if (!privatePackSelector || !privatePackSelector.selectedOptions) {
+          return null;
+        }
+        const option = privatePackSelector.selectedOptions[0];
+        if (!option || !option.value) {
+          return null;
+        }
+        return {
+          name: option.value,
+          kind: option.dataset.kind || 'archive',
+          source: option.dataset.source || '',
+          archiveName: option.dataset.archive || '',
+          liteName: option.dataset.lite || '',
+          fullName: option.dataset.full || '',
+          includeGlb: option.dataset.includeGlb === 'true',
+          defaultIncludeGlb: option.dataset.defaultIncludeGlb !== 'false',
+          isLite: option.dataset.isLite === 'true',
+        };
+      }
+
+      function updatePackActionStates() {
+        const meta = selectedPackMeta();
+        const kind = meta?.kind;
+        const selected = privatePackSelector?.selectedOptions?.[0] ?? null;
+
+        if (loadPrivatePackButton) {
+          const disabled = !meta || kind !== 'archive';
+          loadPrivatePackButton.dataset.packDisabled = disabled ? 'true' : 'false';
+        }
+
+        if (buildPrivatePackButton) {
+          const canBuild = Boolean(meta && meta.source && kind === 'directory');
+          buildPrivatePackButton.disabled = !canBuild;
+          buildPrivatePackButton.dataset.source = canBuild ? meta.source : '';
+        }
+
+        if (includeGlbToggle) {
+          const canToggle = Boolean(meta && kind === 'directory');
+          includeGlbToggle.disabled = !canToggle;
+          if (canToggle) {
+            const defaultInclude =
+              typeof meta?.defaultIncludeGlb === 'boolean'
+                ? meta.defaultIncludeGlb
+                : selected?.dataset.defaultIncludeGlb !== 'false';
+            includeGlbToggle.checked = defaultInclude;
+          }
+        }
+
+        if (packNameInput) {
+          if (!packNameInput.value && meta && meta.source) {
+            packNameInput.value = meta.source;
+          }
+          if (meta && meta.source) {
+            packNameInput.placeholder = meta.source;
+          } else {
+            packNameInput.placeholder = 'apim_project_assets';
+          }
+          updateStageButtonState();
+        }
+      }
+
+      function applyStorageStatus(rawStatus, display) {
+        const previousBlocked = storageUnavailable();
+        storageStatus = rawStatus || {};
+        const currentBlocked = storageUnavailable();
+
+        if (storageStatusCard && display) {
+          storageStatusCard.dataset.state = display.state || '';
+          storageStatusCard.classList.remove('status-ok', 'status-error', 'status-pending');
+          if (display.status_class) {
+            storageStatusCard.classList.add(`status-${display.status_class}`);
+          }
+        }
+
+        if (storageStatusDetail && display) {
+          storageStatusDetail.textContent = display.detail || '';
+        }
+
+        if (storageStatusMeta && display) {
+          if (display.meta) {
+            storageStatusMeta.textContent = display.meta;
+            storageStatusMeta.hidden = false;
+          } else {
+            storageStatusMeta.textContent = '';
+            storageStatusMeta.hidden = true;
+          }
+        }
+
+        if (storageToggleButton && display) {
+          storageToggleButton.textContent = display.button_label || 'Toggle';
+          storageToggleButton.dataset.action = display.button_action || '';
+          storageToggleButton.disabled = Boolean(display.toggle_disabled);
+        }
+
+        currentStorageDisplay = display || currentStorageDisplay;
+        const resolvedDisplay = currentStorageDisplay || {};
+        const cooldownCandidate = Number(resolvedDisplay.toggle_cooldown_ms);
+        if (Number.isFinite(cooldownCandidate)) {
+          scheduleStorageToggleCooldown(cooldownCandidate);
+        } else {
+          scheduleStorageToggleCooldown(0);
+        }
+        updateImporterAvailability(currentBlocked, previousBlocked);
+      }
+
+      async function refreshStorageStatus() {
+        try {
+          const response = await fetch('api/storage_status');
+          if (!response.ok) {
+            throw new Error('Unable to load storage status.');
+          }
+          const payload = await response.json();
+          if (!payload.success) {
+            throw new Error(payload.error || 'Unable to load storage status.');
+          }
+          applyStorageStatus(payload.status, payload.display);
+        } catch (error) {
+          if (storageStatusDetail) {
+            storageStatusDetail.textContent =
+              error instanceof Error ? error.message : 'Unable to load storage status.';
+          }
+          if (storageStatusCard) {
+            storageStatusCard.classList.remove('status-ok', 'status-pending');
+            storageStatusCard.classList.add('status-error');
+          }
+          if (storageToggleButton) {
+            storageToggleButton.disabled = true;
+          }
+        }
+      }
+
+      async function toggleStorageConnection() {
+        if (!storageToggleButton) {
+          return;
+        }
+
+        const action = storageToggleButton.dataset.action || (storageUnavailable() ? 'connect' : 'disconnect');
+        storageToggleButton.disabled = true;
+        let appliedDisplay = false;
+
+        try {
+          const response = await fetch('api/storage_status', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ action }),
+          });
+          const payload = await response.json();
+          if (!response.ok || !payload.success) {
+            if (payload.display && payload.status) {
+              applyStorageStatus(payload.status, payload.display);
+              appliedDisplay = true;
+            }
+            throw new Error(payload.error || 'Unable to update storage status.');
+          }
+          applyStorageStatus(payload.status, payload.display);
+          appliedDisplay = true;
+          const detailMessage = payload.display?.detail || (payload.status.connected
+            ? 'Runtime database connected.'
+            : 'Runtime database disconnected.');
+          showToast(detailMessage, payload.status.connected ? 'success' : 'error');
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Unable to update storage status.';
+          showToast(message, 'error');
+          if (!appliedDisplay) {
+            applyStorageStatus(storageStatus, currentStorageDisplay);
+          }
+        }
+      }
+
+      function setPackStatus(message, tone) {
+        if (!privatePackStatus) {
+          return;
+        }
+        privatePackStatus.textContent = message;
+        privatePackStatus.classList.remove('success', 'error', 'pending');
+        if (tone) {
+          privatePackStatus.classList.add(tone);
+        }
+      }
+
+      function renderPackWarnings(warnings, resetSummary) {
+        if (!privatePackWarnings) {
+          return;
+        }
+        privatePackWarnings.innerHTML = '';
+        const appendItem = (text, tone = 'info') => {
+          const item = document.createElement('li');
+          item.dataset.tone = tone;
+          item.textContent = text;
+          privatePackWarnings.append(item);
+        };
+
+        if (Array.isArray(warnings)) {
+          warnings.forEach((warning) => appendItem(warning, 'error'));
+        }
+
+        if (resetSummary && typeof resetSummary === 'object') {
+          const asArray = (value) => (Array.isArray(value) ? value : []);
+          asArray(resetSummary.errors).forEach((error) =>
+            appendItem(`Reset error: ${error}`, 'error'),
+          );
+          asArray(resetSummary.warnings).forEach((warning) =>
+            appendItem(`Reset warning: ${warning}`, 'info'),
+          );
+          asArray(resetSummary.actions).forEach((action) =>
+            appendItem(`Reset action: ${action}`, 'success'),
+          );
+          asArray(resetSummary.removed).forEach((removed) =>
+            appendItem(`Removed: ${removed}`, 'info'),
+          );
+          asArray(resetSummary.generated).forEach((generated) =>
+            appendItem(`Regenerated: ${generated}`, 'success'),
+          );
+        }
+
+        privatePackWarnings.hidden = privatePackWarnings.children.length === 0;
+      }
+
+      function renderPackResults(results) {
+        if (!privatePackResults) {
+          return;
+        }
+        privatePackResults.innerHTML = '';
+        const appendSummary = (text) => {
+          const item = document.createElement('li');
+          item.dataset.tone = 'summary';
+          item.textContent = text;
+          privatePackResults.append(item);
+        };
+        const appendEntry = (label, path, tone) => {
+          const item = document.createElement('li');
+          item.dataset.tone = tone;
+          const strong = document.createElement('strong');
+          strong.textContent = `${label}:`;
+          const code = document.createElement('code');
+          code.textContent = path;
+          item.append(strong, ' ', code);
+          if (tone === 'skipped') {
+            item.append(' (missing from pack)');
+          }
+          privatePackResults.append(item);
+        };
+
+        if (!results || typeof results !== 'object') {
+          privatePackResults.hidden = true;
+          return;
+        }
+
+        const toArray = (value) => (Array.isArray(value) ? value : []);
+        const updated = toArray(results.updated);
+        const skipped = toArray(results.skipped);
+
+        if (!updated.length && !skipped.length) {
+          appendSummary('No runtime file changes recorded for this import.');
+        } else {
+          if (updated.length) {
+            appendSummary(
+              `Updated runtime files (${updated.length})`
+            );
+            updated.forEach((path) => appendEntry('Updated', path, 'updated'));
+          }
+          if (skipped.length) {
+            appendSummary(
+              `Skipped runtime targets (${skipped.length}) – missing from pack.`
+            );
+            skipped.forEach((path) => appendEntry('Skipped', path, 'skipped'));
+          }
+        }
+
+        privatePackResults.hidden = privatePackResults.children.length === 0;
+      }
+
+      function confirmPackReset(packName) {
+        const packLabel = packName ? `'${packName}'` : 'this pack';
+        const messageLines = [
+          `Reloading ${packLabel} will reset the APIM runtime database and replace checklist content.`,
+          'Save current work via “Actions → Save State” in PM or Survey before continuing.',
+          'Continue with the reset and import?',
+        ];
+        return window.confirm(messageLines.join('\n\n'));
+      }
+
+      function syncPackOptions(packs, activePack, defaultPack) {
+        if (!privatePackSelector) {
+          return;
+        }
+
+        privatePackSelector.innerHTML = '';
+        defaultPackName = defaultPack || '';
+
+        if (openPrivatePackFolderButton) {
+          openPrivatePackFolderButton.hidden = true;
+          openPrivatePackFolderButton.disabled = false;
+        }
+
+        if (reloadDefaultPackButton) {
+          reloadDefaultPackButton.dataset.pack = defaultPackName;
+          reloadDefaultPackButton.dataset.packDisabled = defaultPackName ? 'false' : 'true';
+        }
+
+        if (!Array.isArray(packs) || packs.length === 0) {
+          const option = document.createElement('option');
+          option.value = '';
+          option.textContent = 'No zip files detected';
+          privatePackSelector.append(option);
+          privatePackSelector.disabled = true;
+          if (loadPrivatePackButton) {
+            loadPrivatePackButton.dataset.packDisabled = 'true';
+          }
+          if (reloadDefaultPackButton) {
+            reloadDefaultPackButton.dataset.packDisabled = 'true';
+          }
+          if (openPrivatePackFolderButton) {
+            openPrivatePackFolderButton.hidden = false;
+          }
+          if (buildPrivatePackButton) {
+            buildPrivatePackButton.disabled = true;
+            buildPrivatePackButton.dataset.source = '';
+          }
+          if (includeGlbToggle) {
+            includeGlbToggle.disabled = true;
+          }
+          setPackStatus(
+            'No asset packs detected. Add .zip bundles to APIM_Mod/custom_assets (use “Open staging folder” to jump there). Archives must keep the .zip extension to be detected.',
+            'pending',
+          );
+          renderPackWarnings([], null);
+          updateImporterAvailability();
+          return;
+        }
+
+        let hasArchives = false;
+        let hasDirectories = false;
+
+        packs.forEach((pack) => {
+          const option = document.createElement('option');
+          option.value = pack.name || '';
+          const label = pack.label || pack.name || '';
+          const size = pack.size_display ? ` (${pack.size_display})` : '';
+          option.textContent = `${label}${size}`;
+          if (pack.kind) {
+            option.dataset.kind = pack.kind;
+          }
+          if (pack.source_directory) {
+            option.dataset.source = pack.source_directory;
+          }
+          if (pack.archive_name) {
+            option.dataset.archive = pack.archive_name;
+          }
+          if (pack.lite_name) {
+            option.dataset.lite = pack.lite_name;
+          }
+          if (pack.full_name) {
+            option.dataset.full = pack.full_name;
+          }
+          if (typeof pack.default_include_glb === 'boolean') {
+            option.dataset.defaultIncludeGlb = pack.default_include_glb ? 'true' : 'false';
+          }
+          if (typeof pack.is_lite === 'boolean') {
+            option.dataset.isLite = pack.is_lite ? 'true' : 'false';
+          }
+          if (pack.kind === 'archive' && typeof pack.include_glb === 'boolean') {
+            option.dataset.includeGlb = pack.include_glb ? 'true' : 'false';
+          } else if (pack.kind === 'directory') {
+            const defaultInclude =
+              typeof pack.default_include_glb === 'boolean'
+                ? pack.default_include_glb
+                : true;
+            option.dataset.includeGlb = defaultInclude ? 'true' : 'false';
+          }
+          if (pack.kind === 'archive') {
+            hasArchives = true;
+          }
+          if (pack.kind === 'directory') {
+            hasDirectories = true;
+          }
+          privatePackSelector.append(option);
+        });
+
+        const archiveNames = packs
+          .filter((pack) => pack.kind === 'archive')
+          .map((pack) => pack.name);
+        let preferred = null;
+        if (activePack && archiveNames.includes(activePack)) {
+          preferred = activePack;
+        } else if (defaultPack && archiveNames.includes(defaultPack)) {
+          preferred = defaultPack;
+        }
+        if (!preferred) {
+          preferred = archiveNames[0] || packs[0].name;
+        }
+
+        privatePackSelector.value = preferred || '';
+        if (!privatePackSelector.value && packs.length) {
+          privatePackSelector.selectedIndex = 0;
+        }
+        privatePackSelector.disabled = false;
+        if (reloadDefaultPackButton) {
+          const disabled = !defaultPackName;
+          reloadDefaultPackButton.dataset.packDisabled = disabled ? 'true' : 'false';
+        }
+        if (buildPrivatePackButton) {
+          const selected = privatePackSelector.selectedOptions?.[0];
+          const canBuild = Boolean(
+            hasDirectories && selected && selected.dataset.kind === 'directory'
+          );
+          buildPrivatePackButton.disabled = !canBuild;
+          buildPrivatePackButton.dataset.source = canBuild ? selected.dataset.source || '' : '';
+        }
+        if (includeGlbToggle) {
+          const selected = privatePackSelector.selectedOptions?.[0];
+          includeGlbToggle.disabled = !(
+            selected && selected.dataset.kind === 'directory'
+          );
+        }
+        updateImporterAvailability();
+        updatePackActionStates();
+      }
+
+      async function refreshPrivatePacks() {
+        if (!privatePackSelector) {
+          return;
+        }
+
+        try {
+          const response = await fetch('api/private_asset_packs');
+          if (!response.ok) {
+            throw new Error('Unable to load private asset packs.');
+          }
+
+          const payload = await response.json();
+          const packs = Array.isArray(payload.packs) ? payload.packs : [];
+          const hasArchives = packs.some((pack) => pack.kind === 'archive');
+          const hasDirectories = packs.some((pack) => pack.kind === 'directory');
+          syncPackOptions(packs, payload.active_pack, payload.default_pack);
+
+          if (payload.last_import) {
+            const lastImport = payload.last_import;
+            const tone = lastImport.status === 'error' ? 'error' : 'success';
+            const resetSummary = lastImport.reset || null;
+            let message = lastImport.message || '';
+            if (
+              resetSummary &&
+              Array.isArray(resetSummary.actions) &&
+              resetSummary.actions.length > 0
+            ) {
+              const actionCount = resetSummary.actions.length;
+              const actionText = `${actionCount} reset action${actionCount !== 1 ? 's' : ''}`;
+              message = message ? `${message} (${actionText})` : `Runtime reset recorded ${actionText}.`;
+            }
+            if (!message) {
+              message =
+                tone === 'error'
+                  ? 'Pack import failed. Review the warnings below.'
+                  : 'Pack import completed.';
+            }
+            setPackStatus(message, tone);
+            renderPackWarnings(lastImport.warnings || [], resetSummary);
+            renderPackResults(lastImport.results || null);
+          } else if (!packs.length) {
+            setPackStatus(
+              'No asset packs detected. Add .zip bundles to APIM_Mod/custom_assets (use “Open staging folder” to jump there). Archives must keep the .zip extension to be detected.',
+              'pending',
+            );
+            renderPackWarnings([], null);
+            renderPackResults(null);
+          } else if (!hasArchives && hasDirectories) {
+            setPackStatus(
+              'No zip archives detected. Select a folder and choose “Create asset pack” to generate a bundle.',
+              'pending',
+            );
+            renderPackWarnings([], null);
+            renderPackResults(null);
+          } else {
+            setPackStatus(saveStateDefaultMessage, 'pending');
+            renderPackWarnings([], null);
+            renderPackResults(null);
+          }
+        } catch (error) {
+          setPackStatus('Unable to load private asset packs.', 'error');
+          renderPackWarnings([], null);
+          renderPackResults(null);
+          if (privatePackSelector) {
+            privatePackSelector.innerHTML = '';
+            const option = document.createElement('option');
+            option.value = '';
+            option.textContent = 'Unavailable';
+            privatePackSelector.append(option);
+            privatePackSelector.disabled = true;
+          }
+          if (loadPrivatePackButton) {
+            loadPrivatePackButton.dataset.packDisabled = 'true';
+          }
+          if (reloadDefaultPackButton) {
+            reloadDefaultPackButton.dataset.packDisabled = 'true';
+          }
+          if (openPrivatePackFolderButton) {
+            openPrivatePackFolderButton.hidden = false;
+          }
+          updateImporterAvailability();
+        }
+      }
+
+      async function importPack(packName) {
+        if (!packName) {
+          setPackStatus('Select a pack before importing.', 'error');
+          return;
+        }
+
+        if (storageUnavailable()) {
+          setPackStatus('Runtime database is disconnected. Reconnect before importing.', 'error');
+          return;
+        }
+
+        if (!confirmPackReset(packName)) {
+          setPackStatus(saveStateCancelMessage, 'pending');
+          renderPackWarnings([], null);
+          return;
+        }
+
+        setPackStatus(`Importing ${packName}…`, 'pending');
+        renderPackWarnings([], null);
+
+        if (privatePackSelector) {
+          privatePackSelector.disabled = true;
+        }
+        if (loadPrivatePackButton) {
+          loadPrivatePackButton.disabled = true;
+        }
+        if (reloadDefaultPackButton) {
+          reloadDefaultPackButton.disabled = true;
+        }
+
+        try {
+          const response = await fetch('api/private_asset_packs', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ pack: packName }),
+          });
+
+          const payload = await response.json();
+          if (response.ok && payload.success) {
+            showToast(payload.message ?? `Imported ${packName}`, 'success');
+          } else {
+            const errorMessage = payload?.error ?? 'Unable to import asset pack.';
+            showToast(errorMessage, 'error');
+          }
+        } catch (error) {
+          showToast('Unable to import asset pack.', 'error');
+        } finally {
+          await refreshPrivatePacks();
+        }
+      }
+
+      if (dismissButton) {
+        dismissButton.addEventListener('click', hideToast);
+      }
+
+      if (storageToggleButton) {
+        storageToggleButton.addEventListener('click', () => {
+          toggleStorageConnection();
+        });
+      }
+
+      if (loadPrivatePackButton && !loadPrivatePackButton.dataset.packDisabled) {
+        loadPrivatePackButton.dataset.packDisabled = loadPrivatePackButton.disabled ? 'true' : 'false';
+      }
+
+      if (reloadDefaultPackButton && !reloadDefaultPackButton.dataset.packDisabled) {
+        reloadDefaultPackButton.dataset.packDisabled = reloadDefaultPackButton.disabled ? 'true' : 'false';
+      }
+
+      if (privatePackSelector) {
+        privatePackSelector.addEventListener('change', () => {
+          updatePackActionStates();
+        });
+      }
+
+      if (packNameInput) {
+        packNameInput.addEventListener('input', () => {
+          updateStageButtonState();
+        });
+        packNameInput.addEventListener('blur', () => {
+          if (!packNameInput) {
+            return;
+          }
+          packNameInput.value = packNameInput.value.trim();
+          updateStageButtonState();
+        });
+      }
+
+      if (buildPrivatePackButton) {
+        buildPrivatePackButton.addEventListener('click', async () => {
+          const meta = selectedPackMeta();
+          if (!meta || meta.kind !== 'directory' || !meta.source) {
+            showToast('Select a staging folder before creating a pack.', 'error');
+            return;
+          }
+
+          const includeGlb = includeGlbToggle ? includeGlbToggle.checked : true;
+          const packLabel = includeGlb ? meta.source : `${meta.source}_lite`;
+
+          buildPrivatePackButton.disabled = true;
+          setPackStatus(`Creating ${packLabel}…`, 'pending');
+          renderPackWarnings([], null);
+
+          try {
+            const response = await fetch('api/private_asset_packs/build', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                source: meta.source,
+                include_glb: includeGlb,
+              }),
+            });
+
+            const payload = await response.json();
+            if (response.ok && payload.success) {
+              showToast(payload.message ?? `Created ${packLabel}.`, 'success');
+            } else {
+              const error = payload?.error ?? 'Unable to build asset pack.';
+              showToast(error, 'error');
+            }
+          } catch (error) {
+            showToast('Unable to build asset pack.', 'error');
+          } finally {
+            if (includeGlbToggle) {
+              includeGlbToggle.blur();
+            }
+            await refreshPrivatePacks();
+            buildPrivatePackButton.disabled = false;
+          }
+        });
+      }
+
+      if (stagePrivatePackButton) {
+        stagePrivatePackButton.addEventListener('click', async () => {
+          const requestedName = currentPackNameValue();
+          if (!requestedName) {
+            const message = 'Enter a pack folder name before staging.';
+            setPackStatus(message, 'error');
+            showToast(message, 'error');
+            return;
+          }
+
+          if (!packNameLooksValid(requestedName)) {
+            const message =
+              "Pack folder names must follow 'apim_<entity>_assets' (append _lite when GLB assets are excluded).";
+            setPackStatus(message, 'error');
+            showToast(message, 'error');
+            return;
+          }
+
+          const includeGlb = includeGlbToggle ? includeGlbToggle.checked : true;
+          const previewName =
+            !includeGlb && !requestedName.endsWith('_lite')
+              ? `${requestedName}_lite`
+              : requestedName;
+
+          stagePrivatePackButton.disabled = true;
+          setPackStatus(`Staging ${previewName}…`, 'pending');
+          renderPackWarnings([], null);
+          renderPackResults(null);
+
+          let responsePayload;
+
+          try {
+            const response = await fetch('api/private_asset_packs/stage', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                name: requestedName,
+                include_glb: includeGlb,
+              }),
+            });
+
+            responsePayload = await response.json();
+            if (response.ok && responsePayload?.success) {
+              const packName = responsePayload.pack?.name || previewName;
+              const tone = responsePayload.warnings && responsePayload.warnings.length ? 'pending' : 'success';
+              setPackStatus(responsePayload.message || `Staged ${packName}.`, tone);
+              renderPackWarnings(responsePayload.warnings || [], null);
+              showToast(responsePayload.message || `Staged ${packName}.`, 'success');
+              if (packNameInput) {
+                packNameInput.value = packName;
+              }
+            } else {
+              const errorMessage = responsePayload?.error || 'Unable to stage asset pack.';
+              setPackStatus(errorMessage, 'error');
+              renderPackWarnings([], null);
+              showToast(errorMessage, 'error');
+            }
+          } catch (error) {
+            setPackStatus('Unable to stage asset pack.', 'error');
+            renderPackWarnings([], null);
+            showToast('Unable to stage asset pack.', 'error');
+          } finally {
+            await refreshPrivatePacks();
+            if (stagePrivatePackButton) {
+              stagePrivatePackButton.disabled = false;
+            }
+            if (packNameInput && responsePayload?.pack?.name) {
+              packNameInput.value = responsePayload.pack.name;
+            }
+            updateStageButtonState();
+          }
+        });
+      }
+
+      buttons.forEach((button) => {
+        button.addEventListener('click', async () => {
+          const key = button.getAttribute('data-open-key');
+          button.disabled = true;
+
+          try {
+            const response = await fetch('api/open_path', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ key }),
+            });
+
+            const payload = await response.json();
+            if (response.ok && payload.success) {
+              toastIndicator.setAttribute('aria-hidden', 'true');
+              showToast(`Opened ${payload.path}`, 'success');
+            } else {
+              const error = payload?.message ?? 'Unable to open path.';
+              showToast(error, 'error');
+            }
+          } catch (error) {
+            showToast('Unable to reach the server.', 'error');
+          } finally {
+            button.disabled = false;
+          }
+        });
+      });
+
+      if (devButton) {
+        devButton.addEventListener('click', async () => {
+          devButton.disabled = true;
+          devStatus.classList.remove('dev-error');
+          devStatus.textContent = 'Running validation suite…';
+          devResults.hidden = true;
+          devResults.textContent = '';
+
+          try {
+            const response = await fetch('api/run_dev_checks', {
+              method: 'POST',
+            });
+
+            const payload = await response.json();
+            if (!response.ok) {
+              throw new Error(payload?.message ?? 'Validation suite failed to start.');
+            }
+
+            const summaryLines = (payload.results || []).map((entry) => {
+              const status = entry.success ? 'PASS' : 'FAIL';
+              const exitInfo = entry.returncode !== undefined ? ` (exit ${entry.returncode})` : '';
+              const note = entry.error ? ` – ${entry.error}` : '';
+              return `${status} • ${entry.name}${exitInfo}${note}`;
+            });
+
+            summaryLines.push('');
+            const relativePath = payload.relative_log_path || payload.log_path;
+            summaryLines.push(`Log file: ${relativePath}`);
+
+            devResults.textContent = summaryLines.join('\n');
+            devResults.hidden = false;
+            devStatus.textContent = payload.success
+              ? 'Validation suite completed successfully.'
+              : 'Validation suite finished with failures. Review the log for details.';
+            if (!payload.success) {
+              devStatus.classList.add('dev-error');
+            }
+          } catch (error) {
+            devStatus.textContent = error instanceof Error ? error.message : 'Unable to run validation suite.';
+            devStatus.classList.add('dev-error');
+          } finally {
+            devButton.disabled = false;
+          }
+        });
+      }
+
+      if (loadPrivatePackButton && privatePackSelector) {
+        loadPrivatePackButton.addEventListener('click', () => {
+          importPack(privatePackSelector.value);
+        });
+      }
+
+      if (reloadDefaultPackButton) {
+        reloadDefaultPackButton.addEventListener('click', () => {
+          const target = reloadDefaultPackButton.dataset.pack || defaultPackName;
+          importPack(target);
+        });
+      }
+
+      updateStageButtonState();
+
+      if (privatePackSelector) {
+        refreshPrivatePacks();
+      }
+
+        if (window.APIMOverviewDemo) {
+          window.APIMOverviewDemo.init({
+          configElementId: "ui-demo-config",
+          buttonId: "run-ui-demo",
+          clearButtonId: "clear-ui-demo-log",
+          statusElementId: "ui-demo-status",
+          logContainerId: "ui-demo-log",
+          toast: showToast,
+          });
+        }
+
+      applyStorageStatus(storageStatus, currentStorageDisplay);
+      refreshStorageStatus();
+    </script>
+  </body>
+</html>

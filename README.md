@@ -87,8 +87,8 @@ stakeholders who are connected to the existing process.
 ## Web test console (man page)
 
 The HTML dashboard at `APIM-CPP-CLIENT/web/index.html` is the canonical "man page" for stakeholders.
-It opens with the CAPTCHA landing (human + AI paths), renders indicator badges for checklist slugs,
-and lets you exercise every API endpoint inline.
+It opens with the CAPTCHA landing (human + AI paths) and links to `portal.html`, which hosts the
+human portal UI (checklist table) and the Testing Hub (copy-only commands for the smoke/full suites).
 
 Serve it locally so browsers can reach `http://127.0.0.1:8080` without CORS issues:
 
@@ -119,6 +119,14 @@ HTTP endpoints as MCP tools so agents (Cursor, Claude Desktop, etc.) can call th
 4. The host will gain tools such as `apim.list_commands`, `apim.health`, `apim.get_slug`,
    `apim.update_slug`, and `apim.export_json`. Schemas and coverage live in `docs/mcp_tools.md`.
    You can run the automated MCP smoke test via `ctest --output-on-failure` after building.
+
+## Testing
+
+- Unified runner: `scripts/run_tests.ps1 -Label smoke` (fast) or `scripts/run_tests.ps1 -Label all`
+  (full suite).
+- CTest labels:
+  - `smoke`: MCP bridge test + schema normalization integration test.
+  - `all`: runs every registered test (currently same as `smoke` until more tests are added).
 
 ## Third-party notice
 

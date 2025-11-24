@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>APIM Testing / Diagnostics</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: "Segoe UI", sans-serif;
+        background: #0f1423;
+        color: #e9edff;
+      }
+      header {
+        padding: 1rem 1.5rem;
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 1rem;
+        align-items: center;
+        background: rgba(255, 255, 255, 0.04);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .portal-nav {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+      }
+      .portal-nav a {
+        text-decoration: none;
+        color: inherit;
+      }
+      .portal-nav .chip {
+        padding: 0.4rem 0.8rem;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        background: rgba(255, 255, 255, 0.05);
+        font-size: 0.9rem;
+      }
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 0.6rem;
+        align-items: center;
+      }
+      .subnav {
+        display: flex;
+        gap: 0.6rem;
+      }
+      .subnav button {
+        padding: 0.45rem 0.8rem;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.08);
+        color: #e9edff;
+        cursor: pointer;
+      }
+      main {
+        padding: 1.25rem;
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 1rem;
+      }
+      .panel {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        padding: 1rem;
+        min-height: 200px;
+      }
+      pre {
+        background: rgba(0, 0, 0, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 8px;
+        padding: 0.8rem;
+        color: #dbe6ff;
+        min-height: 200px;
+        overflow-x: auto;
+      }
+      input {
+        width: 100%;
+        padding: 0.5rem 0.65rem;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        background: rgba(255, 255, 255, 0.04);
+        color: #e9edff;
+      }
+      button.action {
+        padding: 0.55rem 0.9rem;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        background: rgba(255, 255, 255, 0.08);
+        color: #e9edff;
+        cursor: pointer;
+      }
+      .placeholder {
+        color: #9fb1d5;
+        font-size: 0.95rem;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="portal-nav">
+        <a class="chip" href="portal_checklist.html">Checklist Portal</a>
+        <span class="chip" style="border-color: rgba(255,255,255,0.4);">Testing / Diagnostics</span>
+        <a class="chip" href="portal_data.html">Data</a>
+      </div>
+      <div class="grid-2">
+        <div>
+          <label for="hostInput">Host</label>
+          <input id="hostInput" value="127.0.0.1" />
+        </div>
+        <div>
+          <label for="portInput">Port</label>
+          <input id="portInput" type="number" value="8080" min="1" max="65535" />
+        </div>
+      </div>
+      <div class="subnav">
+        <button class="action" id="copySmoke">Copy smoke</button>
+        <button class="action" id="copyAll">Copy full</button>
+      </div>
+    </header>
+    <main>
+      <section class="panel">
+        <h2>API Diagnostics</h2>
+        <div class="grid-2" style="margin-bottom:0.8rem;">
+          <button class="action" id="healthBtn">/api/health</button>
+          <button class="action" id="commandsBtn">/api/commands</button>
+        </div>
+        <pre id="diagOutput">Ready.</pre>
+      </section>
+      <section class="panel">
+        <h2>Test Commands</h2>
+        <p class="placeholder">Tests execute via CLI/CI. Use the buttons to copy commands.</p>
+        <ul class="placeholder">
+          <li>Smoke: scripts/run_tests.ps1 -Label smoke</li>
+          <li>Full: scripts/run_tests.ps1 -Label all</li>
+        </ul>
+      </section>
+    </main>
+    <script>
+      const diagOutput = document.getElementById("diagOutput");
+
+      function baseUrl() {
+        const host = document.getElementById("hostInput").value || "127.0.0.1";
+        const port = document.getElementById("portInput").value || "8080";
+        return `http://${host}:${port}`;
+      }
+
+      async function fetchJson(path) {
+        const response = await fetch(`${baseUrl()}${path}`);
+        const text = await response.text();
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${text}`);
+        }
+        return text ? JSON.parse(text) : {};
+      }
+
+      async function health() {
+        diagOutput.textContent = "Calling /api/health...";
+        try {
+          const data = await fetchJson("/api/health");
+          diagOutput.textContent = JSON.stringify(data, null, 2);
+        } catch (err) {
+          diagOutput.textContent = `Error: ${err.message}`;
+        }
+      }
+
+      async function commands() {
+        diagOutput.textContent = "Calling /api/commands...";
+        try {
+          const data = await fetchJson("/api/commands");
+          diagOutput.textContent = JSON.stringify(data, null, 2);
+        } catch (err) {
+          diagOutput.textContent = `Error: ${err.message}`;
+        }
+      }
+
+      function copyCmd(cmd) {
+        navigator.clipboard.writeText(cmd).then(
+          () => (diagOutput.textContent = `Copied: ${cmd}`),
+          (err) => (diagOutput.textContent = `Copy failed: ${err.message}`)
+        );
+      }
+
+      document.getElementById("healthBtn").addEventListener("click", health);
+      document.getElementById("commandsBtn").addEventListener("click", commands);
+      document.getElementById("copySmoke").addEventListener("click", () =>
+        copyCmd("scripts/run_tests.ps1 -Label smoke")
+      );
+      document.getElementById("copyAll").addEventListener("click", () =>
+        copyCmd("scripts/run_tests.ps1 -Label all")
+      );
+    </script>
+  </body>
+</html>

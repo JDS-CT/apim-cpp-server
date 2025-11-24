@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>APIM Checklist Portal</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: "Segoe UI", sans-serif;
+        background: #0f1423;
+        color: #e9edff;
+      }
+      header {
+        padding: 1rem 1.5rem;
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 1rem;
+        align-items: center;
+        background: rgba(255, 255, 255, 0.04);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .portal-nav {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+      }
+      .portal-nav a {
+        text-decoration: none;
+        color: inherit;
+      }
+      .portal-nav .chip {
+        padding: 0.4rem 0.8rem;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        background: rgba(255, 255, 255, 0.05);
+        font-size: 0.9rem;
+      }
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 0.6rem;
+        align-items: center;
+      }
+      .subnav {
+        display: flex;
+        gap: 0.6rem;
+      }
+      .subnav button {
+        padding: 0.45rem 0.8rem;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.08);
+        color: #e9edff;
+        cursor: pointer;
+      }
+      main {
+        padding: 1.25rem;
+      }
+      .panel {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        padding: 1rem;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 10px;
+        overflow: hidden;
+        margin-top: 0.75rem;
+      }
+      th,
+      td {
+        padding: 0.55rem 0.7rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        border-right: 1px solid rgba(255, 255, 255, 0.03);
+        font-size: 0.92rem;
+        vertical-align: top;
+      }
+      th:last-child,
+      td:last-child {
+        border-right: none;
+      }
+      thead {
+        background: rgba(255, 255, 255, 0.05);
+      }
+      .compact-spec {
+        max-width: 240px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        color: #c7d6f5;
+      }
+      .indicator {
+        display: inline-block;
+        padding: 0.18rem 0.5rem;
+        border-radius: 999px;
+        font-size: 0.78rem;
+        font-weight: 700;
+      }
+      .tone-success {
+        background: rgba(52, 199, 89, 0.15);
+        color: #68ff9e;
+      }
+      .tone-danger {
+        background: rgba(255, 82, 82, 0.15);
+        color: #ff9d9d;
+      }
+      .tone-warning {
+        background: rgba(255, 179, 64, 0.15);
+        color: #ffd08a;
+      }
+      .tone-neutral {
+        background: rgba(180, 190, 210, 0.12);
+        color: #e1e9ff;
+      }
+      .tone-base {
+        background: rgba(255, 255, 255, 0.06);
+        color: #dfe4f5;
+      }
+      input,
+      select,
+      textarea {
+        width: 100%;
+        padding: 0.4rem 0.6rem;
+        border-radius: 6px;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        background: rgba(255, 255, 255, 0.04);
+        color: #e9edff;
+        font-size: 0.9rem;
+      }
+      textarea {
+        min-height: 60px;
+      }
+      button.action {
+        padding: 0.5rem 0.8rem;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        background: rgba(255, 255, 255, 0.08);
+        color: #e9edff;
+        cursor: pointer;
+      }
+      .detail-row {
+        background: rgba(255, 255, 255, 0.02);
+      }
+      .detail-box {
+        padding: 0.6rem;
+      }
+      .mini-label {
+        font-size: 0.8rem;
+        letter-spacing: 0.06em;
+        color: #9fb1d5;
+        text-transform: uppercase;
+        margin-bottom: 0.2rem;
+      }
+      pre.note {
+        background: rgba(0, 0, 0, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 8px;
+        padding: 0.75rem;
+        color: #dbe6ff;
+        font-size: 0.9rem;
+        margin-top: 0.75rem;
+        overflow-x: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="portal-nav">
+        <span class="chip" style="border-color: rgba(255,255,255,0.4);">Checklist Portal</span>
+        <a class="chip" href="portal_testing.html">Testing / Diagnostics</a>
+        <a class="chip" href="portal_data.html">Data</a>
+      </div>
+      <div class="grid-2">
+        <div>
+          <label for="hostInput">Host</label>
+          <input id="hostInput" value="127.0.0.1" />
+        </div>
+        <div>
+          <label for="portInput">Port</label>
+          <input id="portInput" type="number" value="8080" min="1" max="65535" />
+        </div>
+      </div>
+      <div class="subnav">
+        <button class="action" id="refreshBtn">Refresh</button>
+        <button class="action" id="exportMarkdown">Export MD</button>
+      </div>
+    </header>
+    <main>
+      <section class="panel">
+        <div class="grid-2">
+          <div>
+            <label for="checklistSelect">Checklist</label>
+            <select id="checklistSelect"></select>
+          </div>
+          <div>
+            <label for="slugSelect">Address ID</label>
+            <select id="slugSelect"></select>
+          </div>
+        </div>
+        <div style="overflow-x:auto; margin-top:0.8rem;">
+          <table>
+            <thead>
+              <tr>
+                <th>Action</th>
+                <th>Spec</th>
+                <th>Result</th>
+                <th>Status</th>
+                <th>Comment</th>
+                <th>Ind</th>
+                <th>Update</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+    <script>
+      const checklistSelect = document.getElementById("checklistSelect");
+      const slugSelect = document.getElementById("slugSelect");
+      const tableBody = document.getElementById("tableBody");
+
+      function baseUrl() {
+        const host = document.getElementById("hostInput").value || "127.0.0.1";
+        const port = document.getElementById("portInput").value || "8080";
+        return `http://${host}:${port}`;
+      }
+
+      function indicator(status, comment) {
+        const trimmed = (comment || "").trim();
+        switch ((status || "").toLowerCase()) {
+          case "pass":
+            return { label: "PASS", tone: "tone-success", tip: "Meets spec" };
+          case "fail":
+            return trimmed
+              ? { label: "FLAG", tone: "tone-warning", tip: "Failure with context" }
+              : { label: "FAIL", tone: "tone-danger", tip: "Add comment" };
+          case "other":
+            return trimmed
+              ? { label: "OTHER", tone: "tone-warning", tip: "See comment" }
+              : { label: "OTHER", tone: "tone-warning", tip: "Explain deviation" };
+          case "na":
+            return { label: "N/A", tone: "tone-neutral", tip: "Not applicable" };
+          default:
+            return { label: "--", tone: "tone-base", tip: "No status" };
+        }
+      }
+
+      async function fetchJson(path, opts = {}) {
+        const response = await fetch(`${baseUrl()}${path}`, opts);
+        const text = await response.text();
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${text}`);
+        }
+        return text ? JSON.parse(text) : {};
+      }
+
+      async function loadChecklists() {
+        const data = await fetchJson("/api/checklists");
+        const lists = data.checklists || [];
+        checklistSelect.innerHTML = "";
+        lists.forEach((name) => {
+          const opt = document.createElement("option");
+          opt.value = name;
+          opt.textContent = name;
+          checklistSelect.appendChild(opt);
+        });
+        return lists[0] || "";
+      }
+
+      function renderSlugs(slugs) {
+        tableBody.innerHTML = "";
+        slugSelect.innerHTML = "";
+        slugs.forEach((slug) => {
+          const tr = document.createElement("tr");
+          const mark = indicator(slug.status, slug.comment);
+
+          const statusSelect = document.createElement("select");
+          ["Pass", "Fail", "NA", "Other"].forEach((optVal) => {
+            const opt = document.createElement("option");
+            opt.value = optVal;
+            opt.textContent = optVal;
+            if ((slug.status || "") === optVal) opt.selected = true;
+            statusSelect.appendChild(opt);
+          });
+
+          const resultInput = document.createElement("input");
+          resultInput.value = slug.result || "";
+          const commentInput = document.createElement("textarea");
+          commentInput.value = slug.comment || "";
+
+          tr.innerHTML = `
+            <td><strong>${slug.action || ""}</strong><br/><a href="#" class="detail-link">[details]</a></td>
+            <td class="compact-spec">${slug.spec || ""}</td>
+            <td class="result-cell"></td>
+            <td class="status-cell"></td>
+            <td class="comment-cell"></td>
+            <td><span class="indicator ${mark.tone}" title="${mark.tip}">${mark.label}</span></td>
+            <td><button class="action update-btn">Update</button></td>
+          `;
+
+          tr.querySelector(".result-cell").appendChild(resultInput);
+          tr.querySelector(".status-cell").appendChild(statusSelect);
+          tr.querySelector(".comment-cell").appendChild(commentInput);
+
+          const detailRow = document.createElement("tr");
+          detailRow.className = "detail-row";
+          const detailTd = document.createElement("td");
+          detailTd.colSpan = 7;
+          detailTd.className = "detail-box";
+          const relationships = (slug.relationships || []).map((edge) => `${edge.predicate} ${edge.target}`).join("<br/>") || "(none)";
+          detailTd.innerHTML = `
+            <div class="mini-label">Instructions</div>
+            <div>${slug.instructions || "—"}</div>
+            <div class="mini-label" style="margin-top:6px;">Relationships</div>
+            <div>${relationships}</div>
+          `;
+          detailRow.appendChild(detailTd);
+          detailRow.style.display = "none";
+
+          tr.querySelector(".detail-link").addEventListener("click", (e) => {
+            e.preventDefault();
+            const open = detailRow.style.display !== "none";
+            detailRow.style.display = open ? "none" : "table-row";
+            e.target.textContent = open ? "[details]" : "[hide]";
+          });
+
+          tr.querySelector(".update-btn").addEventListener("click", async () => {
+            const payload = {
+              address_id: slug.address_id,
+              status: statusSelect.value,
+              result: resultInput.value,
+              comment: commentInput.value,
+            };
+            try {
+              await fetchJson("/api/update", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+              });
+              await loadSlugsForChecklist(checklistSelect.value);
+            } catch (err) {
+              alert(`Update failed: ${err.message}`);
+            }
+          });
+
+          tableBody.appendChild(tr);
+          tableBody.appendChild(detailRow);
+
+          const opt = document.createElement("option");
+          opt.value = slug.address_id;
+          opt.textContent = `${(slug.procedure || slug.action || "").slice(0, 16)} (${slug.address_id.slice(0, 6)}...)`;
+          slugSelect.appendChild(opt);
+        });
+      }
+
+      async function loadSlugsForChecklist(name) {
+        if (!name) {
+          tableBody.innerHTML = "";
+          slugSelect.innerHTML = "";
+          return;
+        }
+        const data = await fetchJson(`/api/checklist/${encodeURIComponent(name)}`);
+        renderSlugs(data.slugs || []);
+      }
+
+      async function refreshAll() {
+        try {
+          const selected = await loadChecklists();
+          if (selected) {
+            checklistSelect.value = selected;
+            await loadSlugsForChecklist(selected);
+          }
+        } catch (err) {
+          alert(`Refresh failed: ${err.message}`);
+        }
+      }
+
+      async function exportMarkdown() {
+        const checklist = checklistSelect.value;
+        if (!checklist) {
+          alert("Select a checklist first.");
+          return;
+        }
+        try {
+          const response = await fetch(`${baseUrl()}/api/export/markdown/${encodeURIComponent(checklist)}`);
+          const text = await response.text();
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${text}`);
+          }
+          const blob = new Blob([text], { type: "text/markdown" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `${checklist}.md`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        } catch (err) {
+          alert(`Export failed: ${err.message}`);
+        }
+      }
+
+      document.getElementById("refreshBtn").addEventListener("click", refreshAll);
+      document.getElementById("exportMarkdown").addEventListener("click", exportMarkdown);
+      checklistSelect.addEventListener("change", (e) => loadSlugsForChecklist(e.target.value));
+
+      refreshAll();
+    </script>
+  </body>
+</html>
