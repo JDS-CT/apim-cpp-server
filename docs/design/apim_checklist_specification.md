@@ -1,12 +1,12 @@
 # APIM Checklist Specification
 
-- Version: 1.0
-- Status: Draft
+- Version: 0.0.2-draft
+- Date: 2025-12-18T20-33-00Z
 - Organization: cvmewt
-- Project: APIM (Advanced Product Integration Management)
+- Project: APIM
 - Repository: https://github.com/JDS-CT/APIM.git
 - License: MIT (for reference implementation code)
-- Date: 2024-12-18 (ISO 8601, YYYY-MM-DD)
+- Git-Tracked: yes
 
 This document defines the canonical specification for:
 
@@ -39,7 +39,8 @@ This specification defines:
    - instructions  
    - relationships  
    - deterministic Address ID  
-   - timestamp (ISO 8601 UTC, last update)
+   - timestamp (ISO 8601 UTC, last update)  
+   - entity_id (16-character Base32 identifier for the last updating entity)
 
 2. **Canonical representations:**
    - **Markdown** as the canonical human authoring format (client-side)
@@ -55,7 +56,7 @@ Operationally:
 - Stakeholders author or revise procedures in Markdown using a standard template.
 - A parser ingests Markdown into the canonical data model and persists it in SQLite.
 - Runtime systems (CLI, UI, automations, MCP tools) interact with a server that exposes the state via an API backed by SQLite.
-- The only required information to update a procedure state at runtime is a `address_id` plus one or more state fields.
+- The only required information to update a procedure state at runtime is a `address_id` plus one or more state fields; the runtime regenerates `timestamp` and `entity_id` from the current execution context.
 
 The specification is written to allow:
 
@@ -79,8 +80,19 @@ For this specification, the following terms are used:
   `checklist`, `section`, `procedure`, `action`, `spec`.
 
 - **State Fields**  
-  Mutable fields that represent the current outcome of a procedure:
-  `result`, `status`, `comment`, `timestamp`.
+  Mutable fields and runtime metadata that represent the current outcome of a procedure:
+  `result`, `status`, `comment`, `timestamp`, `entity_id`.
+
+- **Entity**  
+  Any actor that mutates slug state (human, automation, background job, or agent). Entities are identified by an `entity_id` and may have additional metadata in a separate catalog.
+
+- **Entity ID**  
+  A 16-character Crockford Base32 identifier for the entity that last updated a slug's state. It is:
+  - opaque (no embedded semantics),
+  - stable per entity within a deployment,
+  - set by the runtime from authentication or system context,
+  - not authored in Markdown and not supplied by clients in minimal update calls.
+  Clients obtain the active `entity_id` from the server (auth/session metadata or a discovery endpoint), and the runtime echoes it in responses.
 
 - **Instructions**  
   Freeform text providing detailed guidance, SOP steps, or references associated with a slug.
@@ -117,9 +129,10 @@ A **checklist slug** consists of:
 3. **Instructions**  
 4. **Relationships**  
 5. **Address ID**  
-6. **Timestamp (ISO 8601 UTC, last update)**
+6. **Timestamp (ISO 8601 UTC, last update)**  
+7. **Entity ID (opaque identifier of last updating entity)**
 
-Each slug represents one actionable procedure step in a checklist. The timestamp records the last mutation time; it is not a high-frequency telemetry channel (see Section 6.4).
+Each slug represents one actionable procedure step in a checklist. The timestamp and entity ID record the most recent mutation metadata; they are not high-frequency telemetry channels (see Section 6.4).
 
 ### 3.1 Addressing Fields
 
@@ -192,7 +205,15 @@ Comments often serve as:
 #### `timestamp`
 ISO 8601 UTC timestamp indicating when this slug was last updated (e.g., `2023-10-01T12:00:00Z`).
 
-State fields are mutable and may change over time; they do not affect the `address_id`.
+#### `entity_id`
+A 16-character Crockford Base32 identifier for the entity (human, system, or agent) that last updated the slug's state.
+
+- Format: see Section 11.4.1 (Entity ID Encoding)  
+- Set by the runtime based on authentication or system identity  
+- Not authored directly in Markdown or accepted from minimal update payloads  
+- Discoverable by clients via authentication/session metadata or a server-provided endpoint; echoed by the runtime in read/update responses
+
+State fields are mutable and may change over time; they do not affect the `address_id`. Timestamp and `entity_id` are runtime-managed metadata regenerated on each successful update.
 
 ### 3.2 State Fields
 
@@ -200,9 +221,17 @@ State fields capture the mutable outcome of executing the procedure:
 
 - `result`  
   A concise, human-readable summary of the observed result (soft limit ~28 characters).
+- `status`  
+  Evaluation outcome (`Pass`, `Fail`, `NA`, or `Other`).
+- `comment`  
+  Freeform clarifying text.
+- `timestamp`  
+  Runtime-managed ISO 8601 UTC marker of the last update.
+- `entity_id`  
+  Runtime-managed 16-character Crockford Base32 identifier for the actor that performed the last update.
 
 
-These fields may change over time; addressing fields must remain stable for the slug to retain the same `address_id`.
+These fields may change over time; addressing fields must remain stable for the slug to retain the same `address_id`. Timestamp and `entity_id` are regenerated by the runtime on each successful write.
 
 ### 3.3 Instructions
 
@@ -312,7 +341,7 @@ F7W4X2J9T3B6P8KD
 - The ID is always **recomputed** during parsing from the addressing fields.  
 - If authors revise addressing fields in Markdown, the resulting ID will change;  
   this is equivalent to creating a new slug with a new identity.
-- State fields (`result`, `status`, `comment`, `timestamp`) do **not** affect the ID.
+- State fields (`result`, `status`, `comment`, `timestamp`, `entity_id`) do **not** affect the ID.
 
 Address IDs therefore provide a stable linking mechanism across Markdown, API payloads, exports, and the SQLite runtime store.
 
@@ -398,6 +427,8 @@ Bullet formatting uses:
 ```
 
 Capitalization of field names is required as shown.
+
+Runtime-managed metadata (`timestamp`, `entity_id`) are not part of the required bullets. Markdown tools may ignore or overwrite any manually authored values for these fields; the runtime store is canonical. Parsers may tolerate legacy `Timestamp` bullets for compatibility but must not treat them as authoritative.
 
 ### 5.5 Field Extraction Rules
 
@@ -489,6 +520,7 @@ CREATE TABLE slugs (
     status          TEXT CHECK (status IN ('Pass','Fail','NA','Other')),
     comment         TEXT,
     timestamp       TEXT,
+    entity_id       TEXT,  -- 16-char Base32, FK to entities(entity_id) if catalog is enabled
 
     instructions    TEXT
 );
@@ -499,6 +531,7 @@ CREATE TABLE slugs (
 - `address_id` is unique and stable.  
 - Addressing fields (`checklist`, `section`, `procedure`, `action`, `spec`) must match exactly what the parser extracted from Markdown.  
 - Mutating state fields does **not** alter the addressing fields or the ID.  
+- `timestamp` and `entity_id` are runtime-managed metadata regenerated on update; they do not affect addressing or Address ID.  
 - `status` is constrained to the allowed tokens.
 
 ### 6.3 Table: `relationships`
@@ -539,6 +572,7 @@ CREATE TABLE history (
     result        TEXT,
     status        TEXT,
     comment       TEXT,
+    entity_id     TEXT,            -- 16-char Base32
 
     FOREIGN KEY(address_id) REFERENCES slugs(address_id),
 
@@ -550,9 +584,29 @@ CREATE TABLE history (
 
 - The primary key is the natural composite key `(address_id, timestamp)`, since each timestamped snapshot must be unique.
 - There is no artificial `id` column.
+- Each snapshot records the regenerated `timestamp` and `entity_id`, preserving who or what applied the change.
 - Storing the full mutable state at each timestamp avoids diff reconstruction and simplifies analytics.
 - To view the “previous value,” clients simply query the most recent earlier timestamp.
 - This table is typically updated on meaningful state changes (daily, monthly, or procedural events), not high-frequency intervals.
+
+#### 6.4.1 Optional: Entities Catalog
+
+A normalized catalog may be used to track entity metadata without changing runtime semantics:
+
+```sql
+CREATE TABLE entities (
+    entity_id    TEXT PRIMARY KEY,  -- 16-char Base32, matches slugs/history
+    kind         TEXT NOT NULL,     -- e.g., 'human' | 'system' | 'agent'
+    display_name TEXT NOT NULL,     -- e.g., "JDS", "pm-worker-01"
+    meta         TEXT               -- optional JSON blob for auth IDs, email, etc.
+);
+```
+
+The `entities` catalog decouples opaque `entity_id` tokens from human identifiers.
+
+- Core tables (`slugs`, `history`) store only `entity_id`.  
+- UIs and reporting join on `entities.entity_id` to render `display_name` and `kind`.  
+- Access to the `entities` table may be restricted independently from operational tables, allowing logs and exports to retain `entity_id` while redacting or omitting PII.
 
 The `history` table may be omitted in minimal deployments but is strongly recommended for environments requiring audit trails and longitudinal analysis.
 
@@ -575,15 +629,17 @@ During ingest:
 2. Extract addressing fields exactly as written.  
 3. Construct the canonical addressing string.  
 4. Regenerate `address_id`.  
-5. Insert or update the corresponding row in `slugs`.  
-6. Insert all outgoing relationships into `relationships`.  
-7. Preserve `instructions` as raw text.
+5. Populate runtime metadata (`timestamp`, `entity_id`) from the ingestion context (e.g., the ingest service's assigned 16-character `entity_id` plus current UTC).  
+6. Insert or update the corresponding row in `slugs`.  
+7. Insert all outgoing relationships into `relationships`.  
+8. Preserve `instructions` as raw text.
 
 ### 6.7 Treatment of Updates
 
 State updates via the API:
 
-- modify `result`, `status`, `comment`, `timestamp`  
+- modify `result`, `status`, `comment` from the client payload  
+- regenerate `timestamp` and `entity_id` from the current runtime/auth context  
 - append to `history`  
 - **must not** modify the addressing fields  
 - **must not** modify instructions  
@@ -605,7 +661,7 @@ Relationships referencing a deleted slug should be removed or revalidated during
 The runtime store is fully regenerable from Markdown:
 
 - If all Markdown source files are available, the entire SQLite state (slugs + relationships) can be rebuilt deterministically.
-- State fields (`result`, `status`, `comment`, `timestamp`) and `history` are **not** regenerated from Markdown and must be preserved separately.
+- State fields (`result`, `status`, `comment`, `timestamp`, `entity_id`) and `history` are **not** regenerated from Markdown and must be preserved separately.
 
 ### 6.10 SQLite Configuration Notes
 
@@ -638,6 +694,7 @@ API and MCP serve as transport and automation layers.
 State updates require only:
 - `address_id`
 - one or more mutable fields (`result`, `status`, `comment`)
+- the server regenerates `timestamp` and `entity_id` for each successful update
 
 Addressing fields are immutable in place.
 
@@ -693,6 +750,7 @@ Transport interfaces exchange slugs using a unified JSON object shape:
   "status": "Pass | Fail | NA | Other",
   "comment": "<string>",
   "timestamp": "<ISO8601>",
+  "entity_id": "<ENTITY_ID>",   // 16-char Base32, see Section 11.4.1
 
   "instructions": "<string>",
 
@@ -823,7 +881,8 @@ Output:
 {
   "ok": true,
   "updated_fields": ["status", "comment"],
-  "timestamp": "<ISO8601>"
+  "timestamp": "<ISO8601>",
+  "entity_id": "<ENTITY_ID>"   // 16-char Base32, see Section 11.4.1
 }
 ```
 
@@ -1092,7 +1151,7 @@ API and MCP calls interact with the state machine implicitly.
 
 #### Inputs
 - A complete graph of slugs and relationships from the runtime store  
-- The current values of state fields (`result`, `status`, `comment`, `timestamp`)  
+- The current values of state fields (`result`, `status`, `comment`, `timestamp`, `entity_id`)  
 - Any updates received via API or MCP  
 - Time-based rules configured by the deployment (optional)
 
@@ -1259,8 +1318,8 @@ The state machine:
 
 Persistence rules:
 
-- A change to `result`, `status`, or `comment` must come from an explicit API/MCP update  
-- A new snapshot is stored in `history` if the relevant subsystem is enabled  
+- A change to `result`, `status`, or `comment` must come from an explicit API/MCP update; `timestamp` and `entity_id` are regenerated by the runtime on each successful write.  
+- A new snapshot is stored in `history` if the relevant subsystem is enabled (including regenerated `timestamp` and `entity_id`).  
 - Evaluation flags are ephemeral; they do not persist unless a tool writes them out-of-band
 
 ### 9.11 Out-of-Scope Logic
@@ -1298,7 +1357,7 @@ status
 comment
 ```
 
-No other fields may be modified using the minimal update contract.  
+No other fields may be modified using the minimal update contract, and clients must not attempt to set `timestamp` or `entity_id`; the server regenerates them on each successful update.  
 Addressing fields (`checklist`, `section`, `procedure`, `action`, `spec`), instructions, and authored relationships are immutable via this mechanism.
 
 ### 10.2 Example Update Payload
@@ -1319,10 +1378,14 @@ When a minimal update is received:
 1. The runtime store retrieves the slug by `address_id`.  
 2. Only provided mutable fields are updated.  
 3. `timestamp` is regenerated in UTC (ISO8601).  
-4. The updated slug is persisted to SQLite.  
-5. If the history subsystem is enabled, a full snapshot of the mutable fields is written to `history` with the new timestamp.  
-6. The state machine evaluates dependency and roll-up context, returning any warnings or flags (Section 9).  
-7. The server returns a structured response.
+4. `entity_id` is resolved from the current execution context and mapped to a 16-character Base32 ID:  
+   - for human users, from the authenticated principal;  
+   - for systems/agents, from a configured system identity.  
+   The mapping from principal to `entity_id` is maintained in the `entities` catalog or an equivalent identity service.  
+5. The updated slug is persisted to SQLite.  
+6. If the history subsystem is enabled, a full snapshot of the mutable fields is written to `history` with the new timestamp and `entity_id`.  
+7. The state machine evaluates dependency and roll-up context, returning any warnings or flags (Section 9).  
+8. The server returns a structured response.
 
 ### 10.4 Example Response
 
@@ -1332,6 +1395,7 @@ When a minimal update is received:
   "address_id": "F7W4X2J9T3B6P8KD",
   "updated_fields": ["status", "comment", "result"],
   "timestamp": "2024-12-18T15:23:11Z",
+  "entity_id": "ABCDEFGHJKMNPQRS",
   "warnings": []
 }
 ```
@@ -1346,6 +1410,7 @@ Examples of invalid updates:
 - missing `address_id`  
 - updating addressing fields  
 - malformed `status` value  
+- attempts to set `timestamp` or `entity_id` directly  
 - attempts to modify instructions or relationships  
 - missing all mutable fields in the payload
 
@@ -1468,8 +1533,9 @@ Upon creation:
 4. Insert the slug into `slugs`.  
 5. Insert any outgoing relationships into `relationships`.  
 6. Generate a new `timestamp` (UTC, ISO8601).  
-7. Optionally write a snapshot to `history`.  
-8. Return the newly created `address_id`.
+7. Set `entity_id` from the creation context (auth user, system import, or agent).  
+8. Optionally write a snapshot to `history`.  
+9. Return the newly created `address_id`.
 
 No attempt is made to deduplicate addressing fields; new slugs are always distinct.
 
@@ -1480,7 +1546,8 @@ No attempt is made to deduplicate addressing fields; new slugs are always distin
   "ok": true,
   "address_id": "F7W4X2J9T3B6P8KD",
   "created": true,
-  "timestamp": "2024-12-18T15:31:22Z"
+  "timestamp": "2024-12-18T15:31:22Z",
+  "entity_id": "Z234567Z234567Z2"
 }
 ```
 
@@ -1577,6 +1644,62 @@ Restrictions:
 - comments must avoid the literal sequence `` ``` `` inside Markdown unless escaped, to prevent terminating fenced code blocks
 - NULL (`\0`) is forbidden  
 - internal newlines are allowed in `comment` but discouraged in `result`
+
+#### 11.4.1 Entity ID Encoding
+
+`entity_id` values are 16-character Crockford Base32 identifiers using the same unambiguous alphabet as `address_id` (Section 11.1):
+
+```
+ABCDEFGHJKMNPQRSTVWXYZ234567
+```
+
+Rules:
+
+- 16 characters exactly  
+- uppercase only  
+- no padding (`=`)  
+- no hyphens or spaces  
+- safe for filenames, URLs, database keys, JSON keys, and shell usage  
+
+Entity IDs MUST NOT include:
+
+- I, L, O, U (removed in Crockford Base32 to prevent visual confusion)
+
+##### 11.4.1.1 Canonical Entity String
+
+Each deployment defines a canonical “entity principal string” as input to hashing, for example:
+
+```
+<namespace> || <principal>
+```
+
+Examples:
+
+- `idp:azuread || 00000000-0000-0000-0000-000000000000`
+- `system || apim-ingest-worker-01`
+- `agent || apim-mcp-llm-v1`
+
+Rules:
+
+- `||` is reserved as a delimiter in the principal string.  
+- Principal strings are normalized and stable per entity.  
+- The principal string itself is not stored in `slugs` or `history`; only the derived `entity_id` is.
+
+##### 11.4.1.2 Hashing and Encoding
+
+Entity IDs are derived as follows:
+
+1. Compute the xxHash128 of the canonical entity principal string.  
+2. Extract the lowest 80 bits (10 bytes) of the hash output.  
+3. Encode the 10-byte value in Crockford Base32, uppercase.  
+
+This yields a 16-character identifier with:
+
+- deterministic mapping (same principal → same `entity_id`)  
+- extremely low collision probability at typical entity counts  
+- no embedded semantics (kind, name, or auth IDs are stored only in the `entities` catalog or IAM)
+
+Runtime systems MAY choose alternative hashing algorithms, but MUST preserve the 16-character Crockford Base32 format and determinism for a given principal string.
 
 ### 11.5 Instructions Field Encoding
 
@@ -1726,7 +1849,7 @@ After ingestion, all operational state is stored in SQLite:
 
 - Each row = one slug  
 - Relationships are normalized into triples  
-- Mutable fields (`result`, `status`, `comment`, `timestamp`) track execution  
+- Mutable fields (`result`, `status`, `comment`) plus runtime metadata (`timestamp`, `entity_id`) track execution  
 - History snapshots (if enabled) record state transitions over time  
 
 SQLite holds the **canonical active state** for:
