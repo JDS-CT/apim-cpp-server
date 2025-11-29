@@ -1,6 +1,6 @@
 # APIM Checklist Specification
 
-- Version: 0.0.3-draft
+- Version: 0.0.1-0.5.3
 - Date: 2025-11-28T20:30:00Z
 - Organization: cvmewt
 - Project: APIM
@@ -32,7 +32,7 @@ Other views (HTML forms, static PDFs, dashboards, etc.) are derived from the can
 
 APIM checklists are intended to be **active SOPs**: procedures that are authored, executed, updated, and reviewed continuously, rather than static documents that drift out of sync with real work.
 
-In typical project management practice (WBS, task trackers, etc.), work is described with **noun-like labels** (e.g. “Software installation,” “Pressure check”) optimized for planning, reporting, and coordination. Operator-facing SOPs, training videos, and tacit know-how tend instead to use **verb-like instructions** (“Install software,” “Measure pressure,”). APIM checklists deliberately carry both views at once: each checklist slug has a **procedure** (noun phrase) and an **action** (verb phrase), allowing the same row to participate simultaneously in management structures (WBS, dashboards) and in execution tools (UIs, automations, agents). The goal is to reduce drift between administrative abstractions and actionable implementation. By giving both stakeholders a stable shared addressable unit a bridge is formed to maintain meaning and allow smooth information flow.
+In typical project management practice (WBS, task trackers, etc.), work is described with **noun-like labels** (e.g., “Software installation,” “Pressure check”) optimized for planning, reporting, and coordination. Operator-facing SOPs, training videos, and tacit know-how tend instead to use **verb-like instructions** (“Install software,” “Measure pressure”). APIM checklists deliberately carry both views at once: each checklist slug has a **procedure** (noun phrase) and an **action** (verb phrase), allowing the same row to participate simultaneously in management structures (WBS, dashboards) and in execution tools (UIs, automations, agents). The goal is to reduce drift between administrative abstractions and actionable implementation by giving both sides a stable shared addressable unit.
 
 This specification defines:
 
@@ -48,8 +48,7 @@ This specification defines:
 
 2. **Representations:**
    - **Markdown** as the human authoring format (client-side).
-   - **SQLite** as the runtime store (server-side).
-   > jds: A database implementation is the canonical store of checklist data 
+   - **SQLite** (or another database implementation) as the canonical runtime store (server-side).
 
 3. **Reference encodings and interfaces:**
    - A minimal API update contract:
@@ -61,13 +60,12 @@ This specification defines:
 Operationally:
 
 - Stakeholders author or revise checklists in Markdown using a standard template.
+- In the reference implementation, a client-side parser ingests Markdown into the canonical data model and persists it via API calls into SQLite. Direct writes to SQLite are reserved for migration and maintenance tools, not for normal clients.
 - Runtime systems (CLI, UI, automations, MCP tools) interact with a server that exposes the state via an API backed by SQLite.
-  - In the reference implementation a client side parser ingests Markdown into the canonical data model and persists it in SQLite. All SQLite updates must happen through the API.
-  - All client tools should at a minimum allow reading and writing of checklist slugs.
-  > jds: added these two bullets to strengthen the separation of server and client to enforce the minimum API calls
+- All client tools must, at minimum, support reading and writing checklist slugs through the API; they should not reach around the API to mutate the runtime store directly.
 - At runtime, the minimal information required to update a procedure state is a **runtime address** plus one or more state fields:
   - either the address tuple `(slug_id, instance_id)`, or
-  - a single composite `address_id` that reversibly encodes that tuple.
+  - a single composite `address_id` that reversibly encodes that tuple.  
   The runtime regenerates `timestamp` and `entity_id` from the current execution context.
 
 The specification is written to allow:
@@ -87,13 +85,11 @@ This section defines the core terms used throughout the specification. Later sec
 - **Checklist**  
   A collection of related procedures grouped for a specific context (e.g., “Computer Checks,” “Maintenance Visit,” “Site Walkthrough,” “Installation”).  
   A checklist is the primary human-visible grouping. A single checklist may be instantiated against one or more assets or deployments.
-> jds: removed SEM specific terms
 
 - **Checklist Section**  
   A logical grouping of procedures within a checklist (e.g., “Water Cooling System,” “Electronics,” “Floor Plan”).  
   Sections help organize large checklists for authors and operators.  
   Sections are **semantically relevant** for identity in APIM: moving a row between sections is treated as a structural change that yields a new template identity.
-  > jds: removed SEM specific terms
 
 - **Checklist Template**  
   The authored definition of a checklist in Markdown, independent of any specific asset or deployment.  
@@ -111,11 +107,10 @@ This section defines the core terms used throughout the specification. Later sec
   - `spec` (expected target or standard)  
   - `instructions` (freeform SOP text)
 
-  Template rows do **not** include mutable state (`result`, `status`, `comment`) and do **not** carry runtime metadata (`timestamp`, `entity_id`). Mutable and runtime fields may be present in NULL or NaN states for completeness if desired.
-> jds: edited added null and nan descriptions
+  Template rows do **not** include mutable state (`result`, `status`, `comment`) and do **not** carry runtime metadata (`timestamp`, `entity_id`). Mutable and runtime fields may be present in null or NaN states in intermediate representations, but they are not considered part of template identity.
 
 - **Checklist State**  
-  The mutable part of a checklist row (aka Checklist Slug) at runtime, representing execution outcomes for a specific instance:  
+  The mutable part of a checklist row (that is, a checklist slug) at runtime, representing execution outcomes for a specific instance:
 
   - `result`  
   - `status`  
@@ -135,7 +130,7 @@ This section defines the core terms used throughout the specification. Later sec
   - Runtime metadata: `timestamp`, `entity_id`  
   - Relationships: outgoing links to other slugs
 
-  In other words, a “checklist slug” is “this specific template row, for this specific instance, with this current state.”
+  In other words, a checklist slug is “this specific template row, for this specific instance, with this current state.”
 
 ### 2.2 Slug and Instance Identity
 
@@ -173,15 +168,13 @@ This section defines the core terms used throughout the specification. Later sec
 
   `instance_id` identifies **which copy** of the template we are talking about (which building, which oven, which deployment, etc.).  
   The underlying principal string is not stored in core tables; it may be kept in separate catalog tables or external systems.
-> jds: agnostic example
 
 ### 2.3 Addressing
 
 APIM uses two layers of “address”:
 
 1. **Template-level identity** via `slug_id`  
-2. **Runtime-level identity for a specific instance** via an Address Tuple `(slug_id, instance_id)`
-> jds: inserting the words Address Tuple
+2. **Runtime-level identity for a specific instance** via an **Address Tuple** `(slug_id, instance_id)`
 
 - **Address Tuple**  
   The ordered pair:
@@ -195,7 +188,6 @@ APIM uses two layers of “address”:
 
   - “Row X of the maintenance checklist for system serial 1234”  
   - “Row Y of the installation checklist for Room 201”
-> jds: making it agnostic so it is not a single company specific.
 
 - **Address ID (Composite Token)**  
   An optional 32-character Crockford Base32 identifier used as a convenience container for the address tuple.  
@@ -246,7 +238,7 @@ APIM uses two layers of “address”:
   Instructions are treated as part of template identity (they are included in the `slug_id` computation), so changing instructions creates a new slug identity. This ensures that old instructions and new instructions cannot silently share the same identity.
 
 - **Semantic Relationship**  
-  A directed triple describing how one slug relates to another:
+  A directed triple describing how one slug relates to another at the template level:
 
   - `(subject_slug_id, predicate, target_slug_id)`
 
@@ -269,7 +261,7 @@ These terms are used when discussing the reference SQLite implementation and con
   - exist solely to reduce storage duplication and improve performance
 
 - **Runtime Store**  
-  The SQLite database that holds all slugs (template+state), relationships, and history for a given deployment.  
+  The SQLite database that holds all slugs (template plus state), relationships, and history for a given deployment.  
   The runtime store is the canonical source of truth for operational state.
 
 - **Connector**  
