@@ -1,7 +1,7 @@
 # APIM Checklist Specification
 
-- Version: 0.0.2-draft
-- Date: 2025-12-18T20-33-00Z
+- Version: 0.0.3-draft
+- Date: 2025-11-28T20:30:00Z
 - Organization: cvmewt
 - Project: APIM
 - Repository: https://github.com/JDS-CT/APIM.git
@@ -11,7 +11,8 @@
 This document defines the canonical specification for:
 
 - Checklist slugs
-- Address IDs
+- Slug IDs and Instance IDs
+- Address tuples and Address IDs
 - The canonical data model (addressing, state, instructions, relationships)
 - The Markdown authoring format
 - The SQLite runtime storage model
@@ -21,7 +22,7 @@ The specification is technology-agnostic at the conceptual level, but provides a
 
 - Markdown for human authoring
 - SQLite for runtime state storage
-- HTTP+JSON/JSONL for API transport
+- HTTP+JSON/JSONL (and MCP) for transport
 
 Other views (HTML forms, static PDFs, dashboards, etc.) are derived from the canonical model and the SQLite runtime store.
 
@@ -31,90 +32,252 @@ Other views (HTML forms, static PDFs, dashboards, etc.) are derived from the can
 
 APIM checklists are intended to be **active SOPs**: procedures that are authored, executed, updated, and reviewed continuously, rather than static documents that drift out of sync with real work.
 
+In typical project management practice (WBS, task trackers, etc.), work is described with **noun-like labels** (e.g. “Software installation,” “Pressure check”) optimized for planning, reporting, and coordination. Operator-facing SOPs, training videos, and tacit know-how tend instead to use **verb-like instructions** (“Install software,” “Measure pressure,”). APIM checklists deliberately carry both views at once: each checklist slug has a **procedure** (noun phrase) and an **action** (verb phrase), allowing the same row to participate simultaneously in management structures (WBS, dashboards) and in execution tools (UIs, automations, agents). The goal is to reduce drift between administrative abstractions and actionable implementation. By giving both stakeholders a stable shared addressable unit a bridge is formed to maintain meaning and allow smooth information flow.
+
 This specification defines:
 
-1. **The canonical data model** of a checklist slug:  
-   - addressing fields  
-   - state fields  
-   - instructions  
-   - relationships  
-   - deterministic Address ID  
-   - timestamp (ISO 8601 UTC, last update)  
-   - entity_id (16-character Base32 identifier for the last updating entity)
+1. **The data model of a checklist slug**, including:  
+   - immutable template fields (checklist, section, procedure, action, spec, instructions)  
+   - deterministic **Slug ID** (template identity)  
+   - deterministic **Instance ID** (deployment/asset identity)  
+   - **address tuple** `(slug_id, instance_id)` as canonical runtime identity  
+   - optional composite **Address ID** (32-character Base32, slug_id concatenated with instance_id)  
+   - mutable state fields (result, status, comment)  
+   - runtime metadata (timestamp, entity_id)  
+   - relationships to other slugs
 
-2. **Canonical representations:**
-   - **Markdown** as the canonical human authoring format (client-side)
-   - **SQLite** as the canonical runtime store (server-side)
+2. **Representations:**
+   - **Markdown** as the human authoring format (client-side).
+   - **SQLite** as the runtime store (server-side).
+   > jds: A database implementation is the canonical store of checklist data 
 
 3. **Reference encodings and interfaces:**
-   - A minimal API update contract: `Address ID + field(s) to update`
+   - A minimal API update contract:
+     - conceptually: `(slug_id, instance_id) + field(s) to update`  
+     - convenience: a single `address_id` token may stand in for the tuple  
    - Example JSON/JSONL payloads for transport
    - A relationship model for dependency graphs between procedures
 
 Operationally:
 
-- Stakeholders author or revise procedures in Markdown using a standard template.
-- A parser ingests Markdown into the canonical data model and persists it in SQLite.
+- Stakeholders author or revise checklists in Markdown using a standard template.
 - Runtime systems (CLI, UI, automations, MCP tools) interact with a server that exposes the state via an API backed by SQLite.
-- The only required information to update a procedure state at runtime is a `address_id` plus one or more state fields; the runtime regenerates `timestamp` and `entity_id` from the current execution context.
+  - In the reference implementation a client side parser ingests Markdown into the canonical data model and persists it in SQLite. All SQLite updates must happen through the API.
+  - All client tools should at a minimum allow reading and writing of checklist slugs.
+  > jds: added these two bullets to strengthen the separation of server and client to enforce the minimum API calls
+- At runtime, the minimal information required to update a procedure state is a **runtime address** plus one or more state fields:
+  - either the address tuple `(slug_id, instance_id)`, or
+  - a single composite `address_id` that reversibly encodes that tuple.
+  The runtime regenerates `timestamp` and `entity_id` from the current execution context.
 
 The specification is written to allow:
 
-- **Provisional rows** (new procedures added by front-line users) that are immediately executable, and can later be reviewed/edited without breaking IDs.
-- **Deterministic updates**: given a stable set of addressing fields, the same procedure always has the same Address ID.
+- **Provisional rows** (new procedures added by front-line users) that are immediately executable, and can later be reviewed/edited without breaking identity for existing rows.
+- **Deterministic updates**: given a stable slug template and instance principal, the same logical row always maps back to the same `(slug_id, instance_id)` pair.
+- **Multiple instances** of the same checklist (or template) co-existing cleanly: each physical system, asset, or deployment uses its own `instance_id`, avoiding state bleed between machines while still sharing the same slug template definitions.
 
 ---
 
 ## 2. Terminology
 
-For this specification, the following terms are used:
+This section defines the core terms used throughout the specification. Later sections (data model, storage, API, MCP) rely on these definitions.
+
+### 2.1 Core Checklist Concepts
 
 - **Checklist**  
-  A collection of related procedures grouped for a specific context (e.g., PM visit, site survey, installation).
+  A collection of related procedures grouped for a specific context (e.g., “Computer Checks,” “Maintenance Visit,” “Site Walkthrough,” “Installation”).  
+  A checklist is the primary human-visible grouping. A single checklist may be instantiated against one or more assets or deployments.
+> jds: removed SEM specific terms
+
+- **Checklist Section**  
+  A logical grouping of procedures within a checklist (e.g., “Water Cooling System,” “Electronics,” “Floor Plan”).  
+  Sections help organize large checklists for authors and operators.  
+  Sections are **semantically relevant** for identity in APIM: moving a row between sections is treated as a structural change that yields a new template identity.
+  > jds: removed SEM specific terms
+
+- **Checklist Template**  
+  The authored definition of a checklist in Markdown, independent of any specific asset or deployment.  
+  A template contains one or more **Checklist Template Rows**, organized into sections.  
+  Templates are instance-agnostic: they do not know which specific machine, asset, or deployment will use them.
+
+- **Checklist Template Row**  
+  The immutable structural definition of one checklist item within a checklist template.  
+  For the reference implementation, a template row is defined by:
+
+  - `checklist` (the checklist name/slug)  
+  - `section`  
+  - `procedure` (noun phrase)  
+  - `action` (verb phrase)  
+  - `spec` (expected target or standard)  
+  - `instructions` (freeform SOP text)
+
+  Template rows do **not** include mutable state (`result`, `status`, `comment`) and do **not** carry runtime metadata (`timestamp`, `entity_id`). Mutable and runtime fields may be present in NULL or NaN states for completeness if desired.
+> jds: edited added null and nan descriptions
+
+- **Checklist State**  
+  The mutable part of a checklist row (aka Checklist Slug) at runtime, representing execution outcomes for a specific instance:  
+
+  - `result`  
+  - `status`  
+  - `comment`  
+  - `timestamp` (runtime-managed)  
+  - `entity_id` (runtime-managed)
+
+  Checklist state always attaches to a **runtime address** (see Address Tuple below).
 
 - **Checklist Slug**  
-  A single procedure definition and its current state. Conceptually, one row in the checklist that can be addressed, updated, and related to others.
+  The canonical logical unit APIM works with: one checklist template row plus its runtime state, for a particular instance.  
+  Conceptually:
 
-- **Addressing Fields**  
-  The canonical administrative fields that locate a slug within a checklist:
-  `checklist`, `section`, `procedure`, `action`, `spec`.
+  - Template fields: `checklist`, `section`, `procedure`, `action`, `spec`, `instructions`  
+  - Identity fields: `slug_id`, `instance_id` (see Address Tuple)
+  - Mutable state: `result`, `status`, `comment`  
+  - Runtime metadata: `timestamp`, `entity_id`  
+  - Relationships: outgoing links to other slugs
+
+  In other words, a “checklist slug” is “this specific template row, for this specific instance, with this current state.”
+
+### 2.2 Slug and Instance Identity
+
+- **Slug ID**  
+  A 16-character Crockford Base32 identifier that represents the identity of a **Checklist Template Row**.  
+  Derived solely from the immutable template fields:
+
+  - `checklist`  
+  - `section`  
+  - `procedure`  
+  - `action`  
+  - `spec`  
+  - `instructions`
+
+  Two template rows with identical values for all of these fields must produce the same `slug_id`.  
+  Any change to any of these fields (including `instructions`) creates a **new** slug identity and thus a new `slug_id`.  
+  `slug_id` has no embedded semantics; it is a compact, deterministic handle for the template row.
+
+- **Checklist Instance**  
+  A stable, deployment-defined description of the specific asset, system, or context where a checklist is being applied.  
+  This is represented as an **instance principal string**, for example:
+
+  - `machine || model=Machine_A || serial=1234`  
+  - `line || line_id=Furnace_2 || plant=CT`  
+  - `room || building=Lab || room=201`
+
+  The content and structure of the principal string are defined by the deployment; the APIM core treats it as opaque text.
+
+- **Instance ID**  
+  A 16-character Crockford Base32 identifier derived from the instance principal string:
+
+  - deterministic (same principal → same `instance_id`)  
+  - opaque (no embedded semantics)  
+  - stable for the lifetime of that instance in a deployment
+
+  `instance_id` identifies **which copy** of the template we are talking about (which building, which oven, which deployment, etc.).  
+  The underlying principal string is not stored in core tables; it may be kept in separate catalog tables or external systems.
+> jds: agnostic example
+
+### 2.3 Addressing
+
+APIM uses two layers of “address”:
+
+1. **Template-level identity** via `slug_id`  
+2. **Runtime-level identity for a specific instance** via an Address Tuple `(slug_id, instance_id)`
+> jds: inserting the words Address Tuple
+
+- **Address Tuple**  
+  The ordered pair:
+
+  - `(slug_id, instance_id)`
+
+  This is the canonical runtime identity of “one checklist slug for one checklist instance.”  
+  All state and history operations conceptually target this address tuple.
+
+  Examples:
+
+  - “Row X of the maintenance checklist for system serial 1234”  
+  - “Row Y of the installation checklist for Room 201”
+> jds: making it agnostic so it is not a single company specific.
+
+- **Address ID (Composite Token)**  
+  An optional 32-character Crockford Base32 identifier used as a convenience container for the address tuple.  
+  Defined as the exact concatenation:
+
+  - first 16 characters: `slug_id`  
+  - last 16 characters: `instance_id`
+
+  Formally:
+
+  - `address_id = slug_id || instance_id`
+
+  Properties:
+
+  - fully reversible: given a valid 32-character `address_id`, the runtime can recover `slug_id` and `instance_id` by splitting it in the middle  
+  - human/CLI-friendly: single token for logs, URLs, labels, “hello world” examples  
+  - optional: the canonical key remains the address tuple `(slug_id, instance_id)`; `address_id` is a derived convenience
+
+  APIs and tools MAY allow clients to use only `address_id` in simple update calls; internal logic MUST still treat `(slug_id, instance_id)` as the true identity.
+
+### 2.4 State, Entities, and Relationships
 
 - **State Fields**  
-  Mutable fields and runtime metadata that represent the current outcome of a procedure:
-  `result`, `status`, `comment`, `timestamp`, `entity_id`.
+  Mutable fields and runtime metadata that represent the current outcome of a checklist slug for a given address:
+
+  - `result` — concise observed outcome  
+  - `status` — enumerated outcome (`Pass`, `Fail`, `NA`, `Other`)  
+  - `comment` — freeform clarifying text  
+  - `timestamp` — ISO 8601 UTC, last update, runtime-managed  
+  - `entity_id` — 16-character Base32 identifier of the actor that last updated the slug’s state, runtime-managed
 
 - **Entity**  
-  Any actor that mutates slug state (human, automation, background job, or agent). Entities are identified by an `entity_id` and may have additional metadata in a separate catalog.
+  Any actor that mutates slug state (human, automation, background job, or agent).  
+  Entities are identified by an `entity_id` and may have additional metadata in a separate catalog.
 
 - **Entity ID**  
-  A 16-character Crockford Base32 identifier for the entity that last updated a slug's state. It is:
-  - opaque (no embedded semantics),
-  - stable per entity within a deployment,
-  - set by the runtime from authentication or system context,
-  - not authored in Markdown and not supplied by clients in minimal update calls.
-  Clients obtain the active `entity_id` from the server (auth/session metadata or a discovery endpoint), and the runtime echoes it in responses.
+  A 16-character Crockford Base32 identifier for the entity that last updated a slug’s state. It is:
+
+  - opaque (no embedded semantics)  
+  - stable per entity within a deployment  
+  - set by the runtime from authentication or system context  
+  - not authored in Markdown and not supplied by clients in minimal update calls
+
+  Clients obtain the active `entity_id` from the server (auth/session metadata or a discovery endpoint); the runtime echoes it in responses and history.
 
 - **Instructions**  
-  Freeform text providing detailed guidance, SOP steps, or references associated with a slug.
-
-- **Address ID**  
-  A deterministic 16-character Base32 identifier derived from the addressing fields. Used for relationships, API updates, and storage. Recomputed from addressing fields; not directly edited by humans.
+  Freeform text providing detailed guidance, SOP steps, or references associated with a template row.  
+  Instructions are treated as part of template identity (they are included in the `slug_id` computation), so changing instructions creates a new slug identity. This ensures that old instructions and new instructions cannot silently share the same identity.
 
 - **Semantic Relationship**  
-  A directed triple of the form:
-  `(subject_address_id, predicate, target_address_id)`.
+  A directed triple describing how one slug relates to another:
+
+  - `(subject_slug_id, predicate, target_slug_id)`
+
+  Relationships are authored in terms of template identities (`slug_id`). At runtime, they are evaluated in the context of instances by combining with `instance_id` as needed.
 
 - **Relationship Predicate**  
-  A lowercase ASCII token (e.g., `depends_on`, `fulfills`, `satisfied_by`) describing how one slug relates to another.
+  A lowercase ASCII token (e.g., `depends_on`, `fulfills`, `satisfied_by`) describing how one slug relates to another.  
+  Predicates are defined in the relationship model and interpreted by the state machine.
+
+### 2.5 Storage and Runtime Terms
+
+These terms are used when discussing the reference SQLite implementation and connectors. They do not change the conceptual model above; they are implementation details that optimize storage and indexing.
+
+- **Normalized ID Columns** (`checklist_id`, `section_id`, `procedure_id`, `action_id`, `spec_id`, `instructions_id`)  
+  Internal database identifiers that reference deduplicated lookup tables for commonly repeated text (e.g., many rows may share the same spec text “5 V”).  
+  These IDs:
+
+  - are not exposed in the canonical API/MCP surface  
+  - are not part of the conceptual identity model  
+  - exist solely to reduce storage duplication and improve performance
 
 - **Runtime Store**  
-  The SQLite database that holds all slugs, relationships, and history for a given deployment.
+  The SQLite database that holds all slugs (template+state), relationships, and history for a given deployment.  
+  The runtime store is the canonical source of truth for operational state.
 
 - **Connector**  
   Any export/import mechanism that maps between the runtime store and external systems (JSON/JSONL exports, JSON-LD, RDF triples, etc.).
 
 - **State Machine**  
-  The logic that consumes current slug states and relationships to derive or validate updated states (for example, enforcing `depends_on` constraints or time-based rules).
+  The logic that consumes current slug states and relationships to derive or validate updated states (for example, enforcing `depends_on` constraints or time-based rules).  
+  The state machine operates strictly on the canonical identities `(slug_id, instance_id)` and the relationship graph between `slug_id`s.
 
 ---
 
